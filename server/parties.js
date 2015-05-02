@@ -1,4 +1,7 @@
 Meteor.publish("parties", function (options, searchString) {
+  check(options, Match.Any);
+  check(searchString, Match.Any);
+
   if (searchString == null)
     searchString = '';
 

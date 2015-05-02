@@ -15,3 +15,12 @@ email
 angularui:angular-google-maps
 twbs:bootstrap
 less
+meteorhacks:npm
+momentjs:moment
+random
+
+
+npm-container
+audit-argument-checks
+check
+underscore
