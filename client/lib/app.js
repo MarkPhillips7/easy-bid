@@ -1,12 +1,17 @@
-angular.module('socially',[
+angular.module('app',[
   'angular-meteor',
+  'angularMoment',
+  'formly',
+  'formlyBootstrap',
   'ui.router',
   'angularUtils.directives.dirPagination',
   'uiGmapgoogle-maps'
 ]);
 
+angular.module('app').run(function($state){});
+
 function onReady() {
-  angular.bootstrap(document, ['socially']);
+  angular.bootstrap(document, ['app']);
 }
 
 if (Meteor.isCordova)

@@ -1,0 +1,48 @@
+<div class="container">
+  <div class="row">
+    <div class="panel panel-default billing-module" ng-controller="billing as vm">
+      <div class="panel-heading">
+        <h3 class="panel-title">Billing Overview</h3>
+      </div>
+      <div class="panel-body">
+        <ul class="list-group">
+          <li class="list-group-item list-group-item-info" ng-if="vm.plan.subscription.status === 'trialing'">
+            <p>You're trialing Easy Bid until {{vm.stripeTimestampToTimestamp(vm.plan.subscription.ends) | amDateFormat:'MMMM Do, YYYY'}}. <a href="#" class="cancel-subscription">Cancel
+              Subscription</a>.</p>
+          </li>
+          <li class="list-group-item list-group-item-success" ng-if="vm.plan.subscription.status === 'active'">
+            <p>Your subscription is currently active! <a href="#" class="cancel-subscription">Cancel</a>.</p>
+          </li>
+          <li class="list-group-item list-group-item-danger" ng-if="vm.plan.subscription.status === 'canceled'">
+            <p>Your subscription will end on {{plan.subscription.ends}}. Change of heart?
+              <a ui-sref="billingResubscribe">Resubscribe</a>.</p>
+          </li>
+          <li class="list-group-item bm-block clearfix">
+            <span class="bm-block-label">Current Plan</span>
+
+            <div class="bm-block-content">
+                <span
+                    class="plan-name-quota"><strong>{{vm.plan.subscription.plan.name | capitalize}}</strong> &mdash; {{vm.plan.subscription.plan.used}}
+                  of {{vm.plan.limit}} used</span>
+
+              <div class="usage-bar">
+                <div class="used" ng-style="{ 'width': vm.completionPercent + '%' }"></div>
+              </div>
+            </div>
+            <a ui-sref="billingPlan" class="btn btn-small btn-default pull-right">Change Plan</a>
+          </li>
+          <li class="list-group-item bm-block clearfix">
+            <span class="bm-block-label">Payment</span>
+
+            <div class="bm-block-content">
+              <span><strong>{{vm.plan.subscription.payment.card.type}}</strong> &mdash; {{vm.plan.subscription.payment.card.lastFour}}</span>
+              <span>Next payment due: <strong>{{vm.stripeTimestampToTimestamp(vm.plan.subscription.payment.nextPaymentDue) | amDateFormat:'MMMM Do, YYYY'}}</strong></span>
+              <span>Amount: <strong>{{vm.plan.amount}}</strong></span>
+            </div>
+            <a ui-sref="billingCard" disabled="disabled" class="btn btn-small btn-default pull-right">Update Card</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

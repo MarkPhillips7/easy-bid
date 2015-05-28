@@ -1,0 +1,9 @@
+<div class="list-group select-plan">
+    <div class="list-group-item"
+         ng-repeat="plan in vm.plans"
+         ng-class="{active: vm.client.planName === plan.name}"
+         ng-click="vm.planSelected(plan)">
+      {{plan.name | capitalize}}: {{plan.limit}}
+        <span class="pull-right">{{plan.amount.usd}} / {{plan.interval}}</span>
+    </div>
+</div>

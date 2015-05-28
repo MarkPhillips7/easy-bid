@@ -1,0 +1,27 @@
+<div class="container">
+  <div class="row">
+    <div class="panel panel-default billing-module" ng-controller="billing as vm">
+      <div class="panel-heading">
+        <h3 class="panel-title"><a ui-sref="billing" class="text-muted">Billing</a> / Plan</h3>
+      </div>
+      <div class="panel-body">
+        <ul class="list-group" ng-repeat="plan in vm.plans">
+          <li class="list-group-item bm-block clearfix"
+              ng-class="plan.name === vm.plan.subscription.plan.name ? 'list-group-item-success' : ''">
+            <div class="bm-block-content plan">
+              <span class="plan-name-quota"><strong>{{plan.name | capitalize}}</strong> &mdash; {{plan.limit}}</span>
+            </div>
+            <button type="button" ng-if="plan.name === vm.plan.subscription.plan.name"
+                    disabled="disabled" class="btn btn-success pull-right">Current Plan
+            </button>
+            <button type="button" ng-if="plan.name !== vm.plan.subscription.plan.name" ng-click="vm.switchPlan(plan)"
+                    data-loading-text="Switching plan..." class="btn btn-default pull-right downgrade-upgrade">
+              Switch To This Plan
+            </button>
+
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

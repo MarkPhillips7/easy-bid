@@ -42,6 +42,7 @@ minimongo@1.0.8
 mobile-status-bar@1.0.3
 momentjs:moment@2.10.3
 mongo@1.1.0
+mrt:moment@1.7.0
 npm-bcrypt@0.7.8_2
 npm-container@1.0.0
 observe-sequence@1.0.6
@@ -60,7 +61,9 @@ spacebars-compiler@1.0.6
 srp@1.0.3
 stevezhu:lodash@1.0.2
 templating@1.1.1
+themeteorchef:bert@1.1.0
 tmeasday:publish-counts@0.3.9
+tonekk:angular-moment@1.0.2
 tracker@1.0.7
 twbs:bootstrap@3.3.4
 ui@1.0.6
@@ -68,5 +71,6 @@ underscore@1.0.3
 urigo:angular@0.8.8
 urigo:angular-utils-pagination@1.0.5
 url@1.0.4
+vivekkatta:meteor-angular-formly@1.0.1
 webapp@1.2.0
 webapp-hashing@1.0.3

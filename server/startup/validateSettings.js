@@ -6,6 +6,9 @@ Meteor.startup(function () {
             }
         },
         public: {
+            plans: [
+                Match.Any
+            ],
             stripe: {
                 publishableKey: String
             }

@@ -1,4 +1,4 @@
-angular.module("socially").controller("PartiesListCtrl", ['$scope', '$meteor', '$rootScope', '$state',
+angular.module("app").controller("PartiesListCtrl", ['$scope', '$meteor', '$rootScope', '$state',
   function($scope, $meteor, $rootScope, $state){
 
     $scope.page = 1;
