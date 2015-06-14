@@ -4,7 +4,8 @@ Meteor.methods({
   createTrialClient: function (client) {
     console.log(JSON.stringify(client));
     check(client, {
-      name: String,
+      firstName: String,
+      lastName: String,
       emailAddress: String,
       password: String,
       plan: String,
@@ -37,7 +38,8 @@ Meteor.methods({
               email: client.emailAddress,
               password: client.password,
               profile: {
-                name: client.name
+                firstName: client.firstName,
+                lastName: client.lastName
               }
             });
 
@@ -61,7 +63,7 @@ Meteor.methods({
             };
 
             Meteor.users.update(user, {
-              $set: subscription
+              $set: { 'profile.subscription': subscription }
             }, function (error, response) {
               throwIfError(error, newClient);
               newClient.return(user);

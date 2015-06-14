@@ -4,7 +4,8 @@ angular.module("app").controller("signup", ['$scope', '$meteor', '$rootScope', '
     vm.creatingTrialClient = false;
     vm.plans = Meteor.settings.public.plans;
     vm.client = {
-      fullName: "",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
       planName: vm.plans[0].name,
@@ -103,7 +104,8 @@ angular.module("app").controller("signup", ['$scope', '$meteor', '$rootScope', '
     function submit() {
       vm.creatingTrialClient = true;
       var dtoClient = {
-        name: vm.client.fullName,
+        name: vm.client.firstName,
+        name: vm.client.lastName,
         emailAddress: vm.client.email,
         password: vm.client.password,
         plan: vm.client.planName,

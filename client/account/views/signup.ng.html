@@ -1,20 +1,21 @@
 <div class="container">
   <div class="row">
     <div class="col-xs-12 col-sm-6 col-md-5 col-lg-5">
-      <h3 class="page-header">Start Slaying Tasks</h3>
+      <h3 class="page-header">Start Bidding</h3>
 
-      <p>Signup for a <strong>FREE 1 day trial</strong> of Todoodle today and start dropkicking your todo list into
-        the
-        stratosphere. To get started, hit us up with an Email Address, Password, and your credit card details. Your
-        card
-        <strong>will not be charged</strong> until your trial ends!</p>
+      <p>Signup for a <strong>FREE ??? day trial</strong> of Easy Bid today and get an edge on the competition.
+        To get started just complete this form. Your credit card <strong>will not be charged</strong> until your trial ends!</p>
 
       <form id="application-signup" class="signup" ng-controller="signup as vm">
         <h4 class="page-header">Account details</h4>
 
         <div class="form-group">
-          <label for="fullName">Full Name</label>
-          <input type="text" name="fullName" class="form-control" placeholder="Full Name" ng-model="vm.client.fullName">
+          <label for="firstName">First Name</label>
+          <input type="text" name="firstName" class="form-control" placeholder="First Name" ng-model="vm.client.firstName">
+        </div>
+        <div class="form-group">
+          <label for="lastName">Last Name</label>
+          <input type="text" name="lastName" class="form-control" placeholder="Last Name" ng-model="vm.client.lastName">
         </div>
         <div class="form-group">
           <label for="emailAddress">Email Address</label>
@@ -25,7 +26,7 @@
           <input type="password" name="password" class="form-control" placeholder="Password" ng-model="vm.client.password">
         </div>
         <h4 class="page-header">Payment Information</h4>
-        <label>Which plan sounds <em>amazing</em>?</label>
+        <label>Pick a plan <em>(can always change later)</em></label>
         <ng-include src="'client/account/views/select-plan.ng.html'"></ng-include>
         <ng-include src="'client/account/views/credit-card.ng.html'"></ng-include>
         <div class="form-group">

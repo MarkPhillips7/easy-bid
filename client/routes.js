@@ -14,6 +14,11 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         $locationProvider.html5Mode(true);
 
         $stateProvider
+            .state('test', {
+              url: '/test',
+              templateUrl: 'client/test/views/test.ng.html',
+              controller: 'test'
+            })
             .state('billing', {
               url: '/billing',
               templateUrl: 'client/account/views/billing.ng.html',
@@ -48,6 +53,21 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
                         return $meteor.requireUser();
                     }]
                 }
+            })
+            .state('companies', {
+              url: '/companies',
+              templateUrl: 'client/companies/views/company-list.ng.html',
+              controller: 'companies'
+            })
+            .state('companyDetails', {
+              url: '/companies/:companyId',
+              templateUrl: 'client/companies/views/company-details.ng.html',
+              controller: 'companies',
+              resolve: {
+                "currentUser": ["$meteor", function ($meteor) {
+                  return $meteor.requireUser();
+                }]
+              }
             });
 
         $urlRouterProvider.otherwise("/signup");

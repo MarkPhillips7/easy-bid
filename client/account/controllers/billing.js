@@ -10,13 +10,15 @@ angular.module("app").controller("billing", ['$scope', '$meteor', '$rootScope', 
     vm.switchPlan=switchPlan;
     vm.switchingPlan= false;
 
+    vm.companies = $meteor.collection(Companies, false).subscribe('companies');
+
     checkUserPlan();
 
     function checkUserPlan() {
       $meteor.call('checkUserPlan', Meteor.userId()).then(
           function (data) {
             vm.plan = data;
-            vm.completionPercent = 100 * vm.plan.subscription.plan.used / vm.plan.limit;
+            vm.completionPercent = 50;// * vm.plan.subscription.plan.used / vm.plan.limit;
             vm.loading = false;
           },
           function (err) {
