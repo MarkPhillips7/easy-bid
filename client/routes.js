@@ -62,7 +62,47 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
             .state('companyDetails', {
               url: '/companies/:companyId',
               templateUrl: 'client/companies/views/company-details.ng.html',
-              controller: 'companies',
+              controller: 'company',
+              resolve: {
+                "currentUser": ["$meteor", function ($meteor) {
+                  return $meteor.requireUser();
+                }]
+              }
+            })
+            .state('templateLibraryList', {
+              url: '/libraries',
+              templateUrl: 'client/template-libraries/views/template-library-list.ng.html',
+              controller: 'templateLibraryList',
+              resolve: {
+                "currentUser": ["$meteor", function ($meteor) {
+                  return $meteor.requireUser();
+                }]
+              }
+            })
+            .state('templateLibraryDetails', {
+              url: '/libraries/:templateLibraryId',
+              templateUrl: 'client/template-libraries/views/template-library-details.ng.html',
+              controller: 'templateLibraryDetails',
+              resolve: {
+                "currentUser": ["$meteor", function ($meteor) {
+                  return $meteor.requireUser();
+                }]
+              }
+            })
+            //.state('templateLibraryItemList', {
+            //  url: '/libraries/:templateLibraryId/items',
+            //  templateUrl: 'client/template-libraries/views/template-library-item-list.ng.html',
+            //  controller: 'templateLibraryItemList',
+            //  resolve: {
+            //    "currentUser": ["$meteor", function ($meteor) {
+            //      return $meteor.requireUser();
+            //    }]
+            //  }
+            //})
+            .state('templateLibraryItemDetails', {
+              url: '/libraries/:templateLibraryId/items/:templateItemId',
+              templateUrl: 'client/template-libraries/views/template-library-item-details.ng.html',
+              controller: 'templateLibraryItemDetails',
               resolve: {
                 "currentUser": ["$meteor", function ($meteor) {
                   return $meteor.requireUser();

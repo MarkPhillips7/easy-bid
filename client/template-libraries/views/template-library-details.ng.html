@@ -1,0 +1,63 @@
+<section>
+  <div class="container-fluid" data-ng-controller="templateLibraryDetails as vm">
+    <div class="row">
+      <div class="col-md-3">
+        <h2>{{vm.templateLibrary.name}}</h2>
+
+        <div class="eb-add-border">
+          <h4>
+            Product Hierarchy
+          </h4>
+          <abn-tree tree-data="vm.productHierarchyData"
+                    tree-control="vm.productHierarchy"
+                    on-select="vm.onItemSelected(branch)"
+                    icon-leaf=""
+                    icon-expand="fa fa-plus"
+                    icon-collapse="fa fa-minus">
+          </abn-tree>
+        </div>
+      </div>
+      <div class="col-md-7">
+        <h4>
+          {{vm.selectedTemplate.name}}
+          <div class="btn-group pull-right">
+            <button type="button" class="btn btn-default btn-xs"
+                    data-ng-click="vm.editTemplateDetails(vm.selectedTemplate)"
+                    tooltip="Edit product details">
+              <i class="fa fa-edit"></i>
+            </button>
+          </div>
+        </h4>
+        <eb-template-details-view
+            data-template-library="vm.templateLibrary"
+            data-template="vm.selectedTemplate">
+        </eb-template-details-view>
+        <eb-relevant-templates-view
+            data-vm="vm"
+            data-template-library="vm.templateLibrary"
+            data-template="vm.selectedTemplate"
+            data-relevant-template-types-with-templates="vm.relevantTemplateTypesWithTemplates">
+        </eb-relevant-templates-view>
+      </div>
+      <div class="col-md-2">
+        <h2>Variables</h2>
+        <h4 class="sub-header">
+          Key
+          <br/>
+          <span class="label label-success label-spaced">Defined here</span>
+          <span class="label label-default label-spaced">Defined elsewhere</span>
+          <span class="label label-danger label-spaced">Not defined</span>
+          <span class="label label-primary label-spaced">Override</span>
+          <br/>
+          <br/>
+
+          Variables
+          <br/>
+          <span data-ng-repeat="variable in vm.variables" ng-class="variable.labelClass" class="label-spaced">
+            {{variable.variableName}}
+          </span>
+        </h4>
+      </div>
+    </div>
+  </div>
+</section>

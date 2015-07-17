@@ -13,6 +13,7 @@ angular.module("app").controller("companies", ['$scope', '$meteor', '$rootScope'
         sort: $scope.getReactively('vm.sort')
       });
     });
+    vm.search='';
 
     $meteor.autorun($scope, function () {
       //For some reason vm.perPage and vm.page get resolved to NaN at first, so...
@@ -28,7 +29,7 @@ angular.module("app").controller("companies", ['$scope', '$meteor', '$rootScope'
     });
 
     function canRemoveCompany (company) {
-      return Roles.userIsInRole($rootScope.currentUser._id, ['manage-users', 'system-admin'], Roles.GLOBAL_GROUP);
+      return Roles.userIsInRole($rootScope.currentUser, [Config.roles.manageUsers, Config.roles.systemAdmin], Roles.GLOBAL_GROUP);
     }
 
     function remove(company) {

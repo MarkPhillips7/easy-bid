@@ -1,0 +1,25 @@
+<table class="table table-condensed table-striped">
+  <tbody>
+  <tr>
+    <td><b>Item Type</b></td>
+    <td>{{template.templateType}}</td>
+  </tr>
+  <tr>
+    <td><b>Name</b></td>
+    <td>{{template.name}}</td>
+  </tr>
+  <tr>
+    <td><b>Description</b></td>
+    <td>{{template.description}}</td>
+  </tr>
+
+<tr ng-repeat="templateSettingInfo in templateTypeInfo.templateSettingInfoList"
+      data-ng-show="templateSettingInfo.viewShow">
+    <td><b>{{templateSettingInfo.name}}</b></td>
+    <td data-eb-template-settings="{{templateSettingInfo.templateSettingKey}}"
+        data-template-library="templateLibrary"
+        data-template="template"></td>
+  </tr>
+
+  </tbody>
+</table>

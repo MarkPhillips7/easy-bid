@@ -1,0 +1,31 @@
+<div class="row"
+     ng-repeat="relevantTemplateTypeWithTemplates in relevantTemplateTypesWithTemplates">
+  <div class="col-md-12 eb-add-border">
+    <h4 class="sub-header">
+      {{relevantTemplateTypeWithTemplates.name}}
+      <div class="btn-group pull-right">
+        <button type="button" class="btn btn-default btn-xs"
+                data-ng-click="vm.addTemplateAndEditDetails(relevantTemplateTypeWithTemplates)"
+                tooltip="Add {{relevantTemplateTypeWithTemplates.name}}">
+          <i class="fa fa-plus"></i>
+        </button>
+        <button type="button" class="btn btn-default btn-xs"
+                data-ng-click="vm.editTemplateDetails(relevantTemplateTypeWithTemplates.selectedTemplate)"
+                tooltip="Edit selected {{relevantTemplateTypeWithTemplates.name}}">
+          <i class="fa fa-edit"></i>
+        </button>
+        <button type="button" class="btn btn-default btn-xs"
+                data-ng-click="vm.deleteTemplate(relevantTemplateTypeWithTemplates.selectedTemplate)"
+                tooltip="Delete selected {{relevantTemplateTypeWithTemplates.name}}">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+    </h4>
+    <eb-relevant-template-type-view
+        data-vm="vm"
+        data-template-library="templateLibrary"
+        data-template="template"
+        data-relevant-template-type-with-templates="relevantTemplateTypeWithTemplates">
+    </eb-relevant-template-type-view>
+  </div>
+</div>

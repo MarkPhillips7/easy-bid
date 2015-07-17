@@ -2,6 +2,12 @@ angular.module("app").controller("test", ['$scope', '$meteor', '$rootScope', '$s
   function ($scope, $meteor, $rootScope, $state) {
     var vm = this;
 
+    $meteor.subscribe('templateLibraries')
+        .then(function (subscriptionHandle) {
+          vm.templateLibraries = $meteor.collection(TemplateLibraries);
+          vm.templateLibrary = $meteor.object(TemplateLibraries, vm.templateLibraries[0]._id);
+        });
+
     $meteor.subscribe('companies')
         .then(function (subscriptionHandle) {
           vm.companies = $meteor.collection(Companies);

@@ -1,4 +1,4 @@
-Meteor.publish("companies", function (options, searchString) {
+Meteor.publish("templateLibraries", function (options, searchString) {
   check(options, Match.Any);
   check(searchString, Match.Any);
 
@@ -11,40 +11,43 @@ Meteor.publish("companies", function (options, searchString) {
   var loggedInUser = Meteor.users.findOne(this.userId);
 
   if (!loggedInUser)
-      return null;
+    return null;
 
-  if (Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers, Config.roles.systemAdmin], Roles.GLOBAL_GROUP)) {
-    Counts.publish(this, 'numberOfCompanies', Companies.find({
+  if (Roles.userIsInRole(loggedInUser, [Config.roles.manageTemplates, Config.roles.systemAdmin], Roles.GLOBAL_GROUP)) {
+    Counts.publish(this, 'numberOfTemplateLibraries', TemplateLibraries.find({
       'name': {'$regex': '.*' + searchString || '' + '.*', '$options': 'i'}
     },{
       noReady: true
     }));
 
-    return Companies.find({
+    return TemplateLibraries.find({
       'name': {'$regex': '.*' + searchString || '' + '.*', '$options': 'i'}
     }, options);
   }
 
   var companiesRelatedToUser = Roles.getGroupsForUser(loggedInUser);
+  var companyIdsRelatedToUser = Companies.find({
+    'name' : { $in: companiesRelatedToUser }
+    }, { _id: 1 }).map(function (company) {return company._id;});
 
   //Add something like this for search
   //'name' : { '$regex' : '.*' + searchString || '' + '.*', '$options' : 'i' },
 
-  Counts.publish(this, 'numberOfCompanies', Companies.find({
+  Counts.publish(this, 'numberOfTemplateLibraries', TemplateLibraries.find({
     $and : [{
       'name': {'$regex': '.*' + searchString || '' + '.*', '$options': 'i'}
     }, {
-      'name' : { $in: companiesRelatedToUser }
+      'ownerCompanyId' : { $in: companyIdsRelatedToUser }
     }]
   },{
     noReady: true
   }));
 
-  return Companies.find({
+  return TemplateLibraries.find({
     $and : [{
       'name': {'$regex': '.*' + searchString || '' + '.*', '$options': 'i'}
     }, {
-      'name' : { $in: companiesRelatedToUser }
+      'ownerCompanyId' : { $in: companyIdsRelatedToUser }
     }]
   },options);
 });

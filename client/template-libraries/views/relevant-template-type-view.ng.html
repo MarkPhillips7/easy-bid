@@ -1,0 +1,48 @@
+<form class="form-horizontal">
+  <table class="table table-bordered table-condensed table-hover">
+    <thead>
+    <tr>
+      <!--<th>Label</th>-->
+      <th ng-repeat="templateSettingInfo in relevantTemplateTypeInfo.templateSettingInfoList"
+          data-ng-show="templateSettingInfo.viewShow">
+        {{templateSettingInfo.name}}
+      </th>
+      <!--Column for buttons like delete-->
+      <!--<th width="90"></th>-->
+    </tr>
+    </thead>
+
+    <!-- body represents input templates -->
+    <tbody>
+    <tr data-ng-repeat="relevantTemplate in relevantTemplateTypeWithTemplates.relevantTemplates"
+        ng-class="{info: vm.isTemplateSelected(relevantTemplate)}"
+        ng-click="vm.templateHasFocus(relevantTemplate)"
+        ng-focus="vm.templateHasFocus(relevantTemplate)">
+
+      <!--<td>{{relevantTemplate.displayCaption}}</td>-->
+      <td ng-repeat="templateSettingInfo in relevantTemplateTypeInfo.templateSettingInfoList"
+          data-ng-show="templateSettingInfo.viewShow"
+          data-eb-template-settings="{{templateSettingInfo.templateSettingKey}}"
+          data-template-library="templateLibrary"
+        data-template="relevantTemplate">
+      </td>
+      <!--Cell for buttons like delete-->
+      <!--<td>
+                         <div class="btn-group">
+                             <button type="button" class="btn btn-default btn-xs"
+                                     data-ng-click="vm.deleteProductTemplate(inputTemplate, $event)"
+                                     tooltip="Delete">
+                                 <i class="fa fa-times"></i>
+                             </button>
+                             <button type="button" class="btn btn-default btn-xs"
+                                     data-ng-click="vm.editProductTemplate(inputTemplate, $event)"
+                                     tooltip="Edit">
+                                 <i class="fa fa-edit"></i>
+                             </button>
+                         </div>
+
+      </td>-->
+    </tr>
+    </tbody>
+  </table>
+</form>

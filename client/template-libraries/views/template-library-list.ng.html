@@ -1,0 +1,52 @@
+<div class="container">
+  <div class="row">
+    <div ng-controller="templateLibraryList as vm">
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="alert alert-info" ng-hide="$root.currentUser || $root.loggingIn">
+            Log in to view product libraries!
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm-12">
+
+          <h1>Product Libraries:</h1>
+
+          <form class="form-inline search-form">
+            <div class="form-group">
+              <label class="sr-only" for="search">Search</label>
+
+              <div class="input-group">
+                <div class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>
+                <input type="text" ng-model="vm.search" placeholder="Search" id="search" class="form-control">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="sr-only" for="sort-order">Sort Order</label>
+              <select ng-model="vm.orderProperty" class="form-control">
+                <option value="1">Ascending</option>
+                <option value="-1">Descending</option>
+              </select>
+            </div>
+          </form>
+        </div>
+      </div>
+      <ul class="list-group">
+        <li dir-paginate="templateLibrary in vm.templateLibraries | itemsPerPage: vm.perPage" total-items="vm.templateLibraryListCount.count"
+            class="list-group-item">
+          <div class="row">
+            <div class="col-sm-8">
+              <h2><a href="/libraries/{{templateLibrary._id}}">{{templateLibrary.name}} - {{vm.getCompanyName(templateLibrary.ownerCompanyId)}} - {{templateLibrary.createdAt | amDateFormat:'MMMM Do, YYYY'}}</a></h2>
+            </div>
+            <div class="col-sm-4">
+              <a ng-click="vm.clone(templateLibrary)" class="close">Clone</a>
+            </div>
+          </div>
+        </li>
+      </ul>
+      <dir-pagination-controls on-page-change="vm.pageChanged(newPageNumber)"></dir-pagination-controls>
+    </div>
+  </div>
+</div>

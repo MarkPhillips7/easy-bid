@@ -5,7 +5,8 @@ angular.module('app',[
   'formlyBootstrap',
   'ui.router',
   'angularUtils.directives.dirPagination',
-  'uiGmapgoogle-maps'
+  'uiGmapgoogle-maps',
+  'angularBootstrapNavTree'
 ]);
 
 angular.module('app').run(function($state){});
