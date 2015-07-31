@@ -18,6 +18,13 @@
         </div>
       </div>
       <div class="col-md-7">
+        <ol class="breadcrumb">
+          <li data-ng-repeat="breadcrumbItem in vm.breadcrumbItems"
+              data-ng-class="breadcrumbItem.class">
+            <a data-ng-if="breadcrumbItem.class !== 'active'" href="" ng-click="vm.selectTemplateId(breadcrumbItem.templateId)">{{breadcrumbItem.name}}</a>
+            {{breadcrumbItem.class === 'active' ? breadcrumbItem.name : ''}}
+          </li>
+        </ol>
         <h4>
           {{vm.selectedTemplate.name}}
           <div class="btn-group pull-right">
@@ -45,7 +52,8 @@
           Key
           <br/>
           <span class="label label-success label-spaced">Defined here</span>
-          <span class="label label-default label-spaced">Defined elsewhere</span>
+          <span class="label label-default label-spaced">Defined above</span>
+          <!--<span class="label label-warning label-spaced">Defined below</span>-->
           <span class="label label-danger label-spaced">Not defined</span>
           <span class="label label-primary label-spaced">Override</span>
           <br/>
@@ -53,7 +61,7 @@
 
           Variables
           <br/>
-          <span data-ng-repeat="variable in vm.variables" ng-class="variable.labelClass" class="label-spaced">
+          <span data-ng-repeat="variable in vm.variablesSorted" ng-class="variable.labelClass" class="label-spaced">
             {{variable.variableName}}
           </span>
         </h4>

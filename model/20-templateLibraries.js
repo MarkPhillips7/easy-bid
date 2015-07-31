@@ -3,7 +3,78 @@
  */
 
 TemplateTypeInfoList = [{
+  templateType: Constants.templateTypes.company,
+  displayInHierarchy: true,
+  templateSettingInfoList: [],
+  relevantTemplateTypes: [{
+    name: 'Inputs',
+    templateType: Constants.templateTypes.input
+  }, {
+    name: 'Calculations',
+    templateType: Constants.templateTypes.calculation
+  }]
+}, {
+  templateType: Constants.templateTypes.customer,
+  displayInHierarchy: true,
+  templateSettingInfoList: [],
+  relevantTemplateTypes: [{
+    name: 'Inputs',
+    templateType: Constants.templateTypes.input
+  }, {
+    name: 'Calculations',
+    templateType: Constants.templateTypes.calculation
+  }, {
+    name: 'Overrides',
+    templateType: Constants.templateTypes.override
+  }]
+}, {
+  templateType: Constants.templateTypes.job,
+  displayInHierarchy: true,
+  templateSettingInfoList: [],
+  relevantTemplateTypes: [{
+    name: 'Inputs',
+    templateType: Constants.templateTypes.input
+  }, {
+    name: 'Calculations',
+    templateType: Constants.templateTypes.calculation
+  }, {
+    name: 'Overrides',
+    templateType: Constants.templateTypes.override
+  }]
+}, {
+  templateType: Constants.templateTypes.area,
+  displayInHierarchy: true,
+  templateSettingInfoList: [],
+  relevantTemplateTypes: [{
+    name: 'Inputs',
+    templateType: Constants.templateTypes.input
+  }, {
+    name: 'Calculations',
+    templateType: Constants.templateTypes.calculation
+  }, {
+    name: 'Overrides',
+    templateType: Constants.templateTypes.override
+  }]
+}, {
+  templateType: Constants.templateTypes.productSelection,
+  displayInHierarchy: true,
+  templateSettingInfoList: [],
+  relevantTemplateTypes: [{
+    name: 'Products',
+    templateType: Constants.templateTypes.product
+  }, {
+    name: 'Inputs',
+    templateType: Constants.templateTypes.input
+  }, {
+    name: 'Calculations',
+    templateType: Constants.templateTypes.calculation
+  }, {
+    name: 'Overrides',
+    templateType: Constants.templateTypes.override
+  }]
+}, {
   templateType: Constants.templateTypes.baseProduct,
+  displayInHierarchy: true,
   templateSettingInfoList: [{
     //SelectionType should always be Select
     name: 'Selection Type',
@@ -63,6 +134,7 @@ TemplateTypeInfoList = [{
   }]
 }, {
   templateType: Constants.templateTypes.product,
+  displayInHierarchy: true,
   templateSettingInfoList: [{
     name: 'Label',
     templateSettingKey: Constants.templateSettingKeys.displayCaption,
@@ -127,6 +199,7 @@ TemplateTypeInfoList = [{
   }]
 }, {
   templateType: Constants.templateTypes.input,
+  displayInHierarchy: false,
   templateSettingInfoList: [{
     name: 'Label',
     templateSettingKey: Constants.templateSettingKeys.displayCaption,
@@ -230,6 +303,7 @@ TemplateTypeInfoList = [{
   relevantTemplateTypes: []
 }, {
   templateType: Constants.templateTypes.override,
+  displayInHierarchy: false,
   templateSettingInfoList: [{
     name: 'Variable',
     templateSettingKey: Constants.templateSettingKeys.variableToOverride,
@@ -287,6 +361,7 @@ TemplateTypeInfoList = [{
   relevantTemplateTypes: []
 }, {
   templateType: Constants.templateTypes.calculation,
+  displayInHierarchy: false,
   templateSettingInfoList: [{
     name: 'Variable',
     templateSettingKey: Constants.templateSettingKeys.variableName,
@@ -674,10 +749,11 @@ function cloneTemplateLibrary(templateLibrary) {
   return clone;
 }
 
-function parentTemplate(templateLibrary, template) {
+function parentTemplate(templateLibrary, template, dependenciesToIgnore) {
   if (templateLibrary && template) {
     var templateRelationship = _.find(templateLibrary.templateRelationships, function (relationship) {
-      return relationship.childTemplateId === template.id;
+      return relationship.childTemplateId === template.id
+          && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, relationship.dependency));
     });
     if (templateRelationship) {
       return _.find(templateLibrary.templates, function (templ) {
@@ -689,13 +765,30 @@ function parentTemplate(templateLibrary, template) {
   return null;
 }
 
-function templateChildren(templateLibrary, template){
+function parentTemplates(templateLibrary, template, dependenciesToIgnore){
+  var parentTemplates = [];
+
+  if (templateLibrary && template) {
+    var parentTemplateRelationships=_.filter(templateLibrary.templateRelationships, function (templateRelationship) {
+      return templateRelationship.childTemplateId === template.id
+          && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, templateRelationship.dependency));
+    })
+
+    parentTemplates = _.map(parentTemplateRelationships, function (templateRelationship) {
+      return _.find(templateLibrary.templates, function (templ) {return templ.id == templateRelationship.parentTemplateId; })});
+  }
+
+  return parentTemplates;
+}
+
+function templateChildren(templateLibrary, template, dependenciesToIgnore){
   var templateChildren = [];
 
   if (templateLibrary && template) {
-    var childTemplateRelationships=_.filter(templateLibrary.templateRelationships, function (templateRelationship) {
-      return templateRelationship.parentTemplateId === template.id;
-    })
+    var childTemplateRelationships = _.filter(templateLibrary.templateRelationships, function (templateRelationship) {
+       return templateRelationship.parentTemplateId === template.id
+            && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, templateRelationship.dependency));
+    });
 
     templateChildren = _.map(childTemplateRelationships, function (templateRelationship) {
       return _.find(templateLibrary.templates, function (templ) {return templ.id == templateRelationship.childTemplateId; })});
@@ -708,5 +801,6 @@ TemplateLibrariesHelper = {
   getRootTemplate: getRootTemplate,
   cloneTemplateLibrary: cloneTemplateLibrary,
   parentTemplate:parentTemplate,
+  parentTemplates: parentTemplates,
   templateChildren:templateChildren
 }

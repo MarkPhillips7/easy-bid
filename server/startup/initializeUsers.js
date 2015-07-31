@@ -506,6 +506,7 @@ Meteor.startup(function () {
       cabinetryTemplateLibrary.isPublic = false;
       cabinetryTemplateLibrary.isReadOnly = false;
 
+      templateCompany = _.find(cabinetryTemplateLibrary.templates, function(template) {return template.templateType === Constants.templateTypes.company});
       templateCustomer = _.find(cabinetryTemplateLibrary.templates, function(template) {return template.templateType === Constants.templateTypes.customer});
       templateProduct = _.find(cabinetryTemplateLibrary.templates, function(template) {return template.templateType === Constants.templateTypes.baseProduct});
       templateJob = _.find(cabinetryTemplateLibrary.templates, function(template) {return template.templateType === Constants.templateTypes.job});
@@ -522,32 +523,51 @@ Meteor.startup(function () {
       };
       cabinetryTemplateLibrary.templates.push(templateSheetMaterialData);
       cabinetryTemplateLibrary.templateRelationships.push({
-        parentTemplateId: templateCustomer.id,
+        parentTemplateId: templateCompany.id,
         childTemplateId: templateSheetMaterialData.id
       });
+      //
+      //var templateMaterial = {
+      //  id: Random.id(),
+      //  name: "Material",
+      //  description: "Some physical thing",
+      //  templateType: Constants.templateTypes.material
+      //};
+      //cabinetryTemplateLibrary.templates.push(templateMaterial);
+      //cabinetryTemplateLibrary.templateRelationships.push({
+      //  parentTemplateId: templateProduct.id,
+      //  childTemplateId: templateMaterial.id
+      //});
+      //
+      //var templateLabor = {
+      //  id: Random.id(),
+      //  name: "Labor",
+      //  description: "General labor",
+      //  templateType: Constants.templateTypes.labor
+      //};
+      //cabinetryTemplateLibrary.templates.push(templateLabor);
+      //cabinetryTemplateLibrary.templateRelationships.push({
+      //  parentTemplateId: templateProduct.id,
+      //  childTemplateId: templateLabor.id
+      //});
 
-      var templateMaterial = {
+      var templateCabinet = {
         id: Random.id(),
-        name: "Material",
-        description: "Some physical thing",
-        templateType: Constants.templateTypes.material
+        name: "Cabinet",
+        description: "Cabinet",
+        templateType: Constants.templateTypes.product,
+        templateSettings: [{
+          key: "SelectionType", value: Constants.selectionTypes.selectOption
+        }, {
+          key: "IsASubTemplate", value: "True"
+        }, {
+          key: "ImageSource", value: "cabinet.png"
+        }]
       };
-      cabinetryTemplateLibrary.templates.push(templateMaterial);
+      cabinetryTemplateLibrary.templates.push(templateCabinet);
       cabinetryTemplateLibrary.templateRelationships.push({
         parentTemplateId: templateProduct.id,
-        childTemplateId: templateMaterial.id
-      });
-
-      var templateLabor = {
-        id: Random.id(),
-        name: "Labor",
-        description: "General labor",
-        templateType: Constants.templateTypes.labor
-      };
-      cabinetryTemplateLibrary.templates.push(templateLabor);
-      cabinetryTemplateLibrary.templateRelationships.push({
-        parentTemplateId: templateProduct.id,
-        childTemplateId: templateLabor.id
+        childTemplateId: templateCabinet.id
       });
 
       var templateLaborCostMultiplier = {
@@ -569,7 +589,7 @@ Meteor.startup(function () {
       };
       cabinetryTemplateLibrary.templates.push(templateLaborCostMultiplier);
       cabinetryTemplateLibrary.templateRelationships.push({
-        parentTemplateId: templateLabor.id,
+        parentTemplateId: templateCompany.id,
         childTemplateId: templateLaborCostMultiplier.id
       });
 
@@ -596,7 +616,7 @@ Meteor.startup(function () {
       };
       cabinetryTemplateLibrary.templates.push(templateLaborSawingRate);
       cabinetryTemplateLibrary.templateRelationships.push({
-        parentTemplateId: templateLabor.id,
+        parentTemplateId: templateCompany.id,
         childTemplateId: templateLaborSawingRate.id
       });
 
@@ -619,7 +639,7 @@ Meteor.startup(function () {
       };
       cabinetryTemplateLibrary.templates.push(templateLaborSawingCost);
       cabinetryTemplateLibrary.templateRelationships.push({
-        parentTemplateId: templateLabor.id,
+        parentTemplateId: templateCabinet.id,
         childTemplateId: templateLaborSawingCost.id
       });
 
@@ -644,7 +664,7 @@ Meteor.startup(function () {
       };
       cabinetryTemplateLibrary.templates.push(templateLaborSawingTimePerPart);
       cabinetryTemplateLibrary.templateRelationships.push({
-        parentTemplateId: templateLabor.id,
+        parentTemplateId: templateCompany.id,
         childTemplateId: templateLaborSawingTimePerPart.id
       });
 
@@ -667,27 +687,8 @@ Meteor.startup(function () {
       };
       cabinetryTemplateLibrary.templates.push(templateLaborSawingTime);
       cabinetryTemplateLibrary.templateRelationships.push({
-        parentTemplateId: templateLabor.id,
+        parentTemplateId: templateCabinet.id,
         childTemplateId: templateLaborSawingTime.id
-      });
-
-      var templateCabinet = {
-        id: Random.id(),
-        name: "Cabinet",
-        description: "Cabinet",
-        templateType: Constants.templateTypes.product,
-        templateSettings: [{
-          key: "SelectionType", value: Constants.selectionTypes.selectOption
-        }, {
-          key: "IsASubTemplate", value: "True"
-        }, {
-          key: "ImageSource", value: "cabinet.png"
-        }]
-      };
-      cabinetryTemplateLibrary.templates.push(templateCabinet);
-      cabinetryTemplateLibrary.templateRelationships.push({
-        parentTemplateId: templateProduct.id,
-        childTemplateId: templateCabinet.id
       });
 
       var templateOneDoorBaseCabinet = {
@@ -896,7 +897,7 @@ Meteor.startup(function () {
         }, {
           key: "DisplayCategory", value: "Options"
         }, {
-          key: "DisplayCaption", value: "Depth"
+          key: "DisplayCaption", value: "Num adjustable shelves"
         }, {
           key: "DisplayOrder", value: "1"
         }, {

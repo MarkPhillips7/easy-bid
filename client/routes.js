@@ -101,8 +101,8 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
             //})
             .state('templateLibraryItemDetails', {
               url: '/libraries/:templateLibraryId/items/:templateItemId',
-              templateUrl: 'client/template-libraries/views/template-library-item-details.ng.html',
-              controller: 'templateLibraryItemDetails',
+              templateUrl: 'client/template-libraries/views/template-library-details.ng.html',
+              controller: 'templateLibraryDetails',
               resolve: {
                 "currentUser": ["$meteor", function ($meteor) {
                   return $meteor.requireUser();

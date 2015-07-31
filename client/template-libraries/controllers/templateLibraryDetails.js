@@ -7,6 +7,7 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
     vm.productHierarchyData = [];
     vm.relevantTemplateTypesWithTemplates = [];
     vm.selectedTemplate;
+    vm.selectTemplateId = selectTemplateId;
     vm.templateHasFocus = templateHasFocus;
     vm.templateLibrary = {};
 
@@ -17,7 +18,8 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
       $meteor.subscribe('templateLibraries')
           .then(setSubscriptionHandle)
           .then(setTemplateLibrary)
-          .then(setFullProductHierarchy, failure);
+          .then(setFullProductHierarchy)
+          .then(setInitialTemplate, failure);
 
       $scope.$on('$destroy', function () {
         subscriptionHandle.stop();
@@ -28,11 +30,28 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
         return $q.when(null);
       }
 
-      function setTemplateLibrary() {
-        //vm.templateLibraries = $meteor.collection(TemplateLibraries);
-        vm.templateLibrary = TemplateLibraries.findOne($stateParams.templateLibraryId);//vm.templateLibraries[0];//$scope.$meteorObject(TemplateLibraries, $stateParams.templateLibraryId);
-        return $q.when(null);
+    function setTemplateLibrary() {
+      //vm.templateLibraries = $meteor.collection(TemplateLibraries);
+      vm.templateLibrary = TemplateLibraries.findOne($stateParams.templateLibraryId);
+      return $q.when(null);
+    }
+  }
+
+    function setInitialTemplate() {
+      var initialTemplate;
+
+      if (vm.templateLibrary) {
+        if ($stateParams.templateItemId) {
+          initialTemplate = _.find(vm.templateLibrary.templates, function(template){ return template.id === $stateParams.templateItemId});
+        }
+        else {
+          initialTemplate = TemplateLibrariesHelper.getRootTemplate(vm.templateLibrary);
+        }
+
+        selectTemplate(initialTemplate);
       }
+
+      return $q.when(null);
     }
 
     function failure(error) {
@@ -43,12 +62,25 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
     }
 
     function onItemSelected(branch) {
-      var breadcrumbText = '';
       selectTemplate(getTemplateById(branch ? branch.data.templateId : 0));
     }
 
-    function selectTemplate(template){
+    function selectTemplateId(templateId){
+      selectTemplate(getTemplateById(templateId));
+    }
+
+    function selectTemplate(template) {
+      if (!template) {
+        return;
+      }
+
       vm.selectedTemplate = template;
+      var branchToSelect = findBranchInHierarchyList(vm.productHierarchyData, template.id);
+      if (branchToSelect && vm.productHierarchy.get_selected_branch && branchToSelect !== vm.productHierarchy.get_selected_branch()) {
+        vm.productHierarchy.select_branch(branchToSelect);
+      }
+      vm.breadcrumbItems = [];
+      populateBreadcrumbItems(vm.breadcrumbItems, vm.selectedTemplate, true);
 
       setTemplateTypeInfo(template);
 
@@ -61,14 +93,46 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
       }
     }
 
-    function setTemplateTypeInfo(template){
+    function findBranchInHierarchyList(hierarchyList, templateId) {
+      var branchToSelect;
+
+      for (var i = 0; i < hierarchyList.length; i++) {
+        var hierarchyItem = hierarchyList[i];
+        if (hierarchyItem.data.templateId === templateId) {
+          branchToSelect = hierarchyItem;
+        }
+        else {
+          branchToSelect = findBranchInHierarchyList(hierarchyItem.children, templateId);
+        }
+
+        if (branchToSelect) {
+          return branchToSelect;
+        }
+      }
+
+      return null;
+    }
+
+    function populateBreadcrumbItems(breadcrumbItems, template, isActive) {
+      breadcrumbItems.unshift({
+        name: template.name,
+        templateId: template.id,
+        class: isActive ? 'active' : ''
+      });
+
+      var parentTemplate = TemplateLibrariesHelper.parentTemplate(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
+      if (parentTemplate) {
+        populateBreadcrumbItems(breadcrumbItems, parentTemplate, false);
+      }
+    }
+
+    function setTemplateTypeInfo(template) {
       vm.relevantTemplateTypesWithTemplates = [];
 
       if (!template) {
         return;
       }
 
-      var visitedTemplates = [];
       var templateTypeInfo = _.find(TemplateTypeInfoList, function (templateTypeInfo) {
         return templateTypeInfo.templateType === template.templateType;
       });
@@ -83,9 +147,14 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
           });
         });
         vm.variables = [];
+        var visitedTemplates = [];
 
-        populateTypicalRelevantTemplates(template, visitedTemplates, false, true);
-        populateRelevantSubProductTemplates(template, true);
+        populateTypicalRelevantTemplates(template, visitedTemplates, false, true, true, 0);
+
+        visitedTemplates = [];
+        populateRelevantSubProductTemplates(template, visitedTemplates, true);
+
+        vm.variablesSorted = _.sortBy(vm.variables, 'variableName');
 
         //Initialize first template as selected
         vm.relevantTemplateTypesWithTemplates.forEach(function (relevantTemplateTypeWithTemplates) {
@@ -154,12 +223,20 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
       return relevantTemplateInfo && template === relevantTemplateInfo.selectedTemplate;
     }
 
-    function populateRelevantSubProductTemplates(template, isPrimary) {
+    function populateRelevantSubProductTemplates(template, visitedTemplates, isPrimary) {
       var relevantTemplateInfo;
 
       if (!template) {
         return;
       }
+
+      //Don't do anything if template has already been visited
+      if (_.contains(visitedTemplates, template)) {
+        return;
+      }
+
+      //Necessary to avoid infinite recursive loop
+      visitedTemplates.push(template);
 
       if (!isPrimary && template.templateType === Constants.templateTypes.product) {
         relevantTemplateInfo = _.find(vm.relevantTemplateTypesWithTemplates, function (templateInfo) {
@@ -177,12 +254,11 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
 
       var templateChildren = TemplateLibrariesHelper.templateChildren(vm.templateLibrary, template);
       for (var i = 0; i < templateChildren.length; i++) {
-        populateRelevantSubProductTemplates(templateChildren[i], false);
+        populateRelevantSubProductTemplates(templateChildren[i], visitedTemplates, false);
       }
     }
 
-    function populateTypicalRelevantTemplates(template, visitedTemplates, ignoreSubTemplates, isPrimary) {
-      var templateRelationship;
+    function populateTypicalRelevantTemplates(template, visitedTemplates, ignoreSubTemplates, isPrimary, isSelectedTemplateType, levelsFromSelected) {
       var expr;
       var relevantTemplateInfo;
 
@@ -202,9 +278,14 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
         return;
       }
 
-      var variableName = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template,Constants.templateSettingKeys.variableName);
+      var isVariableCollector = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.isVariableCollector);
+      var isThisTemplateTypePrimary = isPrimary && (isSelectedTemplateType || !isVariableCollector);
+      var variableName = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.variableName);
       if (variableName) {
-        setVariableInfo(variableName, true, isPrimary, false, false);
+        //Don't include variables that are hierarchically below selected template type when isVariableCollector is true
+        if (!isVariableCollector || levelsFromSelected >= 0) {
+          setVariableInfo(variableName, true, isThisTemplateTypePrimary, false, false);
+        }
       }
 
       relevantTemplateInfo = _.find(vm.relevantTemplateTypesWithTemplates, function (templateInfo) {
@@ -215,39 +296,40 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
         //Products added by populateRelevantSubProductTemplates
         if (template.templateType !== Constants.templateTypes.product) {
           relevantTemplateInfo.relevantTemplates.push(template);
-
-          //template.isTemplateSelected = function () {
-          //  return template === relevantTemplateInfo.selectedTemplate;
-          //};
         }
+      }
 
-        if (template.templateType === Constants.templateTypes.override) {
-          var variableToOverride = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template,Constants.templateSettingKeys.variableToOverride);
-          if (variableToOverride) {
-            setVariableInfo(variableToOverride, false, isPrimary, true, false);
-          }
+      if (template.templateType === Constants.templateTypes.override) {
+        var variableToOverride = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.variableToOverride);
+        if (variableToOverride) {
+          setVariableInfo(variableToOverride, false, isThisTemplateTypePrimary, true, false);
         }
-        else if (template.templateType === Constants.templateTypes.calculation) {
-          var valueFormula = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template,Constants.templateSettingKeys.valueFormula);
-          if (valueFormula) {
-            //Now indicate that all of the variables in the formula are being used
-            //expr = Parser.parse(valueFormula);
-            //expr.variables().forEach(
-            //    function (templateVariableName) {
-            //      setVariableInfo(templateVariableName, false, false, false, true);
-            //    });
-          }
+      }
+      else if (template.templateType === Constants.templateTypes.calculation) {
+        var valueFormula = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.valueFormula);
+        if (valueFormula) {
+          //Now indicate that all of the variables in the formula are being used
+          expr = Parser.parse(valueFormula);
+          expr.variables().forEach(
+              function (templateVariableName) {
+                setVariableInfo(templateVariableName, false, false, false, true);
+              });
         }
+      }
 
-        //Now populate children (but ignore sub templates)
-        var templateChildren = TemplateLibrariesHelper.templateChildren(vm.templateLibrary, template);
-        for (var i = 0; i < templateChildren.length; i++) {
-          populateTypicalRelevantTemplates(templateChildren[i], visitedTemplates, true, isPrimary);
+      //Now populate children (but ignore sub templates)
+      var templateChildren = TemplateLibrariesHelper.templateChildren(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
+      for (var i = 0; i < templateChildren.length; i++) {
+        //Decided to only populate children if this template type is primary
+        if (!ignoreSubTemplates || isThisTemplateTypePrimary) {
+          populateTypicalRelevantTemplates(templateChildren[i], visitedTemplates, true, isThisTemplateTypePrimary, false, levelsFromSelected - 1);
         }
+      }
 
-        //Now populate helper templates for parent(s)
-        var parentTemplate = TemplateLibrariesHelper.parentTemplate(vm.templateLibrary, template);
-        populateTypicalRelevantTemplates(parentTemplate, visitedTemplates, false, false);
+      //Now populate helper templates for parent(s)
+      var parentTemplates = TemplateLibrariesHelper.parentTemplates(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
+      for (var i = 0; i < parentTemplates.length; i++) {
+        populateTypicalRelevantTemplates(parentTemplates[i], visitedTemplates, false, false, false, levelsFromSelected + 1);
       }
     }
 
@@ -284,7 +366,13 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
               return visitedTemplate === templateChild;
             })) {
           visitedTemplates.push(templateChild);
-          treeDataChildren.push(addItemToTreeData(getTreeDataChildren(templateChild, visitedTemplates), templateChild));
+
+          var templateChildTypeInfo = _.find(TemplateTypeInfoList, function (templateTypeInfo) {
+            return templateTypeInfo.templateType === templateChild.templateType;
+          });
+          if (templateChildTypeInfo && templateChildTypeInfo.displayInHierarchy) {
+            treeDataChildren.push(addItemToTreeData(getTreeDataChildren(templateChild, visitedTemplates), templateChild));
+          }
         }
       });
 

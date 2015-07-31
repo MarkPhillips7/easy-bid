@@ -37,6 +37,7 @@ Constants.templateSettingKeys = {
   imageSource:"ImageSource",
   isABaseTemplate:"IsABaseTemplate",
   isASubTemplate:"IsASubTemplate",
+  isVariableCollector:"IsVariableCollector",
   isVariableOverride:"IsVariableOverride",
   numeratorUnit:"NumeratorUnit",
   overrideValue:"OverrideValue",
