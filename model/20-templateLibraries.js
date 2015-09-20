@@ -444,7 +444,8 @@ Schema.TemplateSetting = new SimpleSchema({
 //    type: [Schema.Item]
 //  }
 //})
-//Instead just make various versions of almost identical schemas
+//Instead just make various versions of almost identical schemas. Actually not doing this either.
+
 var itemTemplateDefinition = {
   // Using an id since we want these to be able to be referenced even though they are not in their own collection
   id: {

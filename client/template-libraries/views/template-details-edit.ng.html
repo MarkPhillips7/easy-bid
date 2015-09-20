@@ -1,0 +1,50 @@
+<form class="form-horizontal" role="form">
+  <div class="form-group">
+    <label class="col-sm-3 control-label" for="TemplateBaseProduct">Base Product</label>
+
+    <div class="col-sm-9">
+      <input class="form-control" type="text" id="TemplateBaseProduct"
+             ng-model="template.firstParentTemplate.description"/>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label" for="TemplateName">Name</label>
+
+    <div class="col-sm-9">
+      <input class="form-control" type="text" id="TemplateName" ng-model="template.name"/>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label" for="TemplateDescription">Description</label>
+
+    <div class="col-sm-9">
+      <input class="form-control" type="text" id="TemplateDescription" ng-model="template.description"/>
+    </div>
+  </div>
+
+  <div class="form-group" ng-repeat="templateSettingInfo in templateTypeInfo.templateSettingInfoList"
+       data-ng-show="templateSettingInfo.editShow">
+
+    <eb-template-settings-edit
+        data-template-setting-info="templateSettingInfo"
+        data-template="template"
+        data-input-index="$index"
+        data-vm="vm">
+    </eb-template-settings-edit>
+  </div>
+
+  <div class="btn-group">
+    <button type="button" class="btn btn-default btn-xs"
+            data-ng-show="vm.showOption($root.Constants.recordActions.save, template)"
+            data-ng-click="vm.save()"
+            tooltip="Save">
+      <i class="fa fa-save"></i> Save
+    </button>
+    <button type="button" class="btn btn-default btn-xs"
+            data-ng-show="vm.showOption($root.Constants.recordActions.cancel, template)"
+            data-ng-click="vm.cancel()"
+            tooltip="Cancel">
+      <i class="fa fa-cancel"></i> Cancel
+    </button>
+  </div>
+</form>

@@ -1,3 +1,19 @@
+Constants.usageModes = {
+  browse:"Browse", //don't even see buttons for editing or deleting
+  classicEdit:"Classic Edit", //must choose to save before changes take effect
+  autoSave:"Auto Save" //updates take effect immediately
+};
+
+Constants.recordActions = {
+  add:"Add",
+  copy:"Copy",
+  view:"View",
+  edit:"Edit",
+  delete:"Delete",
+  save:"Save",
+  cancel:"Cancel"
+};
+
 Constants.dependency = {
   required:"Required",
   optionalAutomatic:"OptionalAutomatic",//Automatically selected

@@ -15,18 +15,21 @@ angular.module("app").controller("billing", ['$scope', '$meteor', '$rootScope', 
     checkUserPlan();
 
     function checkUserPlan() {
-      $meteor.call('checkUserPlan', Meteor.userId()).then(
-          function (data) {
-            vm.plan = data;
-            vm.completionPercent = 50;// * vm.plan.subscription.plan.used / vm.plan.limit;
-            vm.loading = false;
-          },
-          function (err) {
-            console.log('failed', err);
-            vm.loading = false;
-            alert(err.reason);
-          }
-      );
+      $meteor.call('checkUserPlan', Meteor.userId())
+          .then(checkUserPlanSuccess)
+          .catch(checkUserPlanFailure);
+
+      function checkUserPlanSuccess(data) {
+        vm.plan = data;
+        vm.completionPercent = 50;// * vm.plan.subscription.plan.used / vm.plan.limit;
+        vm.loading = false;
+      }
+
+      function checkUserPlanFailure(err) {
+        console.log('failed', err);
+        vm.loading = false;
+        alert(err.reason);
+      }
     }
 
     // Stripe stores dates as seconds while we normally need it in milliseconds

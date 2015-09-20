@@ -1,6 +1,9 @@
 angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor', '$q', '$rootScope', '$stateParams', '$timeout',
   function ($scope, $meteor, $q, $rootScope, $stateParams, $timeout) {
     var vm = this;
+    vm.recordAction = Constants.recordActions.view;
+    vm.editTemplateDetails = editTemplateDetails;
+    vm.hasChanges = false;
     vm.isTemplateSelected = isTemplateSelected;
     vm.onItemSelected = onItemSelected;
     vm.productHierarchy = {};
@@ -8,18 +11,23 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
     vm.relevantTemplateTypesWithTemplates = [];
     vm.selectedTemplate;
     vm.selectTemplateId = selectTemplateId;
+    vm.setUsageMode = setUsageMode;
+    vm.showOption = showOption;
     vm.templateHasFocus = templateHasFocus;
     vm.templateLibrary = {};
+    //vm.templateLibrary = $meteor.object(TemplateLibraries, $stateParams.templateLibraryId);
+    vm.usageMode = Constants.usageModes.browse;
 
     activate();
 
     function activate() {
       var subscriptionHandle;
       $meteor.subscribe('templateLibraries')
-          .then(setSubscriptionHandle)
-          .then(setTemplateLibrary)
-          .then(setFullProductHierarchy)
-          .then(setInitialTemplate, failure);
+        .then(setSubscriptionHandle)
+        .then(setTemplateLibrary)
+        .then(setFullProductHierarchy)
+        .then(setInitialTemplate)
+        .catch(failure);
 
       $scope.$on('$destroy', function () {
         subscriptionHandle.stop();
@@ -30,22 +38,97 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
         return $q.when(null);
       }
 
-    function setTemplateLibrary() {
-      //vm.templateLibraries = $meteor.collection(TemplateLibraries);
-      vm.templateLibrary = TemplateLibraries.findOne($stateParams.templateLibraryId);
-      return $q.when(null);
+      function setTemplateLibrary() {
+        //vm.templateLibraries = $meteor.collection(TemplateLibraries);
+        //vm.templateLibrary = TemplateLibraries.findOne($stateParams.templateLibraryId);
+        vm.templateLibrary = $meteor.object(TemplateLibraries, $stateParams.templateLibraryId, false);
+
+        //this did not work ...
+        //$scope.$watch('vm.templateLibrary', function(newValue, oldValue) {
+        //  vm.hasChanges=true;
+        //}, true); //the true causes object equality check which is a deep watch
+
+        //autorun only runs when final parameter is true,but I want the opposite
+        //$meteor.autorun($scope, function () {
+        //  vm.templateLibrary = $meteor.object(TemplateLibraries, $stateParams.templateLibraryId, true);
+        //
+        //  vm.hasChanges=true;
+        //});
+
+        return $q.when(null);
+      }
     }
-  }
+
+
+    // ToDo: implement!
+    function canPerformAction(recordAction, template){
+      return true;
+    }
+
+    function canLeave(){
+      return !vm.hasChanges;
+    }
+
+    function showOption(recordAction, template){
+      var templateIsSelectedTemplate = template === vm.selectedTemplate;
+
+      if (recordAction === Constants.recordActions.add){
+        return canLeave()
+          && vm.usageMode !== Constants.usageModes.browse
+          && canPerformAction(recordAction, template);
+      }
+      else if (recordAction === Constants.recordActions.copy){
+        return canLeave()
+          && vm.usageMode !== Constants.usageModes.browse
+          && canPerformAction(recordAction, template);
+      }
+      else if (recordAction === Constants.recordActions.view){
+        return canLeave()
+          && canPerformAction(recordAction, template);
+      }
+      else if (recordAction === Constants.recordActions.delete){
+        return canLeave()
+          && vm.usageMode !== Constants.usageModes.browse
+          && canPerformAction(recordAction, template);
+      }
+      else if (recordAction === Constants.recordActions.edit){
+        return canLeave()
+          && vm.usageMode !== Constants.usageModes.browse
+          && (!templateIsSelectedTemplate  || !_.contains([Constants.recordActions.add,Constants.recordActions.copy,Constants.recordActions.edit], vm.recordAction))
+          && canPerformAction(recordAction, template);
+      }
+      else if (recordAction === Constants.recordActions.save){
+        return vm.hasChanges
+          && vm.usageMode === Constants.usageModes.classicEdit
+          && canPerformAction(recordAction, template);
+      }
+      else if (recordAction === Constants.recordActions.cancel){
+        return vm.hasChanges
+          && vm.usageMode === Constants.usageModes.classicEdit
+          && canPerformAction(recordAction, template);
+      }    
+    }
+
+    function setUsageMode(usageMode) {
+      vm.usageMode = usageMode;
+    }
+
+    function editTemplateDetails(template) {
+      vm.recordAction = Constants.recordActions.edit;
+      selectTemplate(template);
+    }
 
     function setInitialTemplate() {
       var initialTemplate;
 
       if (vm.templateLibrary) {
         if ($stateParams.templateItemId) {
-          initialTemplate = _.find(vm.templateLibrary.templates, function(template){ return template.id === $stateParams.templateItemId});
+          initialTemplate = _.find(vm.templateLibrary.templates, function (template) {
+            return template.id === $stateParams.templateItemId
+          });
         }
         else {
-          initialTemplate = TemplateLibrariesHelper.getRootTemplate(vm.templateLibrary);
+          initialTemplate = TemplateLibrariesHelper.getRootTemplate(vm.templateLibrary.getRawObject());
         }
 
         selectTemplate(initialTemplate);
@@ -65,12 +148,12 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
       selectTemplate(getTemplateById(branch ? branch.data.templateId : 0));
     }
 
-    function selectTemplateId(templateId){
+    function selectTemplateId(templateId) {
       selectTemplate(getTemplateById(templateId));
     }
 
     function selectTemplate(template) {
-      if (!template) {
+      if (!template  || vm.selectedTemplate === template) {
         return;
       }
 
@@ -311,9 +394,9 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
           //Now indicate that all of the variables in the formula are being used
           expr = Parser.parse(valueFormula);
           expr.variables().forEach(
-              function (templateVariableName) {
-                setVariableInfo(templateVariableName, false, false, false, true);
-              });
+            function (templateVariableName) {
+              setVariableInfo(templateVariableName, false, false, false, true);
+            });
         }
       }
 
@@ -343,7 +426,7 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
       vm.productHierarchyData = [];
 
       if (vm.templateLibrary) {
-        var rootTemplate = TemplateLibrariesHelper.getRootTemplate(vm.templateLibrary);
+        var rootTemplate = TemplateLibrariesHelper.getRootTemplate(vm.templateLibrary.getRawObject());
         var visitedTemplates = [];
         vm.productHierarchyData.push(addItemToTreeData(getTreeDataChildren(rootTemplate, visitedTemplates), rootTemplate));
       }
@@ -363,8 +446,8 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
 
       _.each(templateChildren, function (templateChild) {
         if (!_.find(visitedTemplates, function (visitedTemplate) {
-              return visitedTemplate === templateChild;
-            })) {
+            return visitedTemplate === templateChild;
+          })) {
           visitedTemplates.push(templateChild);
 
           var templateChildTypeInfo = _.find(TemplateTypeInfoList, function (templateTypeInfo) {

@@ -6,6 +6,7 @@ angular.module("app").run(["$rootScope", "$location", function ($rootScope, $loc
             $location.path("/parties");
         }
     });
+    $rootScope.Constants = Constants
 }]);
 
 angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$locationProvider',
