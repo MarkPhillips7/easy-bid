@@ -1,14 +1,16 @@
 angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor', '$q', '$rootScope', '$stateParams', '$timeout',
   function ($scope, $meteor, $q, $rootScope, $stateParams, $timeout) {
     var vm = this;
-    vm.recordAction = Constants.recordActions.view;
+    vm.cancel=cancel;
     vm.editTemplateDetails = editTemplateDetails;
     vm.hasChanges = false;
     vm.isTemplateSelected = isTemplateSelected;
     vm.onItemSelected = onItemSelected;
     vm.productHierarchy = {};
     vm.productHierarchyData = [];
+    vm.recordAction = Constants.recordActions.view;
     vm.relevantTemplateTypesWithTemplates = [];
+    vm.save=save;
     vm.selectedTemplate;
     vm.selectTemplateId = selectTemplateId;
     vm.setUsageMode = setUsageMode;
@@ -67,6 +69,25 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
 
     function canLeave(){
       return !vm.hasChanges;
+    }
+
+    function cancel() {
+      if (vm.templateLibrary) {
+        vm.templateLibrary.reset();
+        vm.hasChanges=false;
+      }
+    }
+
+    function save() {
+      if (vm.templateLibrary) {
+        vm.templateLibrary.save()
+          .then(saveSucceeded)
+          .catch(failure);
+      }
+
+      function saveSucceeded(){
+        vm.hasChanges=false;
+      }
     }
 
     function showOption(recordAction, template){

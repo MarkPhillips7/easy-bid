@@ -38,7 +38,7 @@
             class="list-group-item">
           <div class="row">
             <div class="col-sm-8">
-              <h2><a href="/libraries/{{templateLibrary._id}}">{{templateLibrary.name}} - {{vm.getCompanyName(templateLibrary.ownerCompanyId)}} - {{templateLibrary.createdAt | amDateFormat:'MMMM Do, YYYY'}}</a></h2>
+              <h2><a href="/libraries/{{templateLibrary._id}}/0">{{templateLibrary.name}} - {{vm.getCompanyName(templateLibrary.ownerCompanyId)}} - {{templateLibrary.createdAt | amDateFormat:'MMMM Do, YYYY'}}</a></h2>
             </div>
             <div class="col-sm-4">
               <a ng-click="vm.clone(templateLibrary)" class="close">Clone</a>

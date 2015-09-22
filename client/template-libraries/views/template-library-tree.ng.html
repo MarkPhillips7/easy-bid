@@ -1,0 +1,14 @@
+<h2>{{vm.templateLibrary.name}}</h2>
+
+<div class="eb-add-border">
+  <h4>
+    Product Hierarchy
+  </h4>
+  <abn-tree tree-data="vm.productHierarchyData"
+            tree-control="vm.productHierarchy"
+            on-select="vm.onItemSelected(branch)"
+            icon-leaf=""
+            icon-expand="fa fa-plus"
+            icon-collapse="fa fa-minus">
+  </abn-tree>
+</div>

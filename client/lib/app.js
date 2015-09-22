@@ -1,4 +1,4 @@
-angular.module('app',[
+angular.module('app', [
   'angular-meteor',
   'angularMoment',
   'formly',
@@ -9,7 +9,12 @@ angular.module('app',[
   'angularBootstrapNavTree'
 ]);
 
-angular.module('app').run(function($state){});
+angular.module('app')
+  .run(function ($state) {
+  })
+  .run(function ($rootScope) {
+    $rootScope.$on("$stateChangeError", console.log.bind(console));
+  });
 
 function onReady() {
   angular.bootstrap(document, ['app']);
