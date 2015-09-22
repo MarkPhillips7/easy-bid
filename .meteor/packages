@@ -4,11 +4,9 @@
 # 'meteor add' and 'meteor remove' will edit this file for you,
 # but you can also edit it by hand.
 
-urigo:angular
 angularui:angular-ui-router
 accounts-password
 accounts-ui
-urigo:angular-utils-pagination
 tmeasday:publish-counts
 email
 angularui:angular-google-maps
@@ -47,3 +45,5 @@ spacebars
 
 
 npm-container
+angular
+angularutils:pagination
