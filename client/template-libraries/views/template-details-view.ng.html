@@ -2,22 +2,24 @@
   <tbody>
   <tr>
     <td><b>Item Type</b></td>
-    <td>{{template.templateType}}</td>
+    <td>{{vm.getTemplateById(templateId).templateType}}</td>
   </tr>
   <tr>
     <td><b>Name</b></td>
-    <td>{{template.name}}</td>
+    <td>{{vm.getTemplateById(templateId).name}}</td>
   </tr>
   <tr>
     <td><b>Description</b></td>
-    <td>{{template.description}}</td>
+    <td>{{vm.getTemplateById(templateId).description}}</td>
   </tr>
 
 <tr ng-repeat="templateSettingInfo in templateTypeInfo.templateSettingInfoList"
       data-ng-show="templateSettingInfo.viewShow">
     <td><b>{{templateSettingInfo.name}}</b></td>
     <td data-eb-template-settings="{{templateSettingInfo.templateSettingKey}}"
+        data-vm="vm"
         data-template-library="templateLibrary"
+        data-template-id="templateId"
         data-template="template"></td>
   </tr>
 

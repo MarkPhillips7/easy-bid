@@ -33,6 +33,7 @@ angular.module('app')
       restrict: 'E',
       scope: {
         template: "=",
+        templateId: "=",
         templateLibrary: "=",
         vm: "=",
         relevantTemplateTypeWithTemplates: "="
@@ -78,6 +79,7 @@ angular.module('app')
       scope: {
         vm: "=",
         template: "=",
+        templateId: "=",
         templateLibrary: "=",
         relevantTemplateTypesWithTemplates: "="
       },
@@ -103,6 +105,7 @@ angular.module('app')
       restrict: 'E',
       scope: {
         template: "=",
+        templateId: "=",
         templateLibrary: "=",
         vm: "="
       },
@@ -138,6 +141,7 @@ angular.module('app')
       restrict: 'E',
       scope: {
         template: "=",
+        templateId: "=",
         templateLibrary: "=",
         vm: "="
       },
@@ -173,7 +177,9 @@ angular.module('app')
       restrict: 'A',
       scope: {
         template: "=",
-        templateLibrary: "="
+        templateId: "=",
+        templateLibrary: "=",
+        vm: "="
       }
     };
     return directive;
@@ -182,14 +188,129 @@ angular.module('app')
       templateSettingLink(scope, element, attrs, false);
     }
 
-  }]);
+  }])
+
+  .directive('ebTemplateSettingsEdit', [function () {
+  // Description:
+  //  Provides way to edit template setting values for a given template setting key
+  // Usage:
+  //<eb-template-settings-edit
+  //data-template-setting-info="templateSettingInfo"
+  //data-template="template"
+  //data-input-index="$index"
+  //data-vm="vm">
+  //</eb-template-settings-edit>
+  var directive = {
+    link: link,
+    restrict: 'E',
+    scope: {
+      inputIndex: "=",
+      template: "=",
+      templateId: "=",
+      templateSettingInfo: "=",
+      vm: "="
+    },
+    template: '<div ng-include="contentUrl"></div>'
+  };
+  return directive;
+
+  function loadTemplateSettings(scope) {
+    scope.templateSettings = [];
+
+    if (scope.template && scope.template.templateSettings) {
+      scope.templateSettings = _.filter(scope.template.templateSettings, function (templateSetting) {
+        return (templateSetting.key === scope.templateSettingInfo.templateSettingKey);
+      });
+    }
+  }
+
+  function link(scope, element, attrs) {
+    var numberTemplatesToAdd;
+    var startingOrder;
+    var i;
+    var matchingOption;
+
+    loadTemplateSettings(scope);
+
+    scope.addTemplateSetting = function(templateSettingKey, templateSettingValue, order) {
+      scope.templateSettings.push(scope.vm.addTemplateSetting(scope.templateId, templateSettingKey, templateSettingValue, order));
+    };
+
+    scope.deleteTemplateSetting = function(templateSetting) {
+      var indexOfTemplateSetting = scope.templateSettings.indexOf(templateSetting);
+      scope.vm.deleteTemplateSetting(scope.templateId, templateSetting);
+
+      if (indexOfTemplateSetting > -1) {
+        scope.templateSettings.splice(indexOfTemplateSetting, 1);
+      }
+    };
+
+    //default content is an input
+    scope.contentUrl = 'client/template-libraries/views/template-settings-edit-input.ng.html';
+
+    if (scope.vm && scope.templateSettingInfo) {
+      if (scope.templateSettingInfo.minCount > 0) {
+        numberTemplatesToAdd = Math.max(0, scope.templateSettingInfo.minCount - scope.templateSettings.length);
+        startingOrder = scope.templateSettings.length > 0 ? scope.templateSettings[scope.templateSettings.length - 1] : 0;
+      }
+
+      //Add template settings if the minimum number has not been reached
+      for (i = 0; i < numberTemplatesToAdd; i += 1) {
+        scope.templateSettings.push(
+          scope.vm.addTemplateSetting(scope.templateId,
+            scope.templateSettingInfo.templateSettingKey,
+            scope.templateSettingInfo.templateSettingValue,
+            i + startingOrder));
+      }
+    }
+
+    if (scope.templateSettingInfo && scope.templateSettingInfo.templateSettingKey === Constants.templateSettingKeys.displayCategory) {
+      scope.options = [{
+        value:'PrimaryTableColumn',
+        name:'Main Grid Column'
+      },{
+        value:'Primary',
+        name: 'Primary Tab'
+      }];
+
+      //Other existing DisplayCategory values should make up remaining options
+      if (scope.vm.allDisplayCategories) {
+        scope.vm.allDisplayCategories.forEach(function(displayCategory){
+          if (displayCategory !== "PrimaryTableRow") {
+            matchingOption = _.filter(scope.options, function (option) {
+              return option.value == displayCategory;
+            })[0];
+            if (!matchingOption) {
+              scope.options.push({
+                value: displayCategory,
+                name: displayCategory + ' Tab'
+              });
+            }
+          }
+        });
+        scope.canAddOption = true;
+      }
+    }
+    else if (scope.templateSettingInfo.options) {
+      scope.options = scope.templateSettingInfo.options;
+    }
+
+    if (scope.options) {
+      scope.contentUrl = 'client/template-libraries/views/template-settings-edit-select.ng.html';
+    }
+    //
+    //scope.$watch('template.templateSettings', function (newValue, oldValue) {
+    //    loadTemplateSettings(scope);
+    //}, true);
+  }
+}]);
 
 function templateSettingLink(scope, element, attrs, justOneSettingValue) {
   if (attrs.ebTemplateSettings === Constants.templateSettingKeys.displayCaption) {
     element.text(ItemTemplatesHelper.getDisplayCaption(scope.template));
   }
   else if (attrs.ebTemplateSettings === Constants.templateSettingKeys.unitsText) {
-    element.html(ItemTemplatesHelper.getUnitsText(scope.template));
+    element.html(ItemTemplatesHelper.getUnitsText(scope.vm.getTemplateById(scope.templateId)));
   }
   else if (attrs.ebTemplateSettings === Constants.templateSettingKeys.belongsTo) {
     var parentTemplate = TemplateLibrariesHelper.parentTemplate(scope.templateLibrary, scope.template);

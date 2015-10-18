@@ -1,24 +1,24 @@
 <form class="form-horizontal" role="form">
-  <div class="form-group">
-    <label class="col-sm-3 control-label" for="TemplateBaseProduct">Base Product</label>
+  <!--<div class="form-group">-->
+    <!--<label class="col-sm-3 control-label" for="TemplateBaseProduct">Base Product</label>-->
 
-    <div class="col-sm-9">
-      <input class="form-control" type="text" id="TemplateBaseProduct"
-             ng-model="template.firstParentTemplate.description"/>
-    </div>
-  </div>
+    <!--<div class="col-sm-9 input-group input-group-sm">-->
+      <!--<input class="form-control" type="text" id="TemplateBaseProduct"-->
+             <!--ng-model="template.firstParentTemplate.description"/>-->
+    <!--</div>-->
+  <!--</div>-->
   <div class="form-group">
     <label class="col-sm-3 control-label" for="TemplateName">Name</label>
 
-    <div class="col-sm-9">
-      <input class="form-control" type="text" id="TemplateName" ng-model="template.name"/>
+    <div class="col-sm-9 input-group input-group-sm">
+      <input class="form-control" type="text" id="TemplateName" ng-model="vm.getTemplateById(templateId).name"/>
     </div>
   </div>
   <div class="form-group">
     <label class="col-sm-3 control-label" for="TemplateDescription">Description</label>
 
-    <div class="col-sm-9">
-      <input class="form-control" type="text" id="TemplateDescription" ng-model="template.description"/>
+    <div class="col-sm-9 input-group input-group-sm">
+      <input class="form-control" type="text" id="TemplateDescription" ng-model="vm.getTemplateById(templateId).description"/>
     </div>
   </div>
 
@@ -28,6 +28,7 @@
     <eb-template-settings-edit
         data-template-setting-info="templateSettingInfo"
         data-template="template"
+        data-template-id="templateId"
         data-input-index="$index"
         data-vm="vm">
     </eb-template-settings-edit>

@@ -135,11 +135,17 @@ Meteor.startup(function () {
         userPhoneNumber = user.phoneNumber || confidentialUserInfo.phoneNumber,
         userStripeCustomerId = user.customerId || confidentialUserInfo.customerId;
 
-    var theUser = Meteor.users.findOne({"emails.address": userEmail});
+    var theUser = Accounts.findUserByEmail(userEmail);//Meteor.users.findOne("emails.address", userEmail);
     var userId = theUser && theUser._id;
+
+    if(userId) {
+      console.log('user found for ' + userEmail);
+    }
 
     // If an existing user is not found, create the account.
     if (!userId) {
+
+      console.log(user.firstName + " " + user.lastName + " about to be added");
 
       userId = Accounts.createUser({
         email: userEmail,
@@ -345,7 +351,7 @@ Meteor.startup(function () {
       }, {
         key: "DisplayCategory", value: "Primary"
       }, {
-        key: "DisplayCategory", value: "PrimaryPrimaryTableColumn"
+        key: "DisplayCategory", value: "PrimaryTableColumn"
       }, {
         key: "DisplayOrder", value: "2"
       }, {

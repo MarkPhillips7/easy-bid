@@ -701,7 +701,7 @@ ItemTemplatesHelper = {
 }
 
 function getRootTemplate (templateLibrary) {
-  check(templateLibrary, Schema.TemplateLibrary);
+  //check(templateLibrary, Schema.TemplateLibrary);
   var rootTemplate = null;
 
   templateLibrary.templates.forEach(function (template) {
@@ -720,7 +720,7 @@ function getRootTemplate (templateLibrary) {
 }
 
 function cloneTemplateLibrary(templateLibrary) {
-  check(templateLibrary, Schema.TemplateLibrary);
+  //check(templateLibrary, Schema.TemplateLibrary);
 
   var clone = JSON.parse(JSON.stringify(templateLibrary));
 

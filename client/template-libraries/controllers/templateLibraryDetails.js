@@ -1,9 +1,15 @@
 angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor', '$q', '$rootScope', '$stateParams', '$timeout',
   function ($scope, $meteor, $q, $rootScope, $stateParams, $timeout) {
     var vm = this;
+    vm.addTemplateAndEditDetails = addTemplateAndEditDetails;
+    vm.addTemplateSetting = addTemplateSetting;
+    vm.allDisplayCategories = [];
     vm.cancel=cancel;
+    vm.deleteTemplateSetting = deleteTemplateSetting;
     vm.editTemplateDetails = editTemplateDetails;
-    vm.hasChanges = false;
+    vm.getTemplateById = getTemplateById;
+    vm.getTemplateSetting = getTemplateSetting;
+    vm.hasChanges = true;//false; currently considered too much work to track this properly
     vm.isTemplateSelected = isTemplateSelected;
     vm.onItemSelected = onItemSelected;
     vm.productHierarchy = {};
@@ -18,7 +24,7 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
     vm.templateHasFocus = templateHasFocus;
     vm.templateLibrary = {};
     //vm.templateLibrary = $meteor.object(TemplateLibraries, $stateParams.templateLibraryId);
-    vm.usageMode = Constants.usageModes.browse;
+    vm.usageMode = Constants.usageModes.classicEdit;
 
     activate();
 
@@ -64,17 +70,32 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
 
     // ToDo: implement!
     function canPerformAction(recordAction, template){
-      return true;
+      return vm.recordAction != recordAction
+        && vm.usageMode === Constants.usageModes.classicEdit
+        && ((vm.recordAction === Constants.recordActions.view
+          && (recordAction === Constants.recordActions.add
+           || recordAction === Constants.recordActions.edit
+           || recordAction === Constants.recordActions.delete
+           || recordAction === Constants.recordActions.copy))
+        || ((vm.recordAction === Constants.recordActions.add
+        || vm.recordAction === Constants.recordActions.edit
+        || vm.recordAction === Constants.recordActions.copy)
+        && (recordAction === Constants.recordActions.cancel
+        || recordAction === Constants.recordActions.save
+        || recordAction === Constants.recordActions.view)));
     }
 
     function canLeave(){
-      return !vm.hasChanges;
+      return true;//!vm.hasChanges;
     }
 
     function cancel() {
       if (vm.templateLibrary) {
         vm.templateLibrary.reset();
-        vm.hasChanges=false;
+        //vm.hasChanges=false;
+        if (vm.usageMode === Constants.usageModes.classicEdit){
+          vm.recordAction = Constants.recordActions.view;
+        }
       }
     }
 
@@ -86,7 +107,10 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
       }
 
       function saveSucceeded(){
-        vm.hasChanges=false;
+        //vm.hasChanges=false;
+        if (vm.usageMode === Constants.usageModes.classicEdit){
+          vm.recordAction = Constants.recordActions.view;
+        }
       }
     }
 
@@ -124,14 +148,41 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
           && canPerformAction(recordAction, template);
       }
       else if (recordAction === Constants.recordActions.cancel){
-        return vm.hasChanges
-          && vm.usageMode === Constants.usageModes.classicEdit
+        return vm.usageMode === Constants.usageModes.classicEdit
           && canPerformAction(recordAction, template);
       }    
     }
 
     function setUsageMode(usageMode) {
       vm.usageMode = usageMode;
+    }
+
+    function addTemplateAndEditDetails(templateType, parentTemplate) {
+      if(!templateType) {
+        templateType = vm.selectedTemplate ? vm.selectedTemplate.templateType : null;
+      }
+      if(!parentTemplate) {
+        parentTemplate = TemplateLibrariesHelper.parentTemplate(vm.templateLibrary, vm.selectedTemplate);
+
+      }
+
+      if(templateType && parentTemplate) {
+        var templateToAdd = {
+          id: Random.id(),
+          templateType: templateType,
+          templateSettings: []
+        };
+        vm.templateLibrary.templates.push(templateToAdd);
+        vm.templateLibrary.templateRelationships.push({
+          parentTemplateId: parentTemplate.id,
+          childTemplateId: templateToAdd.id
+        });
+        vm.recordAction = Constants.recordActions.add;
+        selectTemplate(templateToAdd);
+      }
+      else {
+        throw 'Could not determine template type and parent template';
+      }
     }
 
     function editTemplateDetails(template) {
@@ -149,13 +200,28 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
           });
         }
         else {
-          initialTemplate = TemplateLibrariesHelper.getRootTemplate(vm.templateLibrary.getRawObject());
+          initialTemplate = TemplateLibrariesHelper.getRootTemplate(vm.templateLibrary);
         }
 
         selectTemplate(initialTemplate);
       }
 
+      populateAllDisplayCategories();
+
       return $q.when(null);
+    }
+
+    function populateAllDisplayCategories() {
+      vm.allDisplayCategories = [];
+
+      vm.templateLibrary.templates.forEach(function (template) {
+        template.templateSettings.forEach(function (templateSetting) {
+          if (templateSetting.key === Constants.templateSettingKeys.displayCategory &&
+            vm.allDisplayCategories.indexOf(templateSetting.value) == -1) {
+            vm.allDisplayCategories.push(templateSetting.value);
+          }
+        });
+      });
     }
 
     function failure(error) {
@@ -178,6 +244,7 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
         return;
       }
 
+      vm.selectedTemplateId = template.id;
       vm.selectedTemplate = template;
       var branchToSelect = findBranchInHierarchyList(vm.productHierarchyData, template.id);
       if (branchToSelect && vm.productHierarchy.get_selected_branch && branchToSelect !== vm.productHierarchy.get_selected_branch()) {
@@ -443,11 +510,48 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
       });
     }
 
+    function getTemplateSetting(templateId, templateSettingKey, templateSettingIndex) {
+      var template = getTemplateById(templateId);
+
+      if (template) {
+        return _.filter(template.templateSettings, function (templateSetting) {
+          return templateSetting.key === templateSettingKey;
+        })[templateSettingIndex];
+      }
+
+      return null;
+    }
+
+    function addTemplateSetting(templateId, templateSettingKey, templateSettingValue, order) {
+      var template = getTemplateById(templateId);
+      var templateSetting = null;
+
+      if (template) {
+        templateSetting= {
+          key: templateSettingKey,
+          value: templateSettingValue,
+          order: order
+        };
+
+        template.templateSettings.push(templateSetting);
+      }
+
+      return templateSetting;
+    }
+
+    function deleteTemplateSetting(templateId, templateSetting) {
+      var template = getTemplateById(templateId);
+
+      if (template) {
+        template.templateSettings.splice(template.templateSettings.indexOf(templateSetting), 1);
+      }
+    }
+
     function setFullProductHierarchy() {
       vm.productHierarchyData = [];
 
       if (vm.templateLibrary) {
-        var rootTemplate = TemplateLibrariesHelper.getRootTemplate(vm.templateLibrary.getRawObject());
+        var rootTemplate = TemplateLibrariesHelper.getRootTemplate(vm.templateLibrary); //.getRawObject());
         var visitedTemplates = [];
         vm.productHierarchyData.push(addItemToTreeData(getTreeDataChildren(rootTemplate, visitedTemplates), rootTemplate));
       }

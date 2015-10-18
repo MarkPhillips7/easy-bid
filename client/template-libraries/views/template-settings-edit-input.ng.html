@@ -1,0 +1,68 @@
+<label class="control-label col-sm-3"
+       ng-repeat-start="templateSetting in templateSettings"
+       for="TemplateSetting{{inputIndex+1}}">
+  {{$index === 0 ? templateSettingInfo.name : ''}}
+</label>
+
+<div ng-repeat-end class="col-sm-9 input-group input-group-sm">
+  <span ng-if="!templateSettingInfo.canEdit"
+        data-eb-template-settings="{{templateSettingInfo.templateSettingKey}}"
+        data-vm="vm"
+        data-template="template"
+        data-template-id="templateId"
+        id="TemplateSetting{{inputIndex+1}}"></span>
+
+  <span class="input-group-addon"
+        ng-if="templateSettingInfo.canEdit"
+        ng-bind-html="templateSettingInfo.unitsText"
+        data-ng-show="templateSettingInfo.unitsText === '$'"></span>
+  <input class="form-control"
+         ng-if="templateSettingInfo.canEdit"
+         type="text"
+         id="TemplateSetting{{inputIndex+1}}"
+         ng-model="vm.getTemplateSetting(templateId, templateSetting.key, $index).value"/>
+  <span class="input-group-addon"
+        ng-if="templateSettingInfo.canEdit"
+        ng-bind-html="templateSettingInfo.unitsText"
+        data-ng-show="templateSettingInfo.unitsText && templateSettingInfo.unitsText !== '$'"></span>
+
+  <span class="input-group-btn"
+        ng-if="templateSettingInfo.canEdit">
+      <button type="button"
+              class="btn btn-default"
+              data-container="body"
+              data-ng-click="deleteTemplateSetting(templateSetting)"
+              data-ng-show="templateSettingInfo.minCount < templateSettings.length"
+              tooltip="Delete setting">
+        <i class="fa fa-times"></i>
+      </button>
+  </span>
+</div>
+
+<!--If there are no template settings we still want to show a label and a custom view or possibly an add button-->
+<div data-ng-show="templateSettings.length === 0 || (templateSettingInfo.maxCount === -1 || templateSettingInfo.maxCount > templateSettings.length)">
+  <label class="control-label col-sm-3">
+    {{templateSettings.length === 0 ? templateSettingInfo.name : ''}}
+  </label>
+
+  <div class="col-sm-9 input-group input-group-sm">
+  <span ng-if="!templateSettingInfo.canEdit"
+        data-eb-template-settings="{{templateSettingInfo.templateSettingKey}}"
+        data-vm="vm"
+        data-template="template"
+        data-template-id="templateId"
+        id="TemplateSetting{{inputIndex+1}}"></span>
+
+  <span class="input-group-btn"
+        ng-if="templateSettingInfo.canEdit">
+      <button type="button"
+              class="btn btn-default"
+              data-container="body"
+              data-ng-click="addTemplateSetting(templateSettingInfo.templateSettingKey, '', 2)"
+              data-ng-show="templateSettingInfo.maxCount === -1 || templateSettingInfo.maxCount > templateSettings.length"
+              tooltip="Add setting">
+        <i class="fa fa-plus"></i>
+      </button>
+  </span>
+  </div>
+</div>

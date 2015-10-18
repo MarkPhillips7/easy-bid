@@ -18,7 +18,8 @@ Meteor.methods({
     });
 
     var emailRegex = new RegExp(client.emailAddress, "i");
-    var lookupClient = Meteor.users.findOne({"emails.address": emailRegex});
+    //var lookupClient = Meteor.users.findOne({"emails.address": emailRegex});
+    var lookupClient = Accounts.findUserByEmail(emailRegex);
 
     if (!lookupClient) {
       try {
