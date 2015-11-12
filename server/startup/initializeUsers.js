@@ -211,7 +211,7 @@ Meteor.startup(function () {
       description: "Company that provides service",
       templateType: Constants.templateTypes.company,
       templateSettings: [{
-        key: "IsVariableCollector", value: "True"
+        id: Random.id(), key: "IsVariableCollector", value: "True"
       }]
     };
     templateLibrary.templates.push(templateCompany);
@@ -222,11 +222,12 @@ Meteor.startup(function () {
       description: "Customer requesting a bid",
       templateType: Constants.templateTypes.customer,
       templateSettings: [{
-        key: "IsVariableCollector", value: "True"
+        id: Random.id(), key: "IsVariableCollector", value: "True"
       }]
     };
     templateLibrary.templates.push(templateCustomer);
     templateLibrary.templateRelationships.push({
+      id: Random.id(),
       parentTemplateId: templateCompany.id,
       childTemplateId: templateCustomer.id
     });
@@ -237,11 +238,12 @@ Meteor.startup(function () {
       description: "The job or project being bid",
       templateType: Constants.templateTypes.job,
       templateSettings: [{
-        key: "IsVariableCollector", value: "True"
+        id: Random.id(), key: "IsVariableCollector", value: "True"
       }]
     };
     templateLibrary.templates.push(templateJob);
     templateLibrary.templateRelationships.push({
+      id: Random.id(),
       parentTemplateId: templateCustomer.id,
       childTemplateId: templateJob.id
     });
@@ -252,23 +254,24 @@ Meteor.startup(function () {
       description: "Job Subtotal",
       templateType: Constants.templateTypes.function,
       templateSettings: [{
-        key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
       }, {
-        key: "SelectionType", value: Constants.selectionTypes.notApplicable
+        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
       }, {
-        key: "DisplayCaption", value: "Job Subtotal"
+        id: Random.id(), key: "DisplayCaption", value: "Job Subtotal"
       }, {
-        key: "VariableName", value: "jobSubtotal"
+        id: Random.id(), key: "VariableName", value: "jobSubtotal"
       }, {
-        key: "Function", value: "SUM"
+        id: Random.id(), key: "Function", value: "SUM"
       }, {
-        key: "ApplicableTemplateType", value: "Area"
+        id: Random.id(), key: "ApplicableTemplateType", value: "Area"
       }, {
-        key: "ParameterVariable", value: "areaSubtotal"
+        id: Random.id(), key: "ParameterVariable", value: "areaSubtotal"
       }]
     };
     templateLibrary.templates.push(templateJobSubtotal);
     templateLibrary.templateRelationships.push({
+      id: Random.id(),
       parentTemplateId: templateJob.id,
       childTemplateId: templateJobSubtotal.id
     });
@@ -279,17 +282,19 @@ Meteor.startup(function () {
       description: "Area",
       templateType: Constants.templateTypes.area,
       templateSettings: [{
-        key: "IsVariableCollector", value: "True"
+        id: Random.id(), key: "IsVariableCollector", value: "True"
       }, {
-        key: "VariableName", value: "area"
+        id: Random.id(), key: "VariableName", value: "area"
       }]
     };
     templateLibrary.templates.push(templateArea);
     templateLibrary.templateRelationships.push({
+      id: Random.id(),
       parentTemplateId: templateJob.id,
       childTemplateId: templateArea.id
     });
     templateLibrary.templateRelationships.push({
+      id: Random.id(),
       parentTemplateId: templateArea.id,
       childTemplateId: templateArea.id,
       dependency: Constants.dependency.optionalExplicit
@@ -301,23 +306,24 @@ Meteor.startup(function () {
       description: "Area Subtotal",
       templateType: Constants.templateTypes.function,
       templateSettings: [{
-        key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
       }, {
-        key: "SelectionType", value: Constants.selectionTypes.notApplicable
+        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
       }, {
-        key: "DisplayCaption", value: "Area Subtotal"
+        id: Random.id(), key: "DisplayCaption", value: "Area Subtotal"
       }, {
-        key: "VariableName", value: "areaSubtotal"
+        id: Random.id(), key: "VariableName", value: "areaSubtotal"
       }, {
-        key: "Function", value: "SUM"
+        id: Random.id(), key: "Function", value: "SUM"
       }, {
-        key: "ApplicableTemplateType", value: "productSelection"
+        id: Random.id(), key: "ApplicableTemplateType", value: "productSelection"
       }, {
-        key: "ParameterVariable", value: "priceSubtotal"
+        id: Random.id(), key: "ParameterVariable", value: "priceSubtotal"
       }]
     };
     templateLibrary.templates.push(templateAreaSubtotal);
     templateLibrary.templateRelationships.push({
+      id: Random.id(),
       parentTemplateId: templateArea.id,
       childTemplateId: templateAreaSubtotal.id
     });
@@ -328,13 +334,14 @@ Meteor.startup(function () {
       description: "Product Selection",
       templateType: Constants.templateTypes.productSelection,
       templateSettings: [{
-        key: "DisplayCategory", value: "PrimaryTableRow"
+        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableRow"
       }, {
-        key: "IsVariableCollector", value: "True"
+        id: Random.id(), key: "IsVariableCollector", value: "True"
       }]
     };
     templateLibrary.templates.push(templateProductSelection);
     templateLibrary.templateRelationships.push({
+      id: Random.id(),
       parentTemplateId: templateArea.id,
       childTemplateId: templateProductSelection.id
     });
@@ -345,21 +352,22 @@ Meteor.startup(function () {
       description: "Product",
       templateType: Constants.templateTypes.baseProduct,
       templateSettings: [{
-        key: "IsABaseTemplate", value: "True"
+        id: Random.id(), key: "IsABaseTemplate", value: "True"
       }, {
-        key: "SelectionType", value: Constants.selectionTypes.select
+        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.select
       }, {
-        key: "DisplayCategory", value: "Primary"
+        id: Random.id(), key: "DisplayCategory", value: "Primary"
       }, {
-        key: "DisplayCategory", value: "PrimaryTableColumn"
+        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
       }, {
-        key: "DisplayOrder", value: "2"
+        id: Random.id(), key: "DisplayOrder", value: "2"
       }, {
-        key: "VariableName", value: "product"
+        id: Random.id(), key: "VariableName", value: "product"
       }]
     };
     templateLibrary.templates.push(templateProduct);
     templateLibrary.templateRelationships.push({
+      id: Random.id(),
       parentTemplateId: templateProductSelection.id,
       childTemplateId: templateProduct.id
     });
@@ -370,25 +378,26 @@ Meteor.startup(function () {
       description: "Price Each",
       templateType: Constants.templateTypes.calculation,
       templateSettings: [{
-        key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
       }, {
-        key: "SelectionType", value: Constants.selectionTypes.entry
+        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
       }, {
-        key: "DisplayCategory", value: "PrimaryTableColumn"
+        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
       }, {
-        key: "DisplayCaption", value: "Each"
+        id: Random.id(), key: "DisplayCaption", value: "Each"
       }, {
-        key: "DisplayOrder", value: "99"
+        id: Random.id(), key: "DisplayOrder", value: "99"
       }, {
-        key: "VariableName", value: "priceEach"
+        id: Random.id(), key: "VariableName", value: "priceEach"
       }, {
-        key: "ValueFormula", value: "111111.11" //Ridiculous value that better be overridden
+        id: Random.id(), key: "ValueFormula", value: "111111.11" //Ridiculous value that better be overridden
       }, {
-        key: "ColumnWidth", value: "80"
+        id: Random.id(), key: "ColumnWidth", value: "80"
       }]
     };
     templateLibrary.templates.push(templatePriceEach);
     templateLibrary.templateRelationships.push({
+      id: Random.id(),
       parentTemplateId: templateProductSelection.id,
       childTemplateId: templatePriceEach.id
     });
@@ -399,25 +408,26 @@ Meteor.startup(function () {
       description: "Price Total",
       templateType: Constants.templateTypes.calculation,
       templateSettings: [{
-        key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
       }, {
-        key: "SelectionType", value: Constants.selectionTypes.entry
+        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
       }, {
-        key: "DisplayCategory", value: "PrimaryTableColumn"
+        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
       }, {
-        key: "DisplayCaption", value: "Total"
+        id: Random.id(), key: "DisplayCaption", value: "Total"
       }, {
-        key: "DisplayOrder", value: "100"
+        id: Random.id(), key: "DisplayOrder", value: "100"
       }, {
-        key: "VariableName", value: "priceTotal"
+        id: Random.id(), key: "VariableName", value: "priceTotal"
       }, {
-        key: "ValueFormula", value: "(priceEach * quantity)"
+        id: Random.id(), key: "ValueFormula", value: "(priceEach * quantity)"
       }, {
-        key: "ColumnWidth", value: "80"
+        id: Random.id(), key: "ColumnWidth", value: "80"
       }]
     };
     templateLibrary.templates.push(templatePriceTotal);
     templateLibrary.templateRelationships.push({
+      id: Random.id(),
       parentTemplateId: templateProductSelection.id,
       childTemplateId: templatePriceTotal.id
     });
@@ -428,21 +438,22 @@ Meteor.startup(function () {
       description: "AreaColumn",
       templateType: Constants.templateTypes.variableDisplay,
       templateSettings: [{
-        key: "SelectionType", value: Constants.selectionTypes.notApplicable
+        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
       }, {
-        key: "DisplayCategory", value: "Primary"
+        id: Random.id(), key: "DisplayCategory", value: "Primary"
       }, {
-        key: "DisplayCategory", value: "PrimaryTableColumn"
+        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
       }, {
-        key: "DisplayCaption", value: "Area"
+        id: Random.id(), key: "DisplayCaption", value: "Area"
       }, {
-        key: "DisplayOrder", value: "1"
+        id: Random.id(), key: "DisplayOrder", value: "1"
       }, {
-        key: "VariableToDisplay", value: "area"
+        id: Random.id(), key: "VariableToDisplay", value: "area"
       }]
     };
     templateLibrary.templates.push(templateAreaColumn);
     templateLibrary.templateRelationships.push({
+      id: Random.id(),
       parentTemplateId: templateProductSelection.id,
       childTemplateId: templateAreaColumn.id
     });
@@ -453,25 +464,26 @@ Meteor.startup(function () {
       description: "Quantity",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
-        key: "SelectionType", value: Constants.selectionTypes.entry
+        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
       }, {
-        key: "DisplayCategory", value: "Primary"
+        id: Random.id(), key: "DisplayCategory", value: "Primary"
       }, {
-        key: "DisplayCategory", value: "PrimaryTableColumn"
+        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
       }, {
-        key: "DisplayCaption", value: "Quantity"
+        id: Random.id(), key: "DisplayCaption", value: "Quantity"
       }, {
-        key: "DisplayOrder", value: "33"
+        id: Random.id(), key: "DisplayOrder", value: "33"
       }, {
-        key: "VariableName", value: "quantity"
+        id: Random.id(), key: "VariableName", value: "quantity"
       }, {
-        key: "DefaultValue", value: "1"
+        id: Random.id(), key: "DefaultValue", value: "1"
       }, {
-        key: "ColumnWidth", value: "70"
+        id: Random.id(), key: "ColumnWidth", value: "70"
       }]
     };
     templateLibrary.templates.push(templateQuantity);
     templateLibrary.templateRelationships.push({
+      id: Random.id(),
       parentTemplateId: templateProductSelection.id,
       childTemplateId: templateQuantity.id
     });
@@ -524,11 +536,12 @@ Meteor.startup(function () {
         description: "Sheet material lookup data for quick access",
         templateType: Constants.templateTypes.lookupData,
         templateSettings: [{
-          key: "VariableName", value: "sheetMaterialData"
+          id: Random.id(), key: "VariableName", value: "sheetMaterialData"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateSheetMaterialData);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCompany.id,
         childTemplateId: templateSheetMaterialData.id
       });
@@ -563,15 +576,16 @@ Meteor.startup(function () {
         description: "Cabinet",
         templateType: Constants.templateTypes.product,
         templateSettings: [{
-          key: "SelectionType", value: Constants.selectionTypes.selectOption
+          id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.selectOption
         }, {
-          key: "IsASubTemplate", value: "True"
+          id: Random.id(), key: "IsASubTemplate", value: "True"
         }, {
-          key: "ImageSource", value: "cabinet.png"
+          id: Random.id(), key: "ImageSource", value: "cabinet.png"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateCabinet);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateProduct.id,
         childTemplateId: templateCabinet.id
       });
@@ -582,19 +596,20 @@ Meteor.startup(function () {
         description: "Labor cost multiplier",
         templateType: Constants.templateTypes.input,
         templateSettings: [{
-          key: "SelectionType", value: Constants.selectionTypes.entry
+          id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
         }, {
-          key: "DisplayCategory", value: "Labor"
+          id: Random.id(), key: "DisplayCategory", value: "Labor"
         }, {
-          key: "DisplayOrder", value: "1"
+          id: Random.id(), key: "DisplayOrder", value: "1"
         }, {
-          key: "VariableName", value: "laborCostMultiplier"
+          id: Random.id(), key: "VariableName", value: "laborCostMultiplier"
         }, {
-          key: "DefaultValue", value: "1"
+          id: Random.id(), key: "DefaultValue", value: "1"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateLaborCostMultiplier);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCompany.id,
         childTemplateId: templateLaborCostMultiplier.id
       });
@@ -605,23 +620,24 @@ Meteor.startup(function () {
         description: "Sawing hourly rate",
         templateType: Constants.templateTypes.input,
         templateSettings: [{
-          key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
         }, {
-          key: "DenominatorUnit", value: UnitOfMeasure.units.hours
+          id: Random.id(), key: "DenominatorUnit", value: UnitOfMeasure.units.hours
         }, {
-          key: "SelectionType", value: Constants.selectionTypes.entry
+          id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
         }, {
-          key: "DisplayCategory", value: "Labor"
+          id: Random.id(), key: "DisplayCategory", value: "Labor"
         }, {
-          key: "DisplayOrder", value: "1"
+          id: Random.id(), key: "DisplayOrder", value: "1"
         }, {
-          key: "VariableName", value: "laborSawingRate"
+          id: Random.id(), key: "VariableName", value: "laborSawingRate"
         }, {
-          key: "DefaultValue", value: "60"
+          id: Random.id(), key: "DefaultValue", value: "60"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateLaborSawingRate);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCompany.id,
         childTemplateId: templateLaborSawingRate.id
       });
@@ -632,19 +648,20 @@ Meteor.startup(function () {
         description: "Sawing cost",
         templateType: Constants.templateTypes.calculation,
         templateSettings: [{
-          key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
         }, {
-          key: "DisplayCategory", value: "Labor"
+          id: Random.id(), key: "DisplayCategory", value: "Labor"
         }, {
-          key: "DisplayOrder", value: "1"
+          id: Random.id(), key: "DisplayOrder", value: "1"
         }, {
-          key: "VariableName", value: "laborSawingCost"
+          id: Random.id(), key: "VariableName", value: "laborSawingCost"
         }, {
-          key: "ValueFormula", value: "laborCostMultiplier * laborSawingTime * laborSawingRate"
+          id: Random.id(), key: "ValueFormula", value: "laborCostMultiplier * laborSawingTime * laborSawingRate"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateLaborSawingCost);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateLaborSawingCost.id
       });
@@ -655,21 +672,22 @@ Meteor.startup(function () {
         description: "Sawing time per part",
         templateType: Constants.templateTypes.input,
         templateSettings: [{
-          key: "NumeratorUnit", value: UnitOfMeasure.units.minutes
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.minutes
         }, {
-          key: "DenominatorUnit", value: UnitOfMeasure.units.partCount
+          id: Random.id(), key: "DenominatorUnit", value: UnitOfMeasure.units.partCount
         }, {
-          key: "DisplayCategory", value: "Labor"
+          id: Random.id(), key: "DisplayCategory", value: "Labor"
         }, {
-          key: "DisplayOrder", value: "1"
+          id: Random.id(), key: "DisplayOrder", value: "1"
         }, {
-          key: "VariableName", value: "laborSawingTimePerPart"
+          id: Random.id(), key: "VariableName", value: "laborSawingTimePerPart"
         }, {
-          key: "DefaultValue", value: "0.5"
+          id: Random.id(), key: "DefaultValue", value: "0.5"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateLaborSawingTimePerPart);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCompany.id,
         childTemplateId: templateLaborSawingTimePerPart.id
       });
@@ -680,19 +698,20 @@ Meteor.startup(function () {
         description: "Sawing time",
         templateType: Constants.templateTypes.calculation,
         templateSettings: [{
-          key: "NumeratorUnit", value: UnitOfMeasure.units.hours
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.hours
         }, {
-          key: "DisplayCategory", value: "Calculations"
+          id: Random.id(), key: "DisplayCategory", value: "Calculations"
         }, {
-          key: "DisplayOrder", value: "1"
+          id: Random.id(), key: "DisplayOrder", value: "1"
         }, {
-          key: "VariableName", value: "laborSawingTime"
+          id: Random.id(), key: "VariableName", value: "laborSawingTime"
         }, {
-          key: "ValueFormula", value: "numCaseParts * laborSawingTimePerPart / 60"
+          id: Random.id(), key: "ValueFormula", value: "numCaseParts * laborSawingTimePerPart / 60"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateLaborSawingTime);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateLaborSawingTime.id
       });
@@ -703,13 +722,14 @@ Meteor.startup(function () {
         description: "One door base cabinet",
         templateType: Constants.templateTypes.product,
         templateSettings: [{
-          key: "SelectionType", value: Constants.selectionTypes.selectOption
+          id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.selectOption
         }, {
-          key: "IsASubTemplate", value: "True"
+          id: Random.id(), key: "IsASubTemplate", value: "True"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateOneDoorBaseCabinet);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         relationToItem: Constants.relationToItem.subItem,
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateOneDoorBaseCabinet.id
@@ -721,17 +741,18 @@ Meteor.startup(function () {
         description: "Quantity",
         templateType: Constants.templateTypes.override,
         templateSettings: [{
-          key: "IsVariableOverride", value: "True"
+          id: Random.id(), key: "IsVariableOverride", value: "True"
         }, {
-          key: "VariableToOverride", value: "quantity"
+          id: Random.id(), key: "VariableToOverride", value: "quantity"
         }, {
-          key: "PropertyToOverride", value: "DefaultValue"
+          id: Random.id(), key: "PropertyToOverride", value: "DefaultValue"
         }, {
-          key: "OverrideValue", value: "2"//Overrides DefaultValue of Cabinet because templateOneDoorBaseCabinet IsASubTemplate and this DefaultValue gets applied after Cabinet's
+          id: Random.id(), key: "OverrideValue", value: "2"//Overrides DefaultValue of Cabinet because templateOneDoorBaseCabinet IsASubTemplate and this DefaultValue gets applied after Cabinet's
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateOneDoorBaseQuantityOverride);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateOneDoorBaseCabinet.id,
         childTemplateId: templateOneDoorBaseQuantityOverride.id
       });
@@ -742,15 +763,16 @@ Meteor.startup(function () {
         description: "Lazy Susan cabinet",
         templateType: Constants.templateTypes.product,
         templateSettings: [{
-          key: "SelectionType", value: Constants.selectionTypes.selectOption
+          id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.selectOption
         }, {
-          key: "IsASubTemplate", value: "True"
+          id: Random.id(), key: "IsASubTemplate", value: "True"
         }, {
-          key: "ImageSource", value: "LazySusan.png"
+          id: Random.id(), key: "ImageSource", value: "LazySusan.png"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateLazySusanCabinet);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         relationToItem: Constants.relationToItem.subItem,
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateLazySusanCabinet.id
@@ -762,17 +784,18 @@ Meteor.startup(function () {
         description: "Number of adjustable shelves",
         templateType: Constants.templateTypes.override,
         templateSettings: [{
-          key: "IsVariableOverride", value: "True"
+          id: Random.id(), key: "IsVariableOverride", value: "True"
         }, {
-          key: "VariableToOverride", value: "numAdjustableShelves"
+          id: Random.id(), key: "VariableToOverride", value: "numAdjustableShelves"
         }, {
-          key: "PropertyToOverride", value: "DefaultValue"
+          id: Random.id(), key: "PropertyToOverride", value: "DefaultValue"
         }, {
-          key: "OverrideValue", value: "0"//Overrides DefaultValue of Cabinet because templateLazySusanCabinet IsASubTemplate and this DefaultValue gets applied after Cabinet's
+          id: Random.id(), key: "OverrideValue", value: "0"//Overrides DefaultValue of Cabinet because templateLazySusanCabinet IsASubTemplate and this DefaultValue gets applied after Cabinet's
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateLazySusanNumAdjustableShelvesOverride);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateLazySusanCabinet.id,
         childTemplateId: templateLazySusanNumAdjustableShelvesOverride.id
       });
@@ -783,17 +806,18 @@ Meteor.startup(function () {
         description: "Price each",
         templateType: Constants.templateTypes.override,
         templateSettings: [{
-          key: "IsVariableOverride", value: "True"
+          id: Random.id(), key: "IsVariableOverride", value: "True"
         }, {
-          key: "VariableToOverride", value: "priceEach"
+          id: Random.id(), key: "VariableToOverride", value: "priceEach"
         }, {
-          key: "PropertyToOverride", value: "ValueFormula"
+          id: Random.id(), key: "PropertyToOverride", value: "ValueFormula"
         }, {
-          key: "OverrideValue", value: "laborSawingCost + casePartsCost"
+          id: Random.id(), key: "OverrideValue", value: "laborSawingCost + casePartsCost"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templatePriceEachOverride);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCabinet.id,
         childTemplateId: templatePriceEachOverride.id
       });
@@ -804,27 +828,28 @@ Meteor.startup(function () {
         description: "Cabinet width",
         templateType: Constants.templateTypes.input,
         templateSettings: [{
-          key: "NumeratorUnit", value: UnitOfMeasure.units.inches
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.inches
         }, {
-          key: "SelectionType", value: Constants.selectionTypes.entry
+          id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
         }, {
-          key: "DisplayCategory", value: "Primary"
+          id: Random.id(), key: "DisplayCategory", value: "Primary"
         }, {
-          key: "DisplayCategory", value: "PrimaryTableColumn"
+          id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
         }, {
-          key: "DisplayCaption", value: "Width"
+          id: Random.id(), key: "DisplayCaption", value: "Width"
         }, {
-          key: "DisplayOrder", value: "4"
+          id: Random.id(), key: "DisplayOrder", value: "4"
         }, {
-          key: "VariableName", value: "width"
+          id: Random.id(), key: "VariableName", value: "width"
         }, {
-          key: "DefaultValue", value: "16"
+          id: Random.id(), key: "DefaultValue", value: "16"
         }, {
-          key: "ColumnWidth", value: "80"
+          id: Random.id(), key: "ColumnWidth", value: "80"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateCabinetWidth);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateCabinetWidth.id
       });
@@ -835,27 +860,28 @@ Meteor.startup(function () {
         description: "Cabinet height",
         templateType: Constants.templateTypes.input,
         templateSettings: [{
-          key: "NumeratorUnit", value: UnitOfMeasure.units.inches
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.inches
         }, {
-          key: "SelectionType", value: Constants.selectionTypes.entry
+          id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
         }, {
-          key: "DisplayCategory", value: "Primary"
+          id: Random.id(), key: "DisplayCategory", value: "Primary"
         }, {
-          key: "DisplayCategory", value: "PrimaryTableColumn"
+          id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
         }, {
-          key: "DisplayCaption", value: "Height"
+          id: Random.id(), key: "DisplayCaption", value: "Height"
         }, {
-          key: "DisplayOrder", value: "5"
+          id: Random.id(), key: "DisplayOrder", value: "5"
         }, {
-          key: "VariableName", value: "height"
+          id: Random.id(), key: "VariableName", value: "height"
         }, {
-          key: "DefaultValue", value: "24"
+          id: Random.id(), key: "DefaultValue", value: "24"
         }, {
-          key: "ColumnHeight", value: "80"
+          id: Random.id(), key: "ColumnHeight", value: "80"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateCabinetHeight);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateCabinetHeight.id
       });
@@ -866,27 +892,28 @@ Meteor.startup(function () {
         description: "Cabinet depth",
         templateType: Constants.templateTypes.input,
         templateSettings: [{
-          key: "NumeratorUnit", value: UnitOfMeasure.units.inches
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.inches
         }, {
-          key: "SelectionType", value: Constants.selectionTypes.entry
+          id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
         }, {
-          key: "DisplayCategory", value: "Primary"
+          id: Random.id(), key: "DisplayCategory", value: "Primary"
         }, {
-          key: "DisplayCategory", value: "PrimaryTableColumn"
+          id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
         }, {
-          key: "DisplayCaption", value: "Depth"
+          id: Random.id(), key: "DisplayCaption", value: "Depth"
         }, {
-          key: "DisplayOrder", value: "6"
+          id: Random.id(), key: "DisplayOrder", value: "6"
         }, {
-          key: "VariableName", value: "depth"
+          id: Random.id(), key: "VariableName", value: "depth"
         }, {
-          key: "DefaultValue", value: "36.5"
+          id: Random.id(), key: "DefaultValue", value: "36.5"
         }, {
-          key: "ColumnDepth", value: "80"
+          id: Random.id(), key: "ColumnDepth", value: "80"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateCabinetDepth);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateCabinetDepth.id
       });
@@ -897,23 +924,24 @@ Meteor.startup(function () {
         description: "Number of adjustable shelves",
         templateType: Constants.templateTypes.input,
         templateSettings: [{
-          key: "NumeratorUnit", value: UnitOfMeasure.units.partCount
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.partCount
         }, {
-          key: "SelectionType", value: Constants.selectionTypes.entry
+          id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
         }, {
-          key: "DisplayCategory", value: "Options"
+          id: Random.id(), key: "DisplayCategory", value: "Options"
         }, {
-          key: "DisplayCaption", value: "Num adjustable shelves"
+          id: Random.id(), key: "DisplayCaption", value: "Num adjustable shelves"
         }, {
-          key: "DisplayOrder", value: "1"
+          id: Random.id(), key: "DisplayOrder", value: "1"
         }, {
-          key: "VariableName", value: "numAdjustableShelves"
+          id: Random.id(), key: "VariableName", value: "numAdjustableShelves"
         }, {
-          key: "DefaultValue", value: "2"
+          id: Random.id(), key: "DefaultValue", value: "2"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateNumAdjustableShelves);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateNumAdjustableShelves.id
       });
@@ -924,19 +952,20 @@ Meteor.startup(function () {
         description: "Number of case parts",
         templateType: Constants.templateTypes.calculation,
         templateSettings: [{
-          key: "NumeratorUnit", value: UnitOfMeasure.units.partCount
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.partCount
         }, {
-          key: "DisplayCategory", value: "Calculations"
+          id: Random.id(), key: "DisplayCategory", value: "Calculations"
         }, {
-          key: "DisplayOrder", value: "1"
+          id: Random.id(), key: "DisplayOrder", value: "1"
         }, {
-          key: "VariableName", value: "numCaseParts"
+          id: Random.id(), key: "VariableName", value: "numCaseParts"
         }, {
-          key: "ValueFormula", value: "numAdjustableShelves + 4"
+          id: Random.id(), key: "ValueFormula", value: "numAdjustableShelves + 4"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateNumCaseParts);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateNumCaseParts.id
       });
@@ -947,17 +976,17 @@ Meteor.startup(function () {
         description: "Interior (case) material",
         templateType: Constants.templateTypes.input,
         templateSettings: [{
-          key: "SelectionType", value: Constants.selectionTypes.select
+          id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.select
         }, {
-          key: "CustomOptions", value: "GetCoreSheetMaterialOptions"
+          id: Random.id(), key: "CustomOptions", value: "GetCoreSheetMaterialOptions"
         }, {
-          key: "DisplayCategory", value: "Options"
+          id: Random.id(), key: "DisplayCategory", value: "Options"
         }, {
-          key: "DisplayOrder", value: "7"
+          id: Random.id(), key: "DisplayOrder", value: "7"
         }, {
-          key: "VariableName", value: "caseMaterialInteriorSku"
+          id: Random.id(), key: "VariableName", value: "caseMaterialInteriorSku"
         }, {
-          key: "DefaultValue", value: "CHERRY"
+          id: Random.id(), key: "DefaultValue", value: "CHERRY"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateInteriorMaterial);
@@ -974,15 +1003,18 @@ Meteor.startup(function () {
       //});
 
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateJob.id,
         childTemplateId: templateInteriorMaterial.id
       });
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         dependency: Constants.dependency.optionalOverride,
         parentTemplateId: templateArea.id,
         childTemplateId: templateInteriorMaterial.id
       });
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         dependency: Constants.dependency.optionalOverride,
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateInteriorMaterial.id
@@ -994,29 +1026,29 @@ Meteor.startup(function () {
         description: "3/4 inch sheet material cost per square feet",
         templateType: Constants.templateTypes.calculation,
         templateSettings: [{
-          key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
         }, {
-          key: "DenominatorUnit", value: UnitOfMeasure.units.feet
+          id: Random.id(), key: "DenominatorUnit", value: UnitOfMeasure.units.feet
         }, {
-          key: "DenominatorUnit", value: UnitOfMeasure.units.feet
+          id: Random.id(), key: "DenominatorUnit", value: UnitOfMeasure.units.feet
         }, {
-          key: "DisplayCategory", value: "Parts"
+          id: Random.id(), key: "DisplayCategory", value: "Parts"
         }, {
-          key: "DisplayOrder", value: "1"
+          id: Random.id(), key: "DisplayOrder", value: "1"
         }, {
-          key: "VariableName", value: "threeFourthsSheetMaterialCostPerArea"
+          id: Random.id(), key: "VariableName", value: "threeFourthsSheetMaterialCostPerArea"
         }, {
-          key: "CustomLookup", value: "GetSheetMaterialCostPerArea"
+          id: Random.id(), key: "CustomLookup", value: "GetSheetMaterialCostPerArea"
         }, {
-          key: "CaseMaterialInteriorSku", value: "caseMaterialInteriorSku"
+          id: Random.id(), key: "CaseMaterialInteriorSku", value: "caseMaterialInteriorSku"
         }, {
-          key: "CaseMaterialExposedSku", value: "caseMaterialInteriorSku"//Should use "caseMaterialExposedSku" once defined),
+          id: Random.id(), key: "CaseMaterialExposedSku", value: "caseMaterialInteriorSku"//Should use "caseMaterialExposedSku" once defined),
         }, {
-          key: "CaseMaterialInteriorSku", value: "caseMaterialInteriorSku"
+          id: Random.id(), key: "CaseMaterialInteriorSku", value: "caseMaterialInteriorSku"
         }, {
-          key: "NominalThickness", value: "0.75"
+          id: Random.id(), key: "NominalThickness", value: "0.75"
         }, {
-          key: "DefaultValue", value: "3.32"
+          id: Random.id(), key: "DefaultValue", value: "3.32"
           //Could be something like this:
           //new KeyValuePair<string, string>("DefaultValue", "getSheetMaterialCostPerArea(caseMaterialInteriorSku, 0.75)"),
           //new KeyValuePair<string, string>("LookUpTableName", "SheetMaterial"),
@@ -1028,6 +1060,7 @@ Meteor.startup(function () {
       };
       cabinetryTemplateLibrary.templates.push(templateThreeFourthsSheetMaterialCostPerArea);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateThreeFourthsSheetMaterialCostPerArea.id
       });
@@ -1038,21 +1071,22 @@ Meteor.startup(function () {
         description: "3/4 inch sheet material case square footage",
         templateType: Constants.templateTypes.calculation,
         templateSettings: [{
-          key: "NumeratorUnit", value: UnitOfMeasure.units.feet
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.feet
         }, {
-          key: "NumeratorUnit", value: UnitOfMeasure.units.feet
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.feet
         }, {
-          key: "DisplayCategory", value: "Calculations"
+          id: Random.id(), key: "DisplayCategory", value: "Calculations"
         }, {
-          key: "DisplayOrder", value: "1"
+          id: Random.id(), key: "DisplayOrder", value: "1"
         }, {
-          key: "VariableName", value: "threeFourthsSheetMaterialCasePartsArea"
+          id: Random.id(), key: "VariableName", value: "threeFourthsSheetMaterialCasePartsArea"
         }, {
-          key: "ValueFormula", value: "(2 * height / 12 * depth / 12) + ((numAdjustableShelves + 1) * width / 12 * depth / 12) + (height / 12 * width / 12)"
+          id: Random.id(), key: "ValueFormula", value: "(2 * height / 12 * depth / 12) + ((numAdjustableShelves + 1) * width / 12 * depth / 12) + (height / 12 * width / 12)"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateThreeFourthsSheetMaterialCasePartsArea);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateThreeFourthsSheetMaterialCasePartsArea.id
       });
@@ -1063,19 +1097,20 @@ Meteor.startup(function () {
         description: "Case parts cost",
         templateType: Constants.templateTypes.calculation,
         templateSettings: [{
-          key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+          id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
         }, {
-          key: "DisplayCategory", value: "Calculations"
+          id: Random.id(), key: "DisplayCategory", value: "Calculations"
         }, {
-          key: "DisplayOrder", value: "10"
+          id: Random.id(), key: "DisplayOrder", value: "10"
         }, {
-          key: "VariableName", value: "casePartsCost"
+          id: Random.id(), key: "VariableName", value: "casePartsCost"
         }, {
-          key: "ValueFormula", value: "threeFourthsSheetMaterialCasePartsArea * threeFourthsSheetMaterialCostPerArea"
+          id: Random.id(), key: "ValueFormula", value: "threeFourthsSheetMaterialCasePartsArea * threeFourthsSheetMaterialCostPerArea"
         }]
       };
       cabinetryTemplateLibrary.templates.push(templateCasePartsCost);
       cabinetryTemplateLibrary.templateRelationships.push({
+        id: Random.id(),
         parentTemplateId: templateCabinet.id,
         childTemplateId: templateCasePartsCost.id
       });

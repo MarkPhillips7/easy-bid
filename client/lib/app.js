@@ -6,6 +6,8 @@ angular.module('app', [
   'ui.router',
   'angularUtils.directives.dirPagination',
   'uiGmapgoogle-maps',
+  'common.bootstrap', // bootstrap dialog wrapper functions
+  'ui.bootstrap',      // ui-bootstrap (ex: carousel, pagination, dialog)
   'angularBootstrapNavTree'
 ]);
 

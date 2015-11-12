@@ -425,6 +425,10 @@ TemplateTypeInfoList = [{
 TemplateLibraries = new Mongo.Collection("templateLibraries");
 
 Schema.TemplateSetting = new SimpleSchema({
+  // Using an id since we want these to be able to be referenced even though they are not in their own collection
+  id: {
+    type: String
+  },
   key: {
     type: String
   },
@@ -487,6 +491,10 @@ var itemTemplateDefinition = {
 Schema.ItemTemplate = new SimpleSchema(itemTemplateDefinition);
 
 Schema.TemplateRelationship = new SimpleSchema({
+  // Using an id since we want these to be able to be referenced even though they are not in their own collection
+  id: {
+    type: String
+  },
   parentTemplateId: {
     type: String
   },
@@ -648,7 +656,7 @@ function isASubTemplate(template) {
   return getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.isASubTemplate);
 }
 
-function getDisplayCaption(template){
+function getDisplayCaption(template) {
   return getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.displayCaption) || template.name;
 
 }
@@ -686,10 +694,10 @@ function getTemplateSettingValuesForTemplate(template, templateSettingKey) {
 
 
 function getUnitsText(template) {
-    return UnitOfMeasure.getUnitOfMeasureText(
-        getTemplateSettingValuesForTemplate(template, Constants.templateSettingKeys.numeratorUnit),
-        getTemplateSettingValuesForTemplate(template, Constants.templateSettingKeys.denominatorUnit));
-  }
+  return UnitOfMeasure.getUnitOfMeasureText(
+    getTemplateSettingValuesForTemplate(template, Constants.templateSettingKeys.numeratorUnit),
+    getTemplateSettingValuesForTemplate(template, Constants.templateSettingKeys.denominatorUnit));
+}
 
 ItemTemplatesHelper = {
   isABaseTemplate: isABaseTemplate,
@@ -700,7 +708,7 @@ ItemTemplatesHelper = {
   getUnitsText: getUnitsText
 }
 
-function getRootTemplate (templateLibrary) {
+function getRootTemplate(templateLibrary) {
   //check(templateLibrary, Schema.TemplateLibrary);
   var rootTemplate = null;
 
@@ -754,7 +762,7 @@ function parentTemplate(templateLibrary, template, dependenciesToIgnore) {
   if (templateLibrary && template) {
     var templateRelationship = _.find(templateLibrary.templateRelationships, function (relationship) {
       return relationship.childTemplateId === template.id
-          && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, relationship.dependency));
+        && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, relationship.dependency));
     });
     if (templateRelationship) {
       return _.find(templateLibrary.templates, function (templ) {
@@ -766,42 +774,224 @@ function parentTemplate(templateLibrary, template, dependenciesToIgnore) {
   return null;
 }
 
-function parentTemplates(templateLibrary, template, dependenciesToIgnore){
+function parentTemplates(templateLibrary, template, dependenciesToIgnore) {
   var parentTemplates = [];
 
   if (templateLibrary && template) {
-    var parentTemplateRelationships=_.filter(templateLibrary.templateRelationships, function (templateRelationship) {
+    var parentTemplateRelationships = _.filter(templateLibrary.templateRelationships, function (templateRelationship) {
       return templateRelationship.childTemplateId === template.id
-          && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, templateRelationship.dependency));
+        && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, templateRelationship.dependency));
     })
 
     parentTemplates = _.map(parentTemplateRelationships, function (templateRelationship) {
-      return _.find(templateLibrary.templates, function (templ) {return templ.id == templateRelationship.parentTemplateId; })});
+      return _.find(templateLibrary.templates, function (templ) {
+        return templ.id == templateRelationship.parentTemplateId;
+      })
+    });
   }
 
   return parentTemplates;
 }
 
-function templateChildren(templateLibrary, template, dependenciesToIgnore){
+function templateChildren(templateLibrary, template, dependenciesToIgnore) {
   var templateChildren = [];
 
   if (templateLibrary && template) {
     var childTemplateRelationships = _.filter(templateLibrary.templateRelationships, function (templateRelationship) {
-       return templateRelationship.parentTemplateId === template.id
-            && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, templateRelationship.dependency));
+      return templateRelationship.parentTemplateId === template.id
+        && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, templateRelationship.dependency));
     });
 
     templateChildren = _.map(childTemplateRelationships, function (templateRelationship) {
-      return _.find(templateLibrary.templates, function (templ) {return templ.id == templateRelationship.childTemplateId; })});
+      return _.find(templateLibrary.templates, function (templ) {
+        return templ.id == templateRelationship.childTemplateId;
+      })
+    });
   }
 
   return templateChildren;
 }
 
+function addTemplate(templateLibrary, templateType, parentTemplate) {
+  if (!templateLibrary) {
+    throw 'templateLibrary must be set in addTemplate';
+  }
+  if (!templateType) {
+    throw 'templateType must be set in addTemplate';
+  }
+  if (!parentTemplate) {
+    throw 'parentTemplate must be set in addTemplate';
+  }
+
+  var templateToAdd = {
+    id: Random.id(),
+    templateType: templateType,
+    templateSettings: []
+  };
+  templateLibrary.templates.push(templateToAdd);
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: parentTemplate.id,
+    childTemplateId: templateToAdd.id
+  });
+
+  return templateToAdd;
+}
+
+// Need to use this instead of counting on a template object being in the templates array.
+// Even if a template was in the templates array, it might not be later even if it was not removed
+// because I think angular meteor sometimes uses mongo style splices where a given object ends up 
+// getting updated to a different 1. Say you have [a,b,c] and you remove b. What angular/meteor/mongo
+// does is alter the b object to be like c and actually remove c. And that gets reflected in meteor objects.
+function getTemplateById(templateLibrary, templateId) {
+  if (!templateLibrary) {
+    throw 'templateLibrary must be set in getTemplateById';
+  }
+  //if (!templateId) {
+  //  throw 'templateId must be set in getTemplateById';
+  //}
+  return _.find(templateLibrary.templates, function (template) {
+    return template.id === templateId;
+  });
+}
+
+function getTemplateSettingByIds(templateLibrary, templateId, templateSettingId) {
+  if (!templateLibrary) {
+    throw 'templateLibrary must be set in getTemplateSettingByIds';
+  }
+  if (!templateId) {
+    throw 'templateId must be set in getTemplateSettingByIds';
+  }
+  if (!templateSettingId) {
+    throw 'templateSettingId must be set in getTemplateSettingByIds';
+  }
+  var template=getTemplateById(templateLibrary, templateId);
+  if (template) {
+    return _.find(template.templateSettings, function (templateSetting) {
+      return templateSetting.id === templateSettingId;
+    });
+  }
+  return undefined;
+}
+
+function getTemplateSettingByKeyAndIndex(templateLibrary, templateId, templateSettingKey, templateSettingIndex) {
+  if (!templateLibrary) {
+    throw 'templateLibrary must be set in getTemplateSettingByKeyAndIndex';
+  }
+  if (!templateId) {
+    throw 'templateId must be set in getTemplateSettingByKeyAndIndex';
+  }
+  if (!templateSettingKey) {
+    throw 'templateSettingKey must be set in getTemplateSettingByKeyAndIndex';
+  }
+  var template = getTemplateById(templateLibrary, templateId);
+
+  if (template) {
+    return _.filter(template.templateSettings, function (templateSetting) {
+      return templateSetting.key === templateSettingKey;
+    })[templateSettingIndex];
+  }
+
+  return undefined;
+}
+
+function getTemplateRelationshipById(templateLibrary, templateRelationshipId) {
+  if (!templateLibrary) {
+    throw 'templateLibrary must be set in getTemplateRelationshipById';
+  }
+  return _.find(vm.templateLibrary.templateRelationships, function (templateRelationship) {
+    return templateRelationship.id === templateRelationshipId;
+  });
+}
+
+
+function addTemplateSetting(templateLibrary, templateId, templateSettingKey, templateSettingValue, order) {
+  if (!templateLibrary) {
+    throw 'templateLibrary must be set in addTemplateSetting';
+  }
+  if (!templateId) {
+    throw 'templateId must be set in addTemplateSetting';
+  }
+  if (!templateSettingKey) {
+    throw 'templateSettingKey must be set in addTemplateSetting';
+  }
+  var template = getTemplateById(templateLibrary,templateId);
+  if (!template) {
+    throw 'no template found for templateId';//`no template found for template ${templateId} in templateLibrary ${templateLibrary._id}`;
+  }
+  var templateSetting= {
+      id: Random.id(),
+      key: templateSettingKey,
+      value: templateSettingValue,
+      order: order
+    };
+
+  template.templateSettings.push(templateSetting);
+
+  return templateSetting;
+}
+
+function deleteTemplateSetting(templateLibrary, templateId, templateSettingId) {
+  if (!templateLibrary) {
+    throw 'templateLibrary must be set in getTemplateSettingByIds';
+  }
+  if (!templateId) {
+    throw 'templateId must be set in getTemplateSettingByIds';
+  }
+  if (!templateSettingId) {
+    throw 'templateSettingId must be set in getTemplateSettingByIds';
+  }
+  var template = getTemplateById(templateLibrary,templateId);
+  if (!template) {
+    throw 'no template found for templateId';//`no template found for template ${templateId} in templateLibrary ${templateLibrary._id}`;
+  }
+  var templateSetting=getTemplateSettingByIds(templateLibrary,templateId,templateSettingId);
+  if (!templateSetting) {
+    throw 'no templateSetting found for templateSettingId';//`no template found for template ${templateId} in templateLibrary ${templateLibrary._id}`;
+  }
+  
+  template.templateSettings.splice(template.templateSettings.indexOf(templateSetting), 1);
+}
+
+function deleteTemplate(templateLibrary, templateId) {
+  if (!templateLibrary) {
+    throw 'templateLibrary must be set in deleteTemplate';
+  }
+  var template = getTemplateById(templateLibrary, templateId);
+  if (!template) {
+    throw 'no template found for templateId';//`no template found for template ${templateId} in templateLibrary ${templateLibrary._id}`;
+  }
+
+  //First delete relationships
+  var templateRelationships = _.filter(templateLibrary.templateRelationships, function (templateRelationship) {
+    return templateRelationship.childTemplateId === template.id || templateRelationship.parentTemplateId === template.id;
+  })
+
+  templateRelationships.forEach(function (templateRelationship) {
+    var templateRelationshipIndex=templateLibrary.templateRelationships.indexOf(templateRelationship);
+    templateLibrary.templateRelationships.splice(templateRelationshipIndex, 1);
+  });
+
+  //Finally can now delete template
+  var templateIndex=templateLibrary.templates.indexOf(template);
+  templateLibrary.templates.splice(templateIndex, 1);
+
+  // ToDo: remove this once the bug is fixed in angular-meteor where save is not returning a promise
+  templateLibrary.save();
+}
+
 TemplateLibrariesHelper = {
-  getRootTemplate: getRootTemplate,
+  addTemplate: addTemplate,
+  addTemplateSetting: addTemplateSetting,
   cloneTemplateLibrary: cloneTemplateLibrary,
-  parentTemplate:parentTemplate,
+  deleteTemplate: deleteTemplate,
+  deleteTemplateSetting: deleteTemplateSetting,
+  getRootTemplate: getRootTemplate,
+  getTemplateById: getTemplateById,
+  getTemplateRelationshipById: getTemplateRelationshipById,
+  getTemplateSettingByIds: getTemplateSettingByIds,
+  getTemplateSettingByKeyAndIndex: getTemplateSettingByKeyAndIndex,
+  parentTemplate: parentTemplate,
   parentTemplates: parentTemplates,
-  templateChildren:templateChildren
+  templateChildren: templateChildren
 }

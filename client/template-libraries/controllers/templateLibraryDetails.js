@@ -1,10 +1,12 @@
-angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor', '$q', '$rootScope', '$stateParams', '$timeout',
-  function ($scope, $meteor, $q, $rootScope, $stateParams, $timeout) {
+angular.module("app").controller("templateLibraryDetails",
+  ['$scope', '$meteor', '$q', '$rootScope', '$stateParams', '$timeout', 'bootstrap.dialog',
+  function ($scope, $meteor, $q, $rootScope, $stateParams, $timeout, bootstrapDialog) {
     var vm = this;
     vm.addTemplateAndEditDetails = addTemplateAndEditDetails;
     vm.addTemplateSetting = addTemplateSetting;
     vm.allDisplayCategories = [];
     vm.cancel=cancel;
+    vm.deleteTemplate=deleteTemplate;
     vm.deleteTemplateSetting = deleteTemplateSetting;
     vm.editTemplateDetails = editTemplateDetails;
     vm.getTemplateById = getTemplateById;
@@ -68,7 +70,7 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
     }
 
 
-    // ToDo: implement!
+    // ToDo: implement permission checking!
     function canPerformAction(recordAction, template){
       return vm.recordAction != recordAction
         && vm.usageMode === Constants.usageModes.classicEdit
@@ -101,9 +103,12 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
 
     function save() {
       if (vm.templateLibrary) {
-        vm.templateLibrary.save()
+        return vm.templateLibrary.save()
           .then(saveSucceeded)
           .catch(failure);
+      }
+      else {
+        return $q.when(null);
       }
 
       function saveSucceeded(){
@@ -157,32 +162,49 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
       vm.usageMode = usageMode;
     }
 
+    function deleteTemplate(template) {
+      if (template) {
+        bootstrapDialog.confirmationDialog("Delete template and its children", `Are you sure you want to delete '${template.name}' template and its related data and child templates?`)
+          .then(confirmDelete, cancelDelete);
+      } else {
+        console.log("No template found to be deleted");
+      }
+
+      function cancelDelete(err) {
+        if (err) {
+          console.log(err);
+        }
+      }
+
+      function confirmDelete() {
+        TemplateLibrariesHelper.deleteTemplate(vm.templateLibrary, template.id);
+        return save()
+          .then(setTemplateTypeInfo, failure);
+      }
+
+    }
+
+    //function deleteTemplate(template) {
+    //  var confirmDelete = confirm(`Are you sure you want to delete ${template.name} and all its children?`);
+    //  if (confirmDelete) {
+    //    //cancel();
+    //    TemplateLibrariesHelper.deleteTemplate(vm.templateLibrary, template);
+    //    save();
+    //  }
+    //}
+
     function addTemplateAndEditDetails(templateType, parentTemplate) {
-      if(!templateType) {
+      if (!templateType) {
         templateType = vm.selectedTemplate ? vm.selectedTemplate.templateType : null;
       }
-      if(!parentTemplate) {
+      if (!parentTemplate) {
         parentTemplate = TemplateLibrariesHelper.parentTemplate(vm.templateLibrary, vm.selectedTemplate);
-
       }
 
-      if(templateType && parentTemplate) {
-        var templateToAdd = {
-          id: Random.id(),
-          templateType: templateType,
-          templateSettings: []
-        };
-        vm.templateLibrary.templates.push(templateToAdd);
-        vm.templateLibrary.templateRelationships.push({
-          parentTemplateId: parentTemplate.id,
-          childTemplateId: templateToAdd.id
-        });
-        vm.recordAction = Constants.recordActions.add;
-        selectTemplate(templateToAdd);
-      }
-      else {
-        throw 'Could not determine template type and parent template';
-      }
+      var templateToAdd = TemplateLibrariesHelper.addTemplate(vm.templateLibrary, templateType, parentTemplate);
+
+      vm.recordAction = Constants.recordActions.add;
+      selectTemplate(templateToAdd);
     }
 
     function editTemplateDetails(template) {
@@ -298,6 +320,8 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
     }
 
     function setTemplateTypeInfo(template) {
+      template = template || vm.selectedTemplate;
+
       vm.relevantTemplateTypesWithTemplates = [];
 
       if (!template) {
@@ -505,46 +529,27 @@ angular.module("app").controller("templateLibraryDetails", ['$scope', '$meteor',
     }
 
     function getTemplateById(templateId) {
-      return _.find(vm.templateLibrary.templates, function (template) {
-        return template.id === templateId;
-      });
+      return TemplateLibrariesHelper.getTemplateById(vm.templateLibrary, templateId);
+    }
+
+    function getTemplateSettingById(templateId, templateSettingId) {
+      return TemplateLibrariesHelper.getTemplateSettingByIds(vm.templateLibrary, templateId, templateSettingId);
+    }
+
+    function getTemplateRelationshipById(templateRelationshipId) {
+      return TemplateLibrariesHelper.getTemplateRelationshipById(vm.templateLibrary, templateRelationshipId);
     }
 
     function getTemplateSetting(templateId, templateSettingKey, templateSettingIndex) {
-      var template = getTemplateById(templateId);
-
-      if (template) {
-        return _.filter(template.templateSettings, function (templateSetting) {
-          return templateSetting.key === templateSettingKey;
-        })[templateSettingIndex];
-      }
-
-      return null;
+      return TemplateLibrariesHelper.getTemplateSettingByKeyAndIndex(vm.templateLibrary, templateId, templateSettingKey, templateSettingIndex);
     }
 
     function addTemplateSetting(templateId, templateSettingKey, templateSettingValue, order) {
-      var template = getTemplateById(templateId);
-      var templateSetting = null;
-
-      if (template) {
-        templateSetting= {
-          key: templateSettingKey,
-          value: templateSettingValue,
-          order: order
-        };
-
-        template.templateSettings.push(templateSetting);
-      }
-
-      return templateSetting;
+      return TemplateLibrariesHelper.addTemplateSetting(vm.templateLibrary, templateId, templateSettingKey, templateSettingValue, order);
     }
 
-    function deleteTemplateSetting(templateId, templateSetting) {
-      var template = getTemplateById(templateId);
-
-      if (template) {
-        template.templateSettings.splice(template.templateSettings.indexOf(templateSetting), 1);
-      }
+    function deleteTemplateSetting(templateId, templateSettingId) {
+      return TemplateLibrariesHelper.deleteTemplateSetting(vm.templateLibrary, templateId, templateSettingId);
     }
 
     function setFullProductHierarchy() {

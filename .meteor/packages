@@ -48,3 +48,4 @@ npm-container
 angular
 angularutils:pagination
 urigo:angular-blaze-template
+angularui:angular-ui-bootstrap

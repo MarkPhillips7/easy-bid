@@ -208,6 +208,7 @@ angular.module('app')
       template: "=",
       templateId: "=",
       templateSettingInfo: "=",
+      templateLibrary: "=",
       vm: "="
     },
     template: '<div ng-include="contentUrl"></div>'
@@ -233,12 +234,15 @@ angular.module('app')
     loadTemplateSettings(scope);
 
     scope.addTemplateSetting = function(templateSettingKey, templateSettingValue, order) {
-      scope.templateSettings.push(scope.vm.addTemplateSetting(scope.templateId, templateSettingKey, templateSettingValue, order));
+      var templateSetting=TemplateLibrariesHelper.addTemplateSetting(scope.templateLibrary, scope.templateId, templateSettingKey, templateSettingValue, order);
+      scope.templateSettings.push(templateSetting);
+      //scope.templateSettings.push(scope.vm.addTemplateSetting(scope.templateId, templateSettingKey, templateSettingValue, order));
     };
 
     scope.deleteTemplateSetting = function(templateSetting) {
       var indexOfTemplateSetting = scope.templateSettings.indexOf(templateSetting);
-      scope.vm.deleteTemplateSetting(scope.templateId, templateSetting);
+      TemplateLibrariesHelper.deleteTemplateSetting(scope.templateLibrary, scope.templateId, templateSetting.id);
+      //scope.vm.deleteTemplateSetting(scope.templateId, templateSetting.id);
 
       if (indexOfTemplateSetting > -1) {
         scope.templateSettings.splice(indexOfTemplateSetting, 1);
@@ -256,11 +260,15 @@ angular.module('app')
 
       //Add template settings if the minimum number has not been reached
       for (i = 0; i < numberTemplatesToAdd; i += 1) {
-        scope.templateSettings.push(
-          scope.vm.addTemplateSetting(scope.templateId,
-            scope.templateSettingInfo.templateSettingKey,
-            scope.templateSettingInfo.templateSettingValue,
-            i + startingOrder));
+        scope.templateSettings.push(TemplateLibrariesHelper.addTemplateSetting(scope.templateLibrary, scope.templateId,
+          scope.templateSettingInfo.templateSettingKey,
+          scope.templateSettingInfo.templateSettingValue,
+          i + startingOrder));
+        //scope.templateSettings.push(
+        //  scope.vm.addTemplateSetting(scope.templateId,
+        //    scope.templateSettingInfo.templateSettingKey,
+        //    scope.templateSettingInfo.templateSettingValue,
+        //    i + startingOrder));
       }
     }
 
