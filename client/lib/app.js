@@ -1,14 +1,15 @@
 angular.module('app', [
+  'accounts.ui',
   'angular-meteor',
+  'angularBootstrapNavTree',
   'angularMoment',
+  'angularUtils.directives.dirPagination',
+  'common.bootstrap', // bootstrap dialog wrapper functions
   'formly',
   'formlyBootstrap',
-  'ui.router',
-  'angularUtils.directives.dirPagination',
   'uiGmapgoogle-maps',
-  'common.bootstrap', // bootstrap dialog wrapper functions
   'ui.bootstrap',      // ui-bootstrap (ex: carousel, pagination, dialog)
-  'angularBootstrapNavTree'
+  'ui.router'
 ]);
 
 angular.module('app')
@@ -16,10 +17,18 @@ angular.module('app')
   })
   .run(function ($rootScope) {
     $rootScope.$on("$stateChangeError", console.log.bind(console));
+    $rootScope.isInRole = function(role) {
+      if (!_.isArray(role)) {
+        role = [role];
+      }
+      return Roles.userIsInRole($rootScope.currentUser, role, Roles.GLOBAL_GROUP);
+    }
   });
 
 function onReady() {
-  angular.bootstrap(document, ['app']);
+  angular.bootstrap(document, ['app'], {
+    strictDi: true
+  });
 }
 
 if (Meteor.isCordova)

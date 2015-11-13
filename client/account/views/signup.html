@@ -27,8 +27,8 @@
         </div>
         <h4 class="page-header">Payment Information</h4>
         <label>Pick a plan <em>(can always change later)</em></label>
-        <ng-include src="'client/account/views/select-plan.ng.html'"></ng-include>
-        <ng-include src="'client/account/views/credit-card.ng.html'"></ng-include>
+        <ng-include src="'client/account/views/select-plan.html'"></ng-include>
+        <ng-include src="'client/account/views/credit-card.html'"></ng-include>
         <div class="form-group">
           <input type="submit" class="btn btn-success btn-block" data-loading-text="Setting up your trial..."
                  ng-click="vm.submit()" ng-disabled="vm.creatingTrialClient"

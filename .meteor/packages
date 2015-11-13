@@ -6,7 +6,6 @@
 
 angularui:angular-ui-router
 accounts-password
-accounts-ui
 tmeasday:publish-counts
 email
 angularui:angular-google-maps
@@ -34,7 +33,6 @@ standard-minifiers
 meteor-base
 mobile-experience
 mongo
-blaze-html-templates
 session
 jquery
 tracker
@@ -49,3 +47,4 @@ angular
 angularutils:pagination
 urigo:angular-blaze-template
 angularui:angular-ui-bootstrap
+dotansimha:accounts-ui-angular

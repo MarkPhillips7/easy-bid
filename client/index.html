@@ -3,29 +3,21 @@
   <base href="/">
 </head>
 <body>
-
-{{>bertAlert}}
-
-<div>
+  <div>
     <nav class="navbar navbar-fixed-top">
       <div class="container-fluid">
         <div class="navbar-header">
-          {{#if isInRole 'system-admin'}}
-            <a class="navbar-brand" href="/companies">Companies</a>
-          {{/if}}
+          <a ng-if="$root.isInRole('system-admin')" class="navbar-brand" href="/companies">Companies</a>
           <a class="navbar-brand" href="/billing">Billing</a>
           <a class="navbar-brand" href="/libraries">Products</a>
           <a class="navbar-brand" href="/test">Test</a>
           <a class="navbar-brand" href="/parties">Parties</a>
         </div>
         <div class="navbar-right navbar-text">
-          <blaze-template
-              name="loginButtons">
-          </blaze-template>
+          <login-buttons></login-buttons>
         </div>
       </div>
     </nav>
     <div ui-view></div>
-
-</div>
+  </div>
 </body>

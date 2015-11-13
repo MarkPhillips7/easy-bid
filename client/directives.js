@@ -38,7 +38,7 @@ angular.module('app')
         vm: "=",
         relevantTemplateTypeWithTemplates: "="
       },
-      templateUrl: 'client/template-libraries/views/relevant-template-type-view.ng.html'
+      templateUrl: 'client/template-libraries/views/relevant-template-type-view.html'
     };
     return directive;
 
@@ -83,7 +83,7 @@ angular.module('app')
         templateLibrary: "=",
         relevantTemplateTypesWithTemplates: "="
       },
-      templateUrl: 'client/template-libraries/views/relevant-templates-view.ng.html'
+      templateUrl: 'client/template-libraries/views/relevant-templates-view.html'
     };
     return directive;
 
@@ -109,7 +109,7 @@ angular.module('app')
         templateLibrary: "=",
         vm: "="
       },
-      templateUrl: 'client/template-libraries/views/template-details-edit.ng.html'
+      templateUrl: 'client/template-libraries/views/template-details-edit.html'
     };
     return directive;
 
@@ -145,7 +145,7 @@ angular.module('app')
         templateLibrary: "=",
         vm: "="
       },
-      templateUrl: 'client/template-libraries/views/template-details-view.ng.html'
+      templateUrl: 'client/template-libraries/views/template-details-view.html'
     };
     return directive;
 
@@ -250,7 +250,7 @@ angular.module('app')
     };
 
     //default content is an input
-    scope.contentUrl = 'client/template-libraries/views/template-settings-edit-input.ng.html';
+    scope.contentUrl = 'client/template-libraries/views/template-settings-edit-input.html';
 
     if (scope.vm && scope.templateSettingInfo) {
       if (scope.templateSettingInfo.minCount > 0) {
@@ -304,7 +304,7 @@ angular.module('app')
     }
 
     if (scope.options) {
-      scope.contentUrl = 'client/template-libraries/views/template-settings-edit-select.ng.html';
+      scope.contentUrl = 'client/template-libraries/views/template-settings-edit-select.html';
     }
     //
     //scope.$watch('template.templateSettings', function (newValue, oldValue) {

@@ -917,7 +917,7 @@ function addTemplateSetting(templateLibrary, templateId, templateSettingKey, tem
   }
   var template = getTemplateById(templateLibrary,templateId);
   if (!template) {
-    throw 'no template found for templateId';//`no template found for template ${templateId} in templateLibrary ${templateLibrary._id}`;
+    throw `no template found for template ${templateId} in templateLibrary ${templateLibrary._id} in addTemplateSetting`;
   }
   var templateSetting= {
       id: Random.id(),
@@ -959,7 +959,7 @@ function deleteTemplate(templateLibrary, templateId) {
   }
   var template = getTemplateById(templateLibrary, templateId);
   if (!template) {
-    throw 'no template found for templateId';//`no template found for template ${templateId} in templateLibrary ${templateLibrary._id}`;
+    throw `no template found for template ${templateId} in templateLibrary ${templateLibrary._id} in deleteTemplate`;
   }
 
   //First delete relationships
@@ -975,9 +975,6 @@ function deleteTemplate(templateLibrary, templateId) {
   //Finally can now delete template
   var templateIndex=templateLibrary.templates.indexOf(template);
   templateLibrary.templates.splice(templateIndex, 1);
-
-  // ToDo: remove this once the bug is fixed in angular-meteor where save is not returning a promise
-  templateLibrary.save();
 }
 
 TemplateLibrariesHelper = {

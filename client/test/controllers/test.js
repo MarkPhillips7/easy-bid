@@ -5,7 +5,6 @@ angular.module("app").controller("test", ['$scope', '$meteor', '$rootScope', '$s
     $meteor.subscribe('templateLibraries')
       .then(function (subscriptionHandle) {
         vm.templateLibraries = $meteor.collection(TemplateLibraries);
-        vm.templateLibrary = $meteor.object(TemplateLibraries, vm.templateLibraries[0]._id);
       })
       .catch(subscriptionFailed);
 

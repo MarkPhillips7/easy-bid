@@ -17,37 +17,37 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
     $stateProvider
       .state('test', {
         url: '/test',
-        templateUrl: 'client/test/views/test.ng.html',
+        templateUrl: 'client/test/views/test.html',
         controller: 'test'
       })
       .state('billing', {
         url: '/billing',
-        templateUrl: 'client/account/views/billing.ng.html',
+        templateUrl: 'client/account/views/billing.html',
         controller: 'billing'
       })
       .state('billingPlan', {
         url: '/billing/plan',
-        templateUrl: 'client/account/views/billing-plan.ng.html',
+        templateUrl: 'client/account/views/billing-plan.html',
         controller: 'billing'
       })
       .state('signup', {
         url: '/signup',
-        templateUrl: 'client/account/views/signup.ng.html',
+        templateUrl: 'client/account/views/signup.html',
         controller: 'signup'
       })
       .state('intro', {
         url: '/parties',
-        templateUrl: 'client/parties/views/parties-list.ng.html',
+        templateUrl: 'client/parties/views/parties-list.html',
         controller: 'PartiesListCtrl'
       })
       .state('parties', {
         url: '/parties',
-        templateUrl: 'client/parties/views/parties-list.ng.html',
+        templateUrl: 'client/parties/views/parties-list.html',
         controller: 'PartiesListCtrl'
       })
       .state('partyDetails', {
         url: '/parties/:partyId',
-        templateUrl: 'client/parties/views/party-details.ng.html',
+        templateUrl: 'client/parties/views/party-details.html',
         controller: 'PartyDetailsCtrl',
         resolve: {
           "currentUser": ["$meteor", function ($meteor) {
@@ -57,12 +57,12 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
       })
       .state('companies', {
         url: '/companies',
-        templateUrl: 'client/companies/views/company-list.ng.html',
+        templateUrl: 'client/companies/views/company-list.html',
         controller: 'companies'
       })
       .state('companyDetails', {
         url: '/companies/:companyId',
-        templateUrl: 'client/companies/views/company-details.ng.html',
+        templateUrl: 'client/companies/views/company-details.html',
         controller: 'company',
         resolve: {
           "currentUser": ["$meteor", function ($meteor) {
@@ -72,7 +72,7 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
       })
       .state('templateLibraryList', {
         url: '/libraries',
-        templateUrl: 'client/template-libraries/views/template-library-list.ng.html',
+        templateUrl: 'client/template-libraries/views/template-library-list.html',
         controller: 'templateLibraryList',
         resolve: {
           "currentUser": ["$meteor", function ($meteor) {
@@ -83,7 +83,7 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
       .state('templateLibraryDetails', {
         abstract: true,
         url: '/libraries/:templateLibraryId',
-        templateUrl: 'client/template-libraries/views/template-library-details.ng.html',
+        templateUrl: 'client/template-libraries/views/template-library-details.html',
         controller: 'templateLibraryDetails',
         controllerAs: 'vm',
         resolve: {
@@ -101,19 +101,19 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         //},
         views: {
           "left@templateLibraryDetails": {
-            templateUrl: 'client/template-libraries/views/template-library-tree.ng.html'
+            templateUrl: 'client/template-libraries/views/template-library-tree.html'
           },
           "middle@templateLibraryDetails": {
-            templateUrl: 'client/template-libraries/views/template-library-item-details.ng.html'
+            templateUrl: 'client/template-libraries/views/template-library-item-details.html'
           },
           "right@templateLibraryDetails": {
-            templateUrl: 'client/template-libraries/views/template-library-variables.ng.html'
+            templateUrl: 'client/template-libraries/views/template-library-variables.html'
           }
         }
       });
       //.state('templateLibraryItemList', {
       //  url: '/libraries/:templateLibraryId/items',
-      //  templateUrl: 'client/template-libraries/views/template-library-item-list.ng.html',
+      //  templateUrl: 'client/template-libraries/views/template-library-item-list.html',
       //  controller: 'templateLibraryItemList',
       //  resolve: {
       //    "currentUser": ["$meteor", function ($meteor) {
@@ -123,7 +123,7 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
       //})
       //.state('templateLibraryItemDetails', {
       //  url: '/libraries/:templateLibraryId/items/:templateItemId',
-      //  templateUrl: 'client/template-libraries/views/template-library-details.ng.html',
+      //  templateUrl: 'client/template-libraries/views/template-library-details.html',
       //  controller: 'templateLibraryDetails',
       //  resolve: {
       //    "currentUser": ["$meteor", function ($meteor) {

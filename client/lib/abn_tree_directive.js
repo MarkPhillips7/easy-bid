@@ -7,7 +7,7 @@
     '$timeout', function($timeout) {
       return {
         restrict: 'E',
-        templateUrl: 'client/lib/abn_tree_template.ng.html',
+        templateUrl: 'client/lib/abn_tree_template.html',
         replace: true,
         scope: {
           treeData: '=',
