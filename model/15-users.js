@@ -82,10 +82,10 @@ Schema.Subscription = new SimpleSchema({
 //}
 
 Schema.UserProfile = new SimpleSchema({
-  personInfo: {
-    type: Schema.Person,
-    optional: true
-  },
+  //personInfo: {
+  //  type: Schema.Person,
+  //  optional: true
+  //},
   firstName: {
     type: String,
     regEx: /^[a-zA-Z-]{2,25}$/,
@@ -131,7 +131,7 @@ Schema.UserProfile = new SimpleSchema({
     type: Schema.Subscription,
     optional: true
   },
-  customerId: {
+  stripeCustomerId: {
     type: String,
     optional: true
   },

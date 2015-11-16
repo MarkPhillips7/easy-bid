@@ -15,6 +15,7 @@ Package.onUse(function(api) {
   api.addFiles('globals.js');
   api.export('Config');
   api.export('Constants');
+  api.export('Initialization');
   api.export('Schema');
 });
 

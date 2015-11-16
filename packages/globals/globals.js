@@ -5,6 +5,8 @@ Config = {};
 
 Constants = {};
 
+Initialization = {};
+
 Schema = {};
 
 Config.accessFlags = {

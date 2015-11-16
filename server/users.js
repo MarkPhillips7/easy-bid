@@ -1,19 +1,19 @@
-Meteor.publish("coworkers", function (company) {
-  check(company, Match.OneOf(String,null));
-  return usersRelatedToCompany(this.userId,[Config.roles.manageTemplates, Config.roles.manageUsers, Config.roles.user], company);
+Meteor.publish("coworkers", function (companyId) {
+  check(companyId, Match.OneOf(String,null));
+  return usersRelatedToCompany(this.userId,[Config.roles.manageTemplates, Config.roles.manageUsers, Config.roles.user], companyId);
 });
 
-Meteor.publish("customers", function (company) {
-  check(company, Match.OneOf(String,null));
-  return usersRelatedToCompany(this.userId,['customer'], company);
+Meteor.publish("customers", function (companyId) {
+  check(companyId, Match.OneOf(String,null));
+  return usersRelatedToCompany(this.userId,[Config.roles.customer], companyId);
 });
 
-function usersRelatedToCompany(userId,roles, company) {
+function usersRelatedToCompany(userId,roles, companyId) {
   check(userId, Match.OneOf(String,null));
   check(roles, [String]);
-  check(company, Match.OneOf(String,null));
+  check(companyId, Match.OneOf(String,null));
 
-  if (!userId || !company)
+  if (!userId || !companyId)
     return null;
 
   var loggedInUser = Meteor.users.findOne(userId);
@@ -22,12 +22,12 @@ function usersRelatedToCompany(userId,roles, company) {
     return null;
 
   if (!Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers, Config.roles.systemAdmin], Roles.GLOBAL_GROUP)
-    && !Roles.userIsInRole(loggedInUser, [Config.roles.manageTemplates, Config.roles.manageUsers, Config.roles.user], company)) {
+    && !Roles.userIsInRole(loggedInUser, [Config.roles.manageTemplates, Config.roles.manageUsers, Config.roles.user], companyId)) {
     return null;
   }
 
   var userIds = [];
-  Roles.getUsersInRole(roles, company)
+  Roles.getUsersInRole(roles, companyId)
       .forEach(function(user){
         userIds.push(user._id);
   });

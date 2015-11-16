@@ -59,7 +59,7 @@ Companies.allow({
   },
   update: function (userId, company, fields, modifier) {
     if (!Roles.userIsInRole(userId, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
-        && !Roles.userIsInRole(userId, [Config.roles.manageUsers], company.name)) {
+        && !Roles.userIsInRole(userId, [Config.roles.manageUsers], company._id)) {
       return false;
     }
 

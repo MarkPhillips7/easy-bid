@@ -61,9 +61,9 @@ Meteor.methods({
     var stripeUpdateSubscription = new Future();
 
     var user    = Meteor.userId();
-    var getUser = Meteor.users.findOne({"_id": user}, {fields: {"customerId": 1}});
+    var getUser = Meteor.users.findOne({"_id": user}, {fields: {"stripeCustomerId": 1}});
 
-    Stripe.customers.updateSubscription(getUser.customerId, {
+    Stripe.customers.updateSubscription(getUser.stripeCustomerId, {
       plan: plan
     }, function(error, subscription){
       if (error) {
