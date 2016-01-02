@@ -23,7 +23,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Company that provides service",
       templateType: Constants.templateTypes.company,
       templateSettings: [{
-        id: Random.id(), key: "IsVariableCollector", value: "True"
+        id: Random.id(), key: "IsVariableCollector", value: "true"
       }]
     };
     templateLibrary.templates.push(templateCompany);
@@ -34,7 +34,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Customer requesting a bid",
       templateType: Constants.templateTypes.customer,
       templateSettings: [{
-        id: Random.id(), key: "IsVariableCollector", value: "True"
+        id: Random.id(), key: "IsVariableCollector", value: "true"
       }]
     };
     templateLibrary.templates.push(templateCustomer);
@@ -50,7 +50,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "The job or project being bid",
       templateType: Constants.templateTypes.job,
       templateSettings: [{
-        id: Random.id(), key: "IsVariableCollector", value: "True"
+        id: Random.id(), key: "IsVariableCollector", value: "true"
       }]
     };
     templateLibrary.templates.push(templateJob);
@@ -94,7 +94,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Area",
       templateType: Constants.templateTypes.area,
       templateSettings: [{
-        id: Random.id(), key: "IsVariableCollector", value: "True"
+        id: Random.id(), key: "IsVariableCollector", value: "true"
       }, {
         id: Random.id(), key: "VariableName", value: "area"
       }]
@@ -148,7 +148,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       templateSettings: [{
         id: Random.id(), key: "DisplayCategory", value: "PrimaryTableRow"
       }, {
-        id: Random.id(), key: "IsVariableCollector", value: "True"
+        id: Random.id(), key: "IsVariableCollector", value: "true"
       }]
     };
     templateLibrary.templates.push(templateProductSelection);
@@ -164,7 +164,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Product",
       templateType: Constants.templateTypes.baseProduct,
       templateSettings: [{
-        id: Random.id(), key: "IsABaseTemplate", value: "True"
+        id: Random.id(), key: "IsABaseTemplate", value: "true"
       }, {
         id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.select
       }, {
@@ -388,7 +388,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       templateSettings: [{
         id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.selectOption
       }, {
-        id: Random.id(), key: "IsASubTemplate", value: "True"
+        id: Random.id(), key: "IsASubTemplate", value: "true"
       }, {
         id: Random.id(), key: "ImageSource", value: "cabinet.png"
       }]
@@ -534,7 +534,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       templateSettings: [{
         id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.selectOption
       }, {
-        id: Random.id(), key: "IsASubTemplate", value: "True"
+        id: Random.id(), key: "IsASubTemplate", value: "true"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateOneDoorBaseCabinet);
@@ -551,7 +551,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Quantity",
       templateType: Constants.templateTypes.override,
       templateSettings: [{
-        id: Random.id(), key: "IsVariableOverride", value: "True"
+        id: Random.id(), key: "IsVariableOverride", value: "true"
       }, {
         id: Random.id(), key: "VariableToOverride", value: "quantity"
       }, {
@@ -575,7 +575,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       templateSettings: [{
         id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.selectOption
       }, {
-        id: Random.id(), key: "IsASubTemplate", value: "True"
+        id: Random.id(), key: "IsASubTemplate", value: "true"
       }, {
         id: Random.id(), key: "ImageSource", value: "LazySusan.png"
       }]
@@ -594,7 +594,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Number of adjustable shelves",
       templateType: Constants.templateTypes.override,
       templateSettings: [{
-        id: Random.id(), key: "IsVariableOverride", value: "True"
+        id: Random.id(), key: "IsVariableOverride", value: "true"
       }, {
         id: Random.id(), key: "VariableToOverride", value: "numAdjustableShelves"
       }, {
@@ -616,7 +616,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Price each",
       templateType: Constants.templateTypes.override,
       templateSettings: [{
-        id: Random.id(), key: "IsVariableOverride", value: "True"
+        id: Random.id(), key: "IsVariableOverride", value: "true"
       }, {
         id: Random.id(), key: "VariableToOverride", value: "priceEach"
       }, {

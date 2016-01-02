@@ -28,6 +28,14 @@ Constants.relationToItem = {
   subItem:"SubItem"//when template represents a sub-template of a base template
 }
 
+Constants.selectionAddingModes = {
+  addBaseTemplateChildrenForSubTemplates: "AddBaseTemplateChildrenForSubTemplates",
+  handleAnything:"HandleAnything",
+  ignoreBaseTemplates:"IgnoreBaseTemplates",
+  ignoreSubTemplates:"IgnoreSubTemplates",
+  onlySubTemplates:"OnlySubTemplates"
+}
+
 Constants.selectionTypes = {
   // For read-only or calculated values
   notApplicable: "NotApplicable",

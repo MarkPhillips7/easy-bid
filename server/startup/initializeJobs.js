@@ -5,12 +5,11 @@ Initialization.initializeJobs = function (companyInfo, userInfo) {
   let customer = Roles.getUsersInRole([Config.roles.customer], company._id).fetch()[0];
   let templateLibrary = TemplateLibraries.findOne({"name": "Cabinetry", "ownerCompanyId": company._id});
 
-  console.log(`adding job for company ${company._id} with estimator ${estimator} and customer ${customer} and templateLibrary ${templateLibrary._id}`);
-
   let job = Jobs.findOne({"name": "Garage", "companyId": company._id});
   if (!job && estimator && customer && templateLibrary) {
+    console.log(`adding job for company ${company._id} with estimator ${estimator} and customer ${customer} and templateLibrary ${templateLibrary._id}`);
 
-    let job = {
+    job = {
       name: "Garage",
       description: "Garage cabinets and workbench",
       notes: "May be raccoon living in the garage",
@@ -26,5 +25,11 @@ Initialization.initializeJobs = function (companyInfo, userInfo) {
       estimatorId: estimator._id
     };
     var jobId = Jobs.insert(job);
+
+    let jobTemplateLibrary = {
+      jobId: jobId,
+      templateLibraryId: templateLibrary._id
+    }
+    JobsTemplateLibraries.insert(jobTemplateLibrary);
   }
 }

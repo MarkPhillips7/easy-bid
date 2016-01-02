@@ -8,6 +8,12 @@ angular.module("app").controller("test", ['$scope', '$meteor', '$rootScope', '$s
       })
       .catch(subscriptionFailed);
 
+    $meteor.subscribe('selections')
+      .then(function (subscriptionHandle) {
+        vm.selections = $meteor.collection(Selections);
+      })
+      .catch(subscriptionFailed);
+
     $meteor.subscribe('templateLibraries')
       .then(function (subscriptionHandle) {
         vm.templateLibraries = $meteor.collection(TemplateLibraries);

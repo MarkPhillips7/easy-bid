@@ -80,6 +80,9 @@ Schema.Job = new SimpleSchema({
 Jobs.attachSchema(Schema.Job);
 
 Jobs.allow({
+
+  // eventually allow a customer to insert and update his jobs if flagged appropriately
+
   insert: function (userId, job) {
     if (!Roles.userIsInRole(userId, [Config.roles.systemAdmin, Config.roles.user], Roles.GLOBAL_GROUP)
       && !Roles.userIsInRole(userId, [Config.roles.user], job.companyId)) {
@@ -89,17 +92,13 @@ Jobs.allow({
     return true;
   },
   update: function (userId, job, fields, modifier) {
-    var company = _.find(vm.companies, function(company){ return company._id === companyId; });
-
-    if (!Roles.userIsInRole(userId, [Config.roles.systemAdmin, Config.roles.user], Roles.GLOBAL_GROUP)
-      && !Roles.userIsInRole(userId, [Config.roles.user], job.companyId)) {
-      return false;
-    }
-
-    return true;
+    return Meteor.call('userCanUpdateJob', userId, job, fields, modifier);
   },
   remove: function (userId, job) {
     return false;
   }
 });
+
+JobsHelper = {
+};
 
