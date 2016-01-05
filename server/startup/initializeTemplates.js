@@ -2,306 +2,306 @@
 Initialization.initializeTemplates = function(companyInfo, userInfo) {
   var templateLibraryId = TemplateLibraries.findOne({"name": "Bid Model"});
 
-// If an existing templateLibrary is not found, create it.
-  if (!templateLibraryId) {
-
-    var templateLibrary = {
-      name: "Bid Model",
-      description: "Bid Model",
-      isReadOnly: true,
-      isPublic: true,
-      //imageUrl: templateLibrary.websiteUrl,
-      //ownerCompanyId:
-      createdBy: userInfo.systemAdminUserId,
-      templates: [],
-      templateRelationships: []
-    };
-
-    var templateCompany = {
-      id: Random.id(),
-      name: "Company",
-      description: "Company that provides service",
-      templateType: Constants.templateTypes.company,
-      templateSettings: [{
-        id: Random.id(), key: "IsVariableCollector", value: "true"
-      }]
-    };
-    templateLibrary.templates.push(templateCompany);
-
-    var templateCustomer = {
-      id: Random.id(),
-      name: "Customer",
-      description: "Customer requesting a bid",
-      templateType: Constants.templateTypes.customer,
-      templateSettings: [{
-        id: Random.id(), key: "IsVariableCollector", value: "true"
-      }]
-    };
-    templateLibrary.templates.push(templateCustomer);
-    templateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCompany.id,
-      childTemplateId: templateCustomer.id
-    });
-
-    var templateJob = {
-      id: Random.id(),
-      name: "Job",
-      description: "The job or project being bid",
-      templateType: Constants.templateTypes.job,
-      templateSettings: [{
-        id: Random.id(), key: "IsVariableCollector", value: "true"
-      }]
-    };
-    templateLibrary.templates.push(templateJob);
-    templateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCustomer.id,
-      childTemplateId: templateJob.id
-    });
-
-    var templateJobSubtotal = {
-      id: Random.id(),
-      name: "JobSubtotal",
-      description: "Job Subtotal",
-      templateType: Constants.templateTypes.function,
-      templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
-      }, {
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
-      }, {
-        id: Random.id(), key: "DisplayCaption", value: "Job Subtotal"
-      }, {
-        id: Random.id(), key: "VariableName", value: "jobSubtotal"
-      }, {
-        id: Random.id(), key: "Function", value: "SUM"
-      }, {
-        id: Random.id(), key: "ApplicableTemplateType", value: "Area"
-      }, {
-        id: Random.id(), key: "ParameterVariable", value: "areaSubtotal"
-      }]
-    };
-    templateLibrary.templates.push(templateJobSubtotal);
-    templateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateJob.id,
-      childTemplateId: templateJobSubtotal.id
-    });
-
-    var templateArea = {
-      id: Random.id(),
-      name: "Area",
-      description: "Area",
-      templateType: Constants.templateTypes.area,
-      templateSettings: [{
-        id: Random.id(), key: "IsVariableCollector", value: "true"
-      }, {
-        id: Random.id(), key: "VariableName", value: "area"
-      }]
-    };
-    templateLibrary.templates.push(templateArea);
-    templateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateJob.id,
-      childTemplateId: templateArea.id
-    });
-    templateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateArea.id,
-      childTemplateId: templateArea.id,
-      dependency: Constants.dependency.optionalExplicit
-    });
-
-    var templateAreaSubtotal = {
-      id: Random.id(),
-      name: "AreaSubtotal",
-      description: "Area Subtotal",
-      templateType: Constants.templateTypes.function,
-      templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
-      }, {
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
-      }, {
-        id: Random.id(), key: "DisplayCaption", value: "Area Subtotal"
-      }, {
-        id: Random.id(), key: "VariableName", value: "areaSubtotal"
-      }, {
-        id: Random.id(), key: "Function", value: "SUM"
-      }, {
-        id: Random.id(), key: "ApplicableTemplateType", value: "productSelection"
-      }, {
-        id: Random.id(), key: "ParameterVariable", value: "priceSubtotal"
-      }]
-    };
-    templateLibrary.templates.push(templateAreaSubtotal);
-    templateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateArea.id,
-      childTemplateId: templateAreaSubtotal.id
-    });
-
-    var templateProductSelection = {
-      id: Random.id(),
-      name: "ProductSelection",
-      description: "Product Selection",
-      templateType: Constants.templateTypes.productSelection,
-      templateSettings: [{
-        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableRow"
-      }, {
-        id: Random.id(), key: "IsVariableCollector", value: "true"
-      }]
-    };
-    templateLibrary.templates.push(templateProductSelection);
-    templateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateArea.id,
-      childTemplateId: templateProductSelection.id
-    });
-
-    var templateProduct = {
-      id: Random.id(),
-      name: "Product",
-      description: "Product",
-      templateType: Constants.templateTypes.baseProduct,
-      templateSettings: [{
-        id: Random.id(), key: "IsABaseTemplate", value: "true"
-      }, {
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.select
-      }, {
-        id: Random.id(), key: "DisplayCategory", value: "Primary"
-      }, {
-        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
-      }, {
-        id: Random.id(), key: "DisplayOrder", value: "2"
-      }, {
-        id: Random.id(), key: "VariableName", value: "product"
-      }]
-    };
-    templateLibrary.templates.push(templateProduct);
-    templateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateProductSelection.id,
-      childTemplateId: templateProduct.id
-    });
-
-    var templatePriceEach = {
-      id: Random.id(),
-      name: "PriceEach",
-      description: "Price Each",
-      templateType: Constants.templateTypes.calculation,
-      templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
-      }, {
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
-      }, {
-        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
-      }, {
-        id: Random.id(), key: "DisplayCaption", value: "Each"
-      }, {
-        id: Random.id(), key: "DisplayOrder", value: "99"
-      }, {
-        id: Random.id(), key: "VariableName", value: "priceEach"
-      }, {
-        id: Random.id(), key: "ValueFormula", value: "111111.11" //Ridiculous value that better be overridden
-      }, {
-        id: Random.id(), key: "ColumnWidth", value: "80"
-      }]
-    };
-    templateLibrary.templates.push(templatePriceEach);
-    templateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateProductSelection.id,
-      childTemplateId: templatePriceEach.id
-    });
-
-    var templatePriceTotal = {
-      id: Random.id(),
-      name: "PriceTotal",
-      description: "Price Total",
-      templateType: Constants.templateTypes.calculation,
-      templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
-      }, {
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
-      }, {
-        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
-      }, {
-        id: Random.id(), key: "DisplayCaption", value: "Total"
-      }, {
-        id: Random.id(), key: "DisplayOrder", value: "100"
-      }, {
-        id: Random.id(), key: "VariableName", value: "priceTotal"
-      }, {
-        id: Random.id(), key: "ValueFormula", value: "(priceEach * quantity)"
-      }, {
-        id: Random.id(), key: "ColumnWidth", value: "80"
-      }]
-    };
-    templateLibrary.templates.push(templatePriceTotal);
-    templateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateProductSelection.id,
-      childTemplateId: templatePriceTotal.id
-    });
-
-    var templateAreaColumn = {
-      id: Random.id(),
-      name: "AreaColumn",
-      description: "AreaColumn",
-      templateType: Constants.templateTypes.variableDisplay,
-      templateSettings: [{
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
-      }, {
-        id: Random.id(), key: "DisplayCategory", value: "Primary"
-      }, {
-        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
-      }, {
-        id: Random.id(), key: "DisplayCaption", value: "Area"
-      }, {
-        id: Random.id(), key: "DisplayOrder", value: "1"
-      }, {
-        id: Random.id(), key: "VariableToDisplay", value: "area"
-      }]
-    };
-    templateLibrary.templates.push(templateAreaColumn);
-    templateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateProductSelection.id,
-      childTemplateId: templateAreaColumn.id
-    });
-
-    var templateQuantity = {
-      id: Random.id(),
-      name: "Quantity",
-      description: "Quantity",
-      templateType: Constants.templateTypes.input,
-      templateSettings: [{
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
-      }, {
-        id: Random.id(), key: "DisplayCategory", value: "Primary"
-      }, {
-        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
-      }, {
-        id: Random.id(), key: "DisplayCaption", value: "Quantity"
-      }, {
-        id: Random.id(), key: "DisplayOrder", value: "33"
-      }, {
-        id: Random.id(), key: "VariableName", value: "quantity"
-      }, {
-        id: Random.id(), key: "DefaultValue", value: "1"
-      }, {
-        id: Random.id(), key: "ColumnWidth", value: "70"
-      }]
-    };
-    templateLibrary.templates.push(templateQuantity);
-    templateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateProductSelection.id,
-      childTemplateId: templateQuantity.id
-    });
-
-    templateLibraryId = TemplateLibraries.insert(templateLibrary);
+  if (templateLibraryId) {
+    return;
   }
+
+  var templateLibrary = {
+    name: "Bid Model",
+    description: "Bid Model",
+    isReadOnly: true,
+    isPublic: true,
+    //imageUrl: templateLibrary.websiteUrl,
+    //ownerCompanyId:
+    createdBy: userInfo.systemAdminUserId,
+    templates: [],
+    templateRelationships: []
+  };
+
+  var templateCompany = {
+    id: Random.id(),
+    name: "Company",
+    description: "Company that provides service",
+    templateType: Constants.templateTypes.company,
+    templateSettings: [{
+      id: Random.id(), key: "IsVariableCollector", value: "true"
+    }]
+  };
+  templateLibrary.templates.push(templateCompany);
+
+  var templateCustomer = {
+    id: Random.id(),
+    name: "Customer",
+    description: "Customer requesting a bid",
+    templateType: Constants.templateTypes.customer,
+    templateSettings: [{
+      id: Random.id(), key: "IsVariableCollector", value: "true"
+    }]
+  };
+  templateLibrary.templates.push(templateCustomer);
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: templateCompany.id,
+    childTemplateId: templateCustomer.id
+  });
+
+  var templateJob = {
+    id: Random.id(),
+    name: "Job",
+    description: "The job or project being bid",
+    templateType: Constants.templateTypes.job,
+    templateSettings: [{
+      id: Random.id(), key: "IsVariableCollector", value: "true"
+    }]
+  };
+  templateLibrary.templates.push(templateJob);
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: templateCustomer.id,
+    childTemplateId: templateJob.id
+  });
+
+  var templateJobSubtotal = {
+    id: Random.id(),
+    name: "JobSubtotal",
+    description: "Job Subtotal",
+    templateType: Constants.templateTypes.function,
+    templateSettings: [{
+      id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+    }, {
+      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
+    }, {
+      id: Random.id(), key: "DisplayCaption", value: "Job Subtotal"
+    }, {
+      id: Random.id(), key: "VariableName", value: "jobSubtotal"
+    }, {
+      id: Random.id(), key: "Function", value: "SUM"
+    }, {
+      id: Random.id(), key: "ApplicableTemplateType", value: "Area"
+    }, {
+      id: Random.id(), key: "ParameterVariable", value: "areaSubtotal"
+    }]
+  };
+  templateLibrary.templates.push(templateJobSubtotal);
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: templateJob.id,
+    childTemplateId: templateJobSubtotal.id
+  });
+
+  var templateArea = {
+    id: Random.id(),
+    name: "Area",
+    description: "Area",
+    templateType: Constants.templateTypes.area,
+    templateSettings: [{
+      id: Random.id(), key: "IsVariableCollector", value: "true"
+    }, {
+      id: Random.id(), key: "VariableName", value: "area"
+    }]
+  };
+  templateLibrary.templates.push(templateArea);
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: templateJob.id,
+    childTemplateId: templateArea.id
+  });
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: templateArea.id,
+    childTemplateId: templateArea.id,
+    dependency: Constants.dependency.optionalExplicit
+  });
+
+  var templateAreaSubtotal = {
+    id: Random.id(),
+    name: "AreaSubtotal",
+    description: "Area Subtotal",
+    templateType: Constants.templateTypes.function,
+    templateSettings: [{
+      id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+    }, {
+      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
+    }, {
+      id: Random.id(), key: "DisplayCaption", value: "Area Subtotal"
+    }, {
+      id: Random.id(), key: "VariableName", value: "areaSubtotal"
+    }, {
+      id: Random.id(), key: "Function", value: "SUM"
+    }, {
+      id: Random.id(), key: "ApplicableTemplateType", value: "productSelection"
+    }, {
+      id: Random.id(), key: "ParameterVariable", value: "priceSubtotal"
+    }]
+  };
+  templateLibrary.templates.push(templateAreaSubtotal);
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: templateArea.id,
+    childTemplateId: templateAreaSubtotal.id
+  });
+
+  var templateProductSelection = {
+    id: Random.id(),
+    name: "ProductSelection",
+    description: "Product Selection",
+    templateType: Constants.templateTypes.productSelection,
+    templateSettings: [{
+      id: Random.id(), key: "DisplayCategory", value: "PrimaryTableRow"
+    }, {
+      id: Random.id(), key: "IsVariableCollector", value: "true"
+    }]
+  };
+  templateLibrary.templates.push(templateProductSelection);
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: templateArea.id,
+    childTemplateId: templateProductSelection.id
+  });
+
+  var templateProduct = {
+    id: Random.id(),
+    name: "Product",
+    description: "Product",
+    templateType: Constants.templateTypes.baseProduct,
+    templateSettings: [{
+      id: Random.id(), key: "IsABaseTemplate", value: "true"
+    }, {
+      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.select
+    }, {
+      id: Random.id(), key: "DisplayCategory", value: "Primary"
+    }, {
+      id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+    }, {
+      id: Random.id(), key: "DisplayOrder", value: "2"
+    }, {
+      id: Random.id(), key: "VariableName", value: "product"
+    }]
+  };
+  templateLibrary.templates.push(templateProduct);
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: templateProductSelection.id,
+    childTemplateId: templateProduct.id
+  });
+
+  var templatePriceEach = {
+    id: Random.id(),
+    name: "PriceEach",
+    description: "Price Each",
+    templateType: Constants.templateTypes.calculation,
+    templateSettings: [{
+      id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+    }, {
+      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
+    }, {
+      id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+    }, {
+      id: Random.id(), key: "DisplayCaption", value: "Each"
+    }, {
+      id: Random.id(), key: "DisplayOrder", value: "99"
+    }, {
+      id: Random.id(), key: "VariableName", value: "priceEach"
+    }, {
+      id: Random.id(), key: "ValueFormula", value: "111111.11" //Ridiculous value that better be overridden
+    }, {
+      id: Random.id(), key: "ColumnWidth", value: "80"
+    }]
+  };
+  templateLibrary.templates.push(templatePriceEach);
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: templateProductSelection.id,
+    childTemplateId: templatePriceEach.id
+  });
+
+  var templatePriceTotal = {
+    id: Random.id(),
+    name: "PriceTotal",
+    description: "Price Total",
+    templateType: Constants.templateTypes.calculation,
+    templateSettings: [{
+      id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+    }, {
+      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
+    }, {
+      id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+    }, {
+      id: Random.id(), key: "DisplayCaption", value: "Total"
+    }, {
+      id: Random.id(), key: "DisplayOrder", value: "100"
+    }, {
+      id: Random.id(), key: "VariableName", value: "priceTotal"
+    }, {
+      id: Random.id(), key: "ValueFormula", value: "(priceEach * quantity)"
+    }, {
+      id: Random.id(), key: "ColumnWidth", value: "80"
+    }]
+  };
+  templateLibrary.templates.push(templatePriceTotal);
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: templateProductSelection.id,
+    childTemplateId: templatePriceTotal.id
+  });
+
+  var templateAreaColumn = {
+    id: Random.id(),
+    name: "AreaColumn",
+    description: "AreaColumn",
+    templateType: Constants.templateTypes.variableDisplay,
+    templateSettings: [{
+      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
+    }, {
+      id: Random.id(), key: "DisplayCategory", value: "Primary"
+    }, {
+      id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+    }, {
+      id: Random.id(), key: "DisplayCaption", value: "Area"
+    }, {
+      id: Random.id(), key: "DisplayOrder", value: "1"
+    }, {
+      id: Random.id(), key: "VariableToDisplay", value: "area"
+    }]
+  };
+  templateLibrary.templates.push(templateAreaColumn);
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: templateProductSelection.id,
+    childTemplateId: templateAreaColumn.id
+  });
+
+  var templateQuantity = {
+    id: Random.id(),
+    name: "Quantity",
+    description: "Quantity",
+    templateType: Constants.templateTypes.input,
+    templateSettings: [{
+      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
+    }, {
+      id: Random.id(), key: "DisplayCategory", value: "Primary"
+    }, {
+      id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+    }, {
+      id: Random.id(), key: "DisplayCaption", value: "Quantity"
+    }, {
+      id: Random.id(), key: "DisplayOrder", value: "33"
+    }, {
+      id: Random.id(), key: "VariableName", value: "quantity"
+    }, {
+      id: Random.id(), key: "DefaultValue", value: "1"
+    }, {
+      id: Random.id(), key: "ColumnWidth", value: "70"
+    }]
+  };
+  templateLibrary.templates.push(templateQuantity);
+  templateLibrary.templateRelationships.push({
+    id: Random.id(),
+    parentTemplateId: templateProductSelection.id,
+    childTemplateId: templateQuantity.id
+  });
+
+  templateLibraryId = TemplateLibraries.insert(templateLibrary);
 
   _.each(companyInfo.companies, function (company) {
     var companyId = company._id;

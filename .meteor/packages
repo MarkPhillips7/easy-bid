@@ -4,6 +4,7 @@
 # 'meteor add' and 'meteor remove' will edit this file for you,
 # but you can also edit it by hand.
 
+angular
 angularui:angular-ui-router
 accounts-password
 tmeasday:publish-counts
@@ -17,7 +18,6 @@ random
 
 
 audit-argument-checks
-check
 underscore
 vivekkatta:meteor-angular-formly
 themeteorchef:bert
@@ -33,6 +33,7 @@ standard-minifiers
 meteor-base
 mobile-experience
 mongo
+check
 session
 jquery
 tracker
@@ -43,7 +44,6 @@ spacebars
 
 
 npm-container
-angular
 angularutils:pagination
 urigo:angular-blaze-template
 angularui:angular-ui-bootstrap
