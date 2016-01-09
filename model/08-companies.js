@@ -5,6 +5,17 @@ Schema.Company = new SimpleSchema({
     type: String,
     regEx: /^[a-z0-9A-z .]{3,30}$/
   },
+  nameLower: {
+    type: String,
+    autoValue: function() {
+      let name = this.field("name");
+      if (name.isSet) {
+        return name.value.toLowerCase();
+      } else {
+        this.unset();
+      }
+    }
+  },
   address: {
     type: Schema.Address,
     optional: true
@@ -25,11 +36,13 @@ Schema.Company = new SimpleSchema({
   },
   createdAt: {
     type: Date,
-    autoValue: function () {
+    autoValue: function() {
       if (this.isInsert) {
         return new Date;
       } else if (this.isUpsert) {
-        return {$setOnInsert: new Date};
+        return {
+          $setOnInsert: new Date
+        };
       } else {
         this.unset();
       }
@@ -50,23 +63,27 @@ Schema.Company = new SimpleSchema({
 Companies.attachSchema(Schema.Company);
 
 Companies.allow({
-  insert: function (userId, company) {
-    if (!Roles.userIsInRole(userId, [Config.roles.systemAdmin, Config.roles.manageUsers, Config.roles.user], Roles.GLOBAL_GROUP)) {
+  insert: function(userId, company) {
+    if (!Roles.userIsInRole(userId, [Config.roles.systemAdmin, Config.roles
+        .manageUsers, Config.roles.user
+      ], Roles.GLOBAL_GROUP)) {
       return false;
     }
 
     return true;
   },
-  update: function (userId, company, fields, modifier) {
-    if (!Roles.userIsInRole(userId, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
-        && !Roles.userIsInRole(userId, [Config.roles.manageUsers], company._id)) {
+  update: function(userId, company, fields, modifier) {
+    if (!Roles.userIsInRole(userId, [Config.roles.systemAdmin, Config.roles
+        .manageUsers
+      ], Roles.GLOBAL_GROUP) && !Roles.userIsInRole(userId, [Config.roles
+        .manageUsers
+      ], company._id)) {
       return false;
     }
 
     return true;
   },
-  remove: function (userId, company) {
+  remove: function(userId, company) {
     return false;
   }
 });
-

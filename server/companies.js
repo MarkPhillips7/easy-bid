@@ -1,50 +1,52 @@
-Meteor.publish("companies", function (options, searchString) {
+Meteor.publish("companies", function(options, searchString) {
   check(options, Match.Any);
   check(searchString, Match.Any);
 
-  if (!this.userId)
+  if (!this.userId) {
     return null;
-
-  if (searchString == null)
-    searchString = '';
-
-  var loggedInUser = Meteor.users.findOne(this.userId);
-
-  if (!loggedInUser)
-      return null;
-
-  if (Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers, Config.roles.systemAdmin], Roles.GLOBAL_GROUP)) {
-    Counts.publish(this, 'numberOfCompanies', Companies.find({
-      'name': {'$regex': '.*' + searchString || '' + '.*', '$options': 'i'}
-    },{
-      noReady: true
-    }));
-
-    return Companies.find({
-      'name': {'$regex': '.*' + searchString || '' + '.*', '$options': 'i'}
-    }, options);
   }
 
-  var companiesRelatedToUser = Roles.getGroupsForUser(loggedInUser);
+  if (searchString == null) {
+    searchString = '';
+  }
 
-  //Add something like this for search
-  //'name' : { '$regex' : '.*' + searchString || '' + '.*', '$options' : 'i' },
+  let loggedInUser = Meteor.users.findOne(this.userId);
 
-  Counts.publish(this, 'numberOfCompanies', Companies.find({
-    $and : [{
-      'name': {'$regex': '.*' + searchString || '' + '.*', '$options': 'i'}
-    }, {
-      'name' : { $in: companiesRelatedToUser }
-    }]
-  },{
+  if (!loggedInUser) {
+    return null;
+  }
+
+  let selector;
+
+  if (Roles.userIsInRole(loggedInUser, [
+      Config.roles.manageUsers,
+      Config.roles.systemAdmin
+    ], Roles.GLOBAL_GROUP)) {
+    selector = {
+      name: {
+        '$regex': '.*' + searchString || '' + '.*',
+        '$options': 'i'
+      }
+    };
+  } else {
+    const companiesRelatedToUser = Roles.getGroupsForUser(loggedInUser);
+    selector = {
+      $and: [{
+        'name': {
+          '$regex': '.*' + searchString || '' + '.*',
+          '$options': 'i'
+        }
+      }, {
+        '_id': {
+          $in: companiesRelatedToUser
+        }
+      }]
+    }
+  }
+
+  Counts.publish(this, 'numberOfCompanies', Companies.find(selector), {
     noReady: true
-  }));
+  });
 
-  return Companies.find({
-    $and : [{
-      'name': {'$regex': '.*' + searchString || '' + '.*', '$options': 'i'}
-    }, {
-      'name' : { $in: companiesRelatedToUser }
-    }]
-  },options);
+  return Companies.find(selector, options);
 });
