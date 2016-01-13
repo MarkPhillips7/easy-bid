@@ -1,4 +1,17 @@
 Meteor.methods({
+  companyIdsRelatedToUser: function (user) {
+    debugger
+    check(user, String);
+
+    let companiesRelatedToUser = Roles.getGroupsForUser(user);
+    return Companies.find(
+      {
+      '_id' : { $in: companiesRelatedToUser }
+      }, {
+        _id: 1
+      }
+    ).map(function (company) {return company._id;});
+  },
   checkUserPlan: function (user) {
     if (user == null){
       return false;
@@ -6,22 +19,22 @@ Meteor.methods({
 
     check(user, String);
 
-    var getUser = Meteor.users.findOne({"_id": user}, {fields: {"profile.subscription": 1}});
-    var subscription = getUser.profile.subscription;
+    let getUser = Meteor.users.findOne({"_id": user}, {fields: {"profile.subscription": 1}});
+    let subscription = getUser.profile.subscription;
 
     if (!subscription || !subscription.plan) {// || !currentPlan.amount){
       return false;
     }
 
-    var availablePlans = Meteor.settings.public.plans;
-    var currentPlan = _.find(availablePlans, function (plan) {
+    let availablePlans = Meteor.settings.public.plans;
+    let currentPlan = _.find(availablePlans, function (plan) {
       return plan.name == subscription.plan.name;
     });
-    var limit = currentPlan.limit;
-    //var amount = currentPlan.amount.usd;
+    let limit = currentPlan.limit;
+    //let amount = currentPlan.amount.usd;
 
     if (subscription && limit) {
-      var planData = {
+      let planData = {
         subscription: subscription,
         limit: limit, //,// > 1 ? limit + " lists" : limit + " list",
         amount: 29.99

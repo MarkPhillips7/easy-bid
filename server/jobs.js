@@ -25,10 +25,7 @@ Meteor.publish("jobs", function (options, searchString) {
     }, options);
   }
 
-  var companiesRelatedToUser = Roles.getGroupsForUser(loggedInUser);
-  var companyIdsRelatedToUser = Companies.find({
-    'name' : { $in: companiesRelatedToUser }
-  }, { _id: 1 }).map(function (company) {return company._id;});
+  var companiesRelatedToUser = Meteor.call('companyIdsRelatedToUser', loggedInUser);
 
   //Add something like this for search
   //'name' : { '$regex' : '.*' + searchString || '' + '.*', '$options' : 'i' },

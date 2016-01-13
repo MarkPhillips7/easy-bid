@@ -1,0 +1,52 @@
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="alert alert-info" ng-hide="customers.isLoggedIn">
+        Log in to view customers!
+      </div>
+      <form ng-show="customers.isLoggedIn">
+        <button        ng-click=        "customers.addCustomer()"        class="btn">Add new customer
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+      <h1>customers:</h1>
+      <form class="form-inline search-form">
+        <div class="form-group">
+          <label class="sr-only" for="search">Search</label>
+          <div class="input-group">
+            <div class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>
+            <input type="text" ng-model="customers.searchText" pliaceholder="Search" id="search" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="sr-only" for="sort-order">Sort Order</label>
+          <select ng-model="customers.orderProperty" class="form-control">
+            <option value="1">Ascending</option>
+            <option value="-1">Descending</option>
+          </select>
+        </div>
+      </form>
+    </div>
+  </div>
+  <ul class="list-group">
+    <li dir-paginate="customer in customers.customers | itemsPerPage: customers.perPage" total-items="customers.customersCount.count" class="list-group-item">
+      <div class="row">
+        <div class="col-sm-8">
+          <h2>
+            <a href="/customers/{{customer._id}}">
+              {{customer.profile.firstName}} {{customer.profile.lastName}}
+            </a>
+          </h2>
+        </div>
+        <div class="col-sm-4">
+          <a ng-click="customers.remove(customer)" class="close" ng-show="customers.canRemovecustomer(customer)">&times;</a>
+        </div>
+      </div>
+    </li>
+  </ul>
+  <dir-pagination-controls on-page-change="customers.pageChanged(newPageNumber)"></dir-pagination-controls>
+</div>

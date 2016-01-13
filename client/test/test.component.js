@@ -8,9 +8,7 @@ SetModule('app');
   selector: 'test'
 })
 @View({
-  templateUrl: () => {
-    return 'client/test/views/test.html';
-  }
+  templateUrl: () => 'client/test/views/test.html'
 })
 @MeteorReactive
 @LocalInjectables
@@ -46,7 +44,7 @@ class test {
   _customersCollection() {
     let customerRole = {};
     const roleGroup = this.companies &&
-      this.companies[0] &&
+      this.companies.length &&
       'roles.' + this.companies[0]._id;
     customerRole[roleGroup] = 'customer';
     return Meteor.users.find(customerRole);
@@ -55,7 +53,7 @@ class test {
   _customersSubscription() {
     return [
       this.getReactively('companies') &&
-        this.getReactively('companies')[0] &&
+        this.getReactively('companies').length &&
         this.getReactively('companies')[0]._id,
       null
     ]
@@ -64,7 +62,7 @@ class test {
   _coworkersCollection() {
     let coworkerRole = {};
     const roleGroup = this.companies &&
-      this.companies[0] &&
+      this.companies.length &&
       'roles.' + this.companies[0]._id;
     coworkerRole[roleGroup] = {
       $in: ['user', 'manage-templates', 'manage-users']
@@ -75,7 +73,7 @@ class test {
   _coworkersSubscription() {
     return [
       this.getReactively('companies') &&
-        this.getReactively('companies')[0] &&
+        this.getReactively('companies').length &&
         this.getReactively('companies')[0]._id,
       null
     ];

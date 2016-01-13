@@ -19,6 +19,10 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         url: '/test',
         template: '<test></test>'
       })
+      .state('customers', {
+        url: '/customers?c&u',
+        template: '<customers></customers>'
+      })
       .state('billing', {
         url: '/billing',
         templateUrl: 'client/account/views/billing.html',
