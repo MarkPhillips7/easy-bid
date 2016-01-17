@@ -22,6 +22,18 @@ Meteor.publish("customers", function(companyId, searchString) {
     searchString, "numberOfCustomers");
 });
 
+Meteor.publish("user", function (userId) {
+  check(userId, String);
+  const options = {
+    fields: {
+      emails: 1,
+      profile: 1,
+      roles: 1
+    }
+  };
+  return Meteor.users.find({ _id: userId }, options);
+});
+
 function usersRelatedToCompany(userId, roles, companyId, searchString,
   countPublishName) {
   check(userId, Match.OneOf(String, null));
@@ -37,7 +49,7 @@ function usersRelatedToCompany(userId, roles, companyId, searchString,
     searchString = '';
   }
 
-  let loggedInUser = Meteor.users.findOne(userId);
+  const loggedInUser = Meteor.users.findOne(userId);
 
   if (!loggedInUser)
     return null;
@@ -54,13 +66,13 @@ function usersRelatedToCompany(userId, roles, companyId, searchString,
     return null;
   }
 
-  let userIds = [];
+  const userIds = [];
   Roles.getUsersInRole(roles, companyId)
     .forEach(function(user) {
       userIds.push(user._id);
     });
 
-  let selector = {
+  const selector = {
     '$or': [{
       'profile.firstName': {
         '$regex': '.*' + searchString || '' + '.*',
@@ -77,7 +89,7 @@ function usersRelatedToCompany(userId, roles, companyId, searchString,
     }
   };
 
-  let options = {
+  const options = {
     fields: {
       emails: 1,
       profile: 1,

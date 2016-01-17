@@ -100,6 +100,14 @@ Initialization.initializeUsers = function (companyInfo) {
     email: "bob@anywhere.com",
     phoneNumber: "4345551212",
     notes: "Can also be reached at 123-456-7890",
+    address: {
+      addressLines:
+`7 Somewhere Road
+Suite 2`,
+      city: "San Francisco",
+      state: "CA",
+      zipCode: "12345"
+    },
     rolesByGroups: [{
       group: companyInfo.weMakeCabinets._id,
       roles: [Config.roles.customer]

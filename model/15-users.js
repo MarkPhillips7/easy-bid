@@ -96,6 +96,19 @@ Schema.UserProfile = new SimpleSchema({
     regEx: /^[a-zA-Z]{2,25}$/,
     optional: true
   },
+  nameLower: {
+    type: String,
+    autoValue: function() {
+      const firstName = this.field("firstName");
+      const lastName = this.field("lastName");
+      if (firstName.isSet && lastName.isSet) {
+        return `${firstName.value.toLowerCase()} ${lastName.value.toLowerCase()}`;
+      } else {
+        this.unset();
+      }
+    },
+    optional: true
+  },
   address: {
     type: Schema.Address,
     optional: true

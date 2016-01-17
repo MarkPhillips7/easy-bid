@@ -1,3 +1,8 @@
+Meteor.publish("company", function (companyId) {
+  check(companyId, String);
+  return Companies.find({ _id: companyId });
+});
+
 Meteor.publish("companies", function(options, searchString) {
   check(options, Match.Any);
   check(searchString, Match.Any);

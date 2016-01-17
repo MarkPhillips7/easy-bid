@@ -34,7 +34,7 @@ class customers {
 
     this.initializeCompanyId();
 
-    this.subscribe('company');
+    this.subscribe('company', this._companySubscription.bind(this));
     this.subscribe('customers', this._customersSubscription.bind(this));
   }
 
@@ -66,6 +66,12 @@ class customers {
   _company() {
     // console.log(`about to get companyIdToFilterBy ${this.companyIdToFilterBy}`);
     return Companies.findOne({ _id: this.getReactively('companyIdToFilterBy') });
+  }
+
+  _companySubscription() {
+    return [
+      this.getReactively('companyIdToFilterBy')
+    ]
   }
 
   _customersCollection() {

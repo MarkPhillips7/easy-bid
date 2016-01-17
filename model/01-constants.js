@@ -1,8 +1,11 @@
-Constants.usageModes = {
-  browse:"Browse", //don't even see buttons for editing or deleting
-  classicEdit:"Classic Edit", //must choose to save before changes take effect
-  autoSave:"Auto Save" //updates take effect immediately
+Constants.dependency = {
+  required:"Required",
+  optionalAutomatic:"OptionalAutomatic",//Automatically selected
+  optionalExplicit:"OptionalExplicit",//must be explicitly chosen
+  optionalOverride:"OptionalOverride"//Assumes the same setting has a default set by a parent
 };
+
+Constants.noEmailYet = "noemailyet";
 
 Constants.recordActions = {
   add:"Add",
@@ -12,13 +15,6 @@ Constants.recordActions = {
   delete:"Delete",
   save:"Save",
   cancel:"Cancel"
-};
-
-Constants.dependency = {
-  required:"Required",
-  optionalAutomatic:"OptionalAutomatic",//Automatically selected
-  optionalExplicit:"OptionalExplicit",//must be explicitly chosen
-  optionalOverride:"OptionalOverride"//Assumes the same setting has a default set by a parent
 };
 
 Constants.relationToItem = {
@@ -92,6 +88,12 @@ Constants.templateTypes = {
   specification: "Specification",
   undefined: "Undefined",
   variableDisplay: "VariableDisplay"
+};
+
+Constants.usageModes = {
+  browse:"Browse", //don't even see buttons for editing or deleting
+  classicEdit:"Classic Edit", //must choose to save before changes take effect
+  autoSave:"Auto Save" //updates take effect immediately
 };
 
 Constants.valueSources = {

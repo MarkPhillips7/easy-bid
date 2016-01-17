@@ -1,0 +1,66 @@
+<div class="container">
+  <h2>Customer - {{customer.customer.firstName}} {{customer.customer.lastName}}</h2>
+  <div class="row">
+    <form class="form-horizontal" role="form">
+      <div class="form-group">
+        <label class="col-sm-2 control-label" for="CustomerFirstName">First Name</label>
+        <div class="col-sm-10">
+          <input class="form-control" type="text" id="CustomerFirstName" ng-model="customer.customer.firstName" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label" for="CustomerLastName">Last Name</label>
+        <div class="col-sm-10">
+          <input class="form-control" type="text" id="CustomerLastName" ng-model="customer.customer.lastName" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label" for="CustomerPrimaryAddressLines">Address</label>
+        <div class="col-sm-10">
+          <textarea class="form-control" rows="3" id="CustomerPrimaryAddressLines" ng-model="customer.customer.address.addressLines">
+          </textarea>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label" for="CustomerPrimaryAddressCity"></label>
+        <div class="col-sm-2">
+          <input type="text" class="form-control" id="CustomerPrimaryAddressCity" placeholder="City" ng-model="customer.customer.address.city">
+        </div>
+        <div class="col-sm-1">
+          <input type="text" class="form-control" id="CustomerPrimaryAddressState" placeholder="State" ng-model="customer.customer.address.state">
+        </div>
+        <div class="col-sm-2">
+          <input type="text" class="form-control" id="CustomerPrimaryAddressZipCode" placeholder="Zip Code" ng-model="customer.customer.address.zipCode">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label" for="CustomerEmailAddress">Email Address</label>
+        <div class="col-sm-10">
+          <input class="form-control" type="text" id="CustomerEmailAddress"
+            ng-disabled="!customer.isNew" ng-model="customer.customer.emailAddress" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label" for="CustomerPhoneNumber">Phone Number</label>
+        <div class="col-sm-10">
+          <input class="form-control" type="text" id="CustomerPhoneNumber" ng-model="customer.customer.phoneNumber" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label" for="CustomerNotes">Notes</label>
+        <div class="col-sm-10">
+          <textarea class="form-control" rows="3" id="CustomerNotes" ng-model="customer.customer.notes">
+          </textarea>
+        </div>
+      </div>
+      <div class="form-group">
+        <input type="submit" class="btn btn-success"
+               ng-click="customer.submit()" ng-disabled="!customer.isDirty || customer.saving"
+               value="{{customer.isNew ? 'Create New Customer' : 'Save'}}">
+        <input type="button" class="btn btn-danger"
+               ng-click="customer.cancelSave()" ng-disabled="customer.saving"
+               value="Cancel">
+      </div>
+    </form>
+  </div>
+</div>
