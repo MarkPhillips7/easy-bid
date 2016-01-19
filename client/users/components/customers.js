@@ -20,7 +20,7 @@ class customers {
     this.perPage = 3;
     this.page = 1;
     this.sort = {
-      name: 1
+      'profile.nameLower': 1
     };
     this.orderProperty = '1';
     this.searchText = '';
@@ -29,7 +29,8 @@ class customers {
       company: this._company,
       currentUserId: this._currentUserId,
       customers: this._customersCollection,
-      isLoggedIn: this._isLoggedIn
+      customersCount: this._customersCount,
+      isLoggedIn: this._isLoggedIn,
     });
 
     this.initializeCompanyId();
@@ -37,6 +38,16 @@ class customers {
     this.subscribe('company', this._companySubscription.bind(this));
     this.subscribe('customers', this._customersSubscription.bind(this));
   }
+
+  pageChanged(newPage) {
+    this.page = newPage;
+  };
+
+  updateSort() {
+    this.sort = {
+      'profile.nameLower': parseInt(this.orderProperty)
+    }
+  };
 
   initializeCompanyId() {
     let self = this;
@@ -81,14 +92,27 @@ class customers {
       const roleGroup = 'roles.' + companyIdToFilterBy;
       customerRole[roleGroup] = 'customer';
       // console.log(`about to get users for ${roleGroup} customers`);
-      return Meteor.users.find(customerRole);
+      return Meteor.users.find(customerRole,
+        {
+          sort: this.getReactively('sort')
+        }
+      );
     }
+  }
+
+  _customersCount() {
+    return Counts.get('numberOfCustomers');
   }
 
   _customersSubscription() {
     // console.log(`about to get customersSubscription for company ${this.companyIdToFilterBy} searching for '${this.searchText}'`);
     return [
       this.getReactively('companyIdToFilterBy'),
+      {
+        limit: parseInt(this.perPage),
+        skip: parseInt((this.getReactively('page') - 1) * this.perPage),
+        sort: this.getReactively('sort')
+      },
       this.getReactively('searchText')
     ]
   }

@@ -21,21 +21,61 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
       })
       .state('customer', {
         url: '/customers/:userId?c',
-        template: '<customer></customer>'
+        template: '<customer></customer>',
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
+        }
       })
       .state('customers', {
         url: '/customers?c&u',
-        template: '<customers></customers>'
+        template: '<customers></customers>',
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
+        }
       })
       .state('billing', {
         url: '/billing',
         templateUrl: 'client/account/views/billing.html',
-        controller: 'billing'
+        controller: 'billing',
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
+        }
       })
       .state('billingPlan', {
         url: '/billing/plan',
         templateUrl: 'client/account/views/billing-plan.html',
-        controller: 'billing'
+        controller: 'billing',
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
+        }
       })
       .state('signup', {
         url: '/signup',
@@ -57,24 +97,44 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         templateUrl: 'client/parties/views/party-details.html',
         controller: 'PartyDetailsCtrl',
         resolve: {
-          "currentUser": ["$meteor", function ($meteor) {
-            return $meteor.requireUser();
-          }]
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
         }
       })
       .state('companies', {
         url: '/companies',
         templateUrl: 'client/companies/views/company-list.html',
-        controller: 'companies'
+        controller: 'companies',
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
+        }
       })
       .state('companyDetails', {
         url: '/companies/:companyId',
         templateUrl: 'client/companies/views/company-details.html',
         controller: 'company',
         resolve: {
-          "currentUser": ["$meteor", function ($meteor) {
-            return $meteor.requireUser();
-          }]
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
         }
       })
       .state('templateLibraryList', {
@@ -82,9 +142,14 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         templateUrl: 'client/template-libraries/views/template-library-list.html',
         controller: 'templateLibraryList',
         resolve: {
-          "currentUser": ["$meteor", function ($meteor) {
-            return $meteor.requireUser();
-          }]
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
         }
       })
       .state('templateLibraryDetails', {
@@ -94,9 +159,14 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         controller: 'templateLibraryDetails',
         controllerAs: 'vm',
         resolve: {
-          "currentUser": ["$meteor", function ($meteor) {
-            return $meteor.requireUser();
-          }]
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
         }
       })
       .state('templateLibraryDetails.item', {
@@ -115,6 +185,16 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
           },
           "right@templateLibraryDetails": {
             templateUrl: 'client/template-libraries/views/template-library-variables.html'
+          }
+        },
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
           }
         }
       });

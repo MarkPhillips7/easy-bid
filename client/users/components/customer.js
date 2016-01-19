@@ -94,6 +94,10 @@ class customer {
     return this.savedCustomer && Object.assign({}, this.savedCustomer);
   }
 
+  cancelSave() {
+    this.$state.go('customers', {c: this.companyId})
+  }
+
   submit() {
     const self = this;
     if (this.isNew) {

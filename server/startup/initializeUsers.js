@@ -147,7 +147,7 @@ Suite 2`,
         email: userEmail,
         password: userPassword,
         profile: {
-          //name: user.firstName + " " + user.lastName
+          nameLower: user.firstName.toLowerCase() + " " + user.lastName.toLowerCase(),
           firstName: user.firstName,
           lastName: user.lastName,
           address: user.address,

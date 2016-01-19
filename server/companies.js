@@ -1,6 +1,6 @@
 Meteor.publish("company", function (companyId) {
-  check(companyId, String);
-  return Companies.find({ _id: companyId });
+  check(companyId, Match.OneOf(String, null));
+  return companyId && Companies.find({ _id: companyId });
 });
 
 Meteor.publish("companies", function(options, searchString) {

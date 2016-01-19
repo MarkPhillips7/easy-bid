@@ -98,15 +98,18 @@ Schema.UserProfile = new SimpleSchema({
   },
   nameLower: {
     type: String,
-    autoValue: function() {
-      const firstName = this.field("firstName");
-      const lastName = this.field("lastName");
-      if (firstName.isSet && lastName.isSet) {
-        return `${firstName.value.toLowerCase()} ${lastName.value.toLowerCase()}`;
-      } else {
-        this.unset();
-      }
-    },
+    // For some reason firstName.isSet and lastName.isSet are always false (https://github.com/aldeed/meteor-collection2/issues/247)
+    // autoValue: function() {
+    //   const firstName = this.field("firstName");
+    //   const lastName = this.field("lastName");
+    //   if (firstName.isSet && lastName.isSet) {
+    //     const firstNameLower = firstName.value.toLowerCase();
+    //     const lastNameLower = lastName.value.toLowerCase();
+    //     return `${firstNameLower} ${lastNameLower}`;
+    //   } else {
+    //     this.unset();
+    //   }
+    // },
     optional: true
   },
   address: {

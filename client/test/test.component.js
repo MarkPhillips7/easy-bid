@@ -55,7 +55,7 @@ class test {
       this.getReactively('companies') &&
         this.getReactively('companies').length &&
         this.getReactively('companies')[0]._id,
-      null
+      null, null
     ]
   }
 
@@ -75,7 +75,7 @@ class test {
       this.getReactively('companies') &&
         this.getReactively('companies').length &&
         this.getReactively('companies')[0]._id,
-      null
+      null, null
     ];
   }
 }

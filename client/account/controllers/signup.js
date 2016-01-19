@@ -104,8 +104,8 @@ angular.module("app").controller("signup", ['$scope', '$meteor', '$rootScope', '
     function submit() {
       vm.creatingTrialClient = true;
       var dtoClient = {
-        name: vm.client.firstName,
-        name: vm.client.lastName,
+        firstName: vm.client.firstName,
+        lastName: vm.client.lastName,
         emailAddress: vm.client.email,
         password: vm.client.password,
         plan: vm.client.planName,

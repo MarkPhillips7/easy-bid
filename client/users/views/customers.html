@@ -24,7 +24,7 @@
         </div>
         <div class="form-group">
           <label class="sr-only" for="sort-order">Sort Order</label>
-          <select ng-model="customers.orderProperty" class="form-control">
+          <select ng-model="customers.orderProperty" class="form-control" ng-change="customers.updateSort()">
             <option value="1">Ascending</option>
             <option value="-1">Descending</option>
           </select>
@@ -33,7 +33,7 @@
     </div>
   </div>
   <ul class="list-group">
-    <li dir-paginate="customer in customers.customers | itemsPerPage: customers.perPage" total-items="customers.customersCount.count" class="list-group-item">
+    <li dir-paginate="customer in customers.customers | itemsPerPage: customers.perPage" total-items="customers.customersCount" class="list-group-item">
       <div class="row">
         <div class="col-sm-8">
           <h2>

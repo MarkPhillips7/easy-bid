@@ -1,4 +1,4 @@
-Meteor.publish("coworkers", function(companyId, searchString) {
+Meteor.publish("coworkers", function(companyId, options, searchString) {
   check(companyId, Match.OneOf(String, null));
   check(searchString, Match.Any);
 
@@ -9,17 +9,17 @@ Meteor.publish("coworkers", function(companyId, searchString) {
   ];
 
   return usersRelatedToCompany.bind(this)(this.userId, roles, companyId,
-    searchString, "numberOfCoworkers");
+    options, searchString, "numberOfCoworkers");
 });
 
-Meteor.publish("customers", function(companyId, searchString) {
+Meteor.publish("customers", function(companyId, options, searchString) {
   check(companyId, Match.OneOf(String, null));
   check(searchString, Match.Any);
 
   const roles = [Config.roles.customer];
 
   return usersRelatedToCompany.bind(this)(this.userId, roles, companyId,
-    searchString, "numberOfCustomers");
+    options, searchString, "numberOfCustomers");
 });
 
 Meteor.publish("user", function (userId) {
@@ -34,7 +34,7 @@ Meteor.publish("user", function (userId) {
   return Meteor.users.find({ _id: userId }, options);
 });
 
-function usersRelatedToCompany(userId, roles, companyId, searchString,
+function usersRelatedToCompany(userId, roles, companyId, options, searchString,
   countPublishName) {
   check(userId, Match.OneOf(String, null));
   check(roles, [String]);
@@ -89,17 +89,17 @@ function usersRelatedToCompany(userId, roles, companyId, searchString,
     }
   };
 
-  const options = {
+  const _options = Object.assign(options || {}, {
     fields: {
       emails: 1,
       profile: 1,
       roles: 1
     }
-  };
+  });
 
   Counts.publish(this, countPublishName, Meteor.users.find(selector), {
     noReady: true
   });
 
-  return Meteor.users.find(selector, options);
+  return Meteor.users.find(selector, _options);
 }

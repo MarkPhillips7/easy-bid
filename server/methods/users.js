@@ -50,7 +50,7 @@ Meteor.methods({
         email: userEmail,
         password: userPassword,
         profile: {
-          //name: user.firstName + " " + user.lastName
+          nameLower: user.firstName.toLowerCase() + " " + user.lastName.toLowerCase(),
           firstName: user.firstName,
           lastName: user.lastName,
           address: user.address,
@@ -173,46 +173,46 @@ Meteor.methods({
 
     const user =  Meteor.users.findOne(userId);
     if (user) {
-      let roleInfo;
-      if (user.rolesByGroups && user.rolesByGroups.length > 0) {
-        roleInfo = _.find(user.rolesByGroups, function (roleInfo) {
-          return roleInfo.group === companyId;
-        });
+      let roles;
+      const rolesForCompany = user.roles && user.roles[companyId];
 
-        if (_.some(roleInfo.roles, function (_role) {
+      if (rolesForCompany) {
+        if (_.some(rolesForCompany, function (_role) {
           return _role === role;
         })) {
           // user already has role, so just return
-          console.log(`${user.firstName} ${user.lastName} already had ${role} role`);
+          console.log(`${user.profile.firstName} ${user.profile.lastName} already had ${role} role`);
           return;
         } else {
-          roleInfo.roles.push(role);
+          roles = [ ...rolesForCompany, role];
         }
       }
-      if (!roleInfo) {
-        roleInfo = {
-          roles: [role],
-          group: companyId
-        }
+
+      if (!roles) {
+        roles = [role];
       }
-      Roles.setUserRoles(userId, roleInfo.roles, roleInfo.group);
+
+      Roles.setUserRoles(userId, roles, companyId);
       console.log(`${user.profile.firstName} ${user.profile.lastName} was given ${role} role`);
     } else {
       throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
     }
   },
   companyIdsRelatedToUser: function (user) {
-    debugger
-    check(user, String);
+    check(user, Match.OneOf(String, null));
 
-    let companiesRelatedToUser = Roles.getGroupsForUser(user);
-    return Companies.find(
-      {
-        '_id' : { $in: companiesRelatedToUser }
-      }, {
-        _id: 1
-      }
-    ).map(function (company) {return company._id;});
+    if (user) {
+      let companiesRelatedToUser = Roles.getGroupsForUser(user);
+      return Companies.find(
+        {
+          '_id' : { $in: companiesRelatedToUser }
+        }, {
+          _id: 1
+        }
+      ).map(function (company) {return company._id;});
+    }
+
+    return [];
   },
   checkUserPlan: function (user) {
     if (user == null){
