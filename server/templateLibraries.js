@@ -25,13 +25,10 @@ Meteor.publish("templateLibraries", function (options, searchString) {
     }, options);
   }
 
-  var companiesRelatedToUser = Roles.getGroupsForUser(loggedInUser);
-  var companyIdsRelatedToUser = Companies.find({
-    'name' : { $in: companiesRelatedToUser }
-    }, { _id: 1 }).map(function (company) {return company._id;});
-
-  //Add something like this for search
-  //'name' : { '$regex' : '.*' + searchString || '' + '.*', '$options' : 'i' },
+  const groupsRelatedToUser = Roles.getGroupsForUser(loggedInUser);
+  const companyIdsRelatedToUser = Companies.find({
+    '_id' : { $in: groupsRelatedToUser }
+  }, { fields: { 'name': 1 } }).map(function (company) {return company._id;});
 
   Counts.publish(this, 'numberOfTemplateLibraries', TemplateLibraries.find({
     $and : [{
