@@ -21,7 +21,6 @@ audit-argument-checks
 underscore
 vivekkatta:meteor-angular-formly
 themeteorchef:bert
-tonekk:angular-moment
 alanning:roles
 msavin:mongol
 aldeed:collection2
@@ -49,3 +48,4 @@ urigo:angular-blaze-template
 angularui:angular-ui-bootstrap
 dotansimha:accounts-ui-angular
 pbastowski:angular2-now
+jasonaibrahim:angular-moment

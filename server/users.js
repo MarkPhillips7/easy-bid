@@ -2,13 +2,13 @@ Meteor.publish("coworkers", function(companyId, options, searchString) {
   check(companyId, Match.OneOf(String, null));
   check(searchString, Match.Any);
 
-  const roles = [
+  const rolesToReturn = [
     Config.roles.manageTemplates,
     Config.roles.manageUsers,
     Config.roles.user
   ];
 
-  return usersRelatedToCompany.bind(this)(this.userId, roles, companyId,
+  return usersRelatedToCompany.bind(this)(this.userId, rolesToReturn, companyId,
     options, searchString, "numberOfCoworkers");
 });
 
@@ -16,9 +16,9 @@ Meteor.publish("customers", function(companyId, options, searchString) {
   check(companyId, Match.OneOf(String, null));
   check(searchString, Match.Any);
 
-  const roles = [Config.roles.customer];
+  const rolesToReturn = [Config.roles.customer];
 
-  return usersRelatedToCompany.bind(this)(this.userId, roles, companyId,
+  return usersRelatedToCompany.bind(this)(this.userId, rolesToReturn, companyId,
     options, searchString, "numberOfCustomers");
 });
 
@@ -34,16 +34,17 @@ Meteor.publish("user", function (userId) {
   return Meteor.users.find({ _id: userId }, options);
 });
 
-function usersRelatedToCompany(userId, roles, companyId, options, searchString,
+function usersRelatedToCompany(userId, rolesToReturn, companyId, options, searchString,
   countPublishName) {
   check(userId, Match.OneOf(String, null));
-  check(roles, [String]);
+  check(rolesToReturn, [String]);
   check(companyId, Match.OneOf(String, null));
   check(options, Match.Any);
   check(searchString, Match.Any);
 
-  if (!userId || !companyId)
-    return null;
+  if (!userId || !companyId) {
+    return this.ready();
+  }
 
   if (searchString == null) {
     searchString = '';
@@ -51,8 +52,9 @@ function usersRelatedToCompany(userId, roles, companyId, options, searchString,
 
   const loggedInUser = Meteor.users.findOne(userId);
 
-  if (!loggedInUser)
-    return null;
+    if (!loggedInUser) {
+      throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
+    }
 
   if (!Roles.userIsInRole(loggedInUser, [
       Config.roles.manageUsers,
@@ -63,11 +65,11 @@ function usersRelatedToCompany(userId, roles, companyId, options, searchString,
       Config.roles.manageUsers,
       Config.roles.user
     ], companyId)) {
-    return null;
+    throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
   }
 
   const userIds = [];
-  Roles.getUsersInRole(roles, companyId)
+  Roles.getUsersInRole(rolesToReturn, companyId)
     .forEach(function(user) {
       userIds.push(user._id);
     });

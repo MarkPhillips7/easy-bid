@@ -2,16 +2,18 @@ Meteor.publish("templateLibraries", function (options, searchString) {
   check(options, Match.Any);
   check(searchString, Match.Any);
 
-  if (!this.userId)
-    return null;
+  if (!this.userId) {
+    throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+  }
 
   if (searchString == null)
     searchString = '';
 
-  var loggedInUser = Meteor.users.findOne(this.userId);
+  const loggedInUser = Meteor.users.findOne(this.userId);
 
-  if (!loggedInUser)
-    return null;
+  if (!loggedInUser) {
+    throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
+  }
 
   if (Roles.userIsInRole(loggedInUser, [Config.roles.manageTemplates, Config.roles.systemAdmin], Roles.GLOBAL_GROUP)) {
     Counts.publish(this, 'numberOfTemplateLibraries', TemplateLibraries.find({

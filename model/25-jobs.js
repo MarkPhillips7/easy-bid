@@ -5,8 +5,34 @@ Schema.Job = new SimpleSchema({
     type: String,
     regEx: /^[a-z0-9A-z .]{3,30}$/
   },
+  nameLower: {
+    type: String,
+    autoValue: function() {
+      let name = this.field("name");
+      if (name.isSet) {
+        return name.value.toLowerCase();
+      } else {
+        this.unset();
+      }
+    }
+  },
   address: {
     type: Schema.Address,
+    optional: true
+  },
+  addressLower: {
+    type: String,
+    autoValue: function() {
+      let address = this.field("address");
+      if (address.isSet) {
+        const addressLinesLower = address.value.addressLines && address.value.addressLines.toLowerCase();
+        const cityLower = address.value.city && address.value.city.toLowerCase();
+        const stateLower = address.value.state && address.value.state.toLowerCase();
+        return `${addressLinesLower} ${cityLower} ${stateLower} ${address.value.zipCode}`;
+      } else {
+        this.unset();
+      }
+    },
     optional: true
   },
   createdBy: {
@@ -101,4 +127,3 @@ Jobs.allow({
 
 JobsHelper = {
 };
-

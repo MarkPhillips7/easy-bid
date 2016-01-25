@@ -16,7 +16,6 @@ SetModule('app');
 class customers {
   constructor() {
     this.companyIdToFilterBy = this.$stateParams.c;
-    this.userIdToFilterBy = this.$stateParams.u;
     this.perPage = 3;
     this.page = 1;
     this.sort = {

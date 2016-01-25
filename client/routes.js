@@ -19,6 +19,34 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         url: '/test',
         template: '<test></test>'
       })
+      .state('bid', {
+        url: '/bids/:userId?c&r',
+        template: '<bid></bid>',
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
+        }
+      })
+      .state('bids', {
+        url: '/bids?c&r',
+        template: '<bids></bids>',
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
+        }
+      })
       .state('customer', {
         url: '/customers/:userId?c',
         template: '<customer></customer>',
@@ -34,7 +62,7 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         }
       })
       .state('customers', {
-        url: '/customers?c&u',
+        url: '/customers?c',
         template: '<customers></customers>',
         resolve: {
           currentUser: ($q) => {

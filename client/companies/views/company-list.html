@@ -29,7 +29,7 @@
       <div class="row">
         <div class="col-sm-12">
 
-          <h1>Companies:</h1>
+          <h2>Companies:</h2>
 
           <form class="form-inline search-form">
             <div class="form-group">
@@ -55,7 +55,9 @@
             class="list-group-item">
           <div class="row">
             <div class="col-sm-8">
-              <h2><a href="/companies/{{company._id}}">{{company.name}}</a></h2>
+              <a href="/companies/{{company._id}}">
+                <strong>{{company.name}}</strong>
+              </a>
             </div>
             <div class="col-sm-4">
               <a ng-click="remove(company)" class="close"
@@ -64,6 +66,7 @@
           </div>
         </li>
       </ul>
+      <span ng-show="!vm.companies.length">No matches found</span>
       <dir-pagination-controls on-page-change="vm.pageChanged(newPageNumber)"></dir-pagination-controls>
     </div>
   </div>

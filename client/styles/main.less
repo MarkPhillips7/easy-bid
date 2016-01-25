@@ -13,8 +13,47 @@ body {
   }
 }
 
+.eb-btn-group {
+  margin-left: 10px;
+}
+
+.eb-inline {
+  display: inline;
+  margin-right:20px;
+}
+
 .eb-option-buttons {
   margin-bottom: 5px;
+}
+
+.eb-list-group-item {
+  padding: 0;
+}
+
+.eb-list-group-item-left-checkbox {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  margin-top: -10px;
+}
+
+.eb-list-group-item-main-a {
+  display: block;
+  padding: 10px 15px;
+  text-decoration: none !important; // no hyperlink underline
+  color: inherit; // don't use the hyperlink blue color
+  margin-left: 30px; // leave room for check box on the left
+}
+
+.eb-list-group-item-main-a-left {
+  margin-left: -12px;
+}
+
+.eb-list-group-item-right {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  margin-top: -15px;
 }
 
 @import "../account/styles/billing.import.less";

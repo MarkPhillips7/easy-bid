@@ -9,7 +9,7 @@
 
   <div class="row">
     <div class="col-sm-12">
-      <h1>Customers:</h1>
+      <h2>Customers:</h2>
       <a ng-show="customers.isLoggedIn" class="btn btn-default pull-right"
         href="/customers/new?c={{customers.company._id}}">
         Add new customer
@@ -36,11 +36,9 @@
     <li dir-paginate="customer in customers.customers | itemsPerPage: customers.perPage" total-items="customers.customersCount" class="list-group-item">
       <div class="row">
         <div class="col-sm-8">
-          <h2>
-            <a href="/customers/{{customer._id}}?c={{customers.company._id}}">
-              {{customer.profile.firstName}} {{customer.profile.lastName}}
-            </a>
-          </h2>
+          <a href="/customers/{{customer._id}}?c={{customers.company._id}}">
+            <strong>{{customer.profile.firstName}} {{customer.profile.lastName}}</strong>
+          </a>
         </div>
         <div class="col-sm-4">
           <a ng-click="customers.removeCustomer(customer)" class="close" ng-show="customers.canRemoveCustomer(customer)">&times;</a>
@@ -48,5 +46,6 @@
       </div>
     </li>
   </ul>
+  <span ng-show="!customers.customers.length">No matches found</span>
   <dir-pagination-controls on-page-change="customers.pageChanged(newPageNumber)"></dir-pagination-controls>
 </div>

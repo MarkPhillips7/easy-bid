@@ -12,7 +12,7 @@
       <div class="row">
         <div class="col-sm-12">
 
-          <h1>Product Libraries:</h1>
+          <h2>Product Libraries:</h2>
 
           <form class="form-inline search-form">
             <div class="form-group">
@@ -38,14 +38,19 @@
             class="list-group-item">
           <div class="row">
             <div class="col-sm-8">
-              <h2><a href="/libraries/{{templateLibrary._id}}/0">{{templateLibrary.name}} - {{vm.getCompanyName(templateLibrary.ownerCompanyId)}} - {{templateLibrary.createdAt | amDateFormat:'MMMM Do, YYYY'}}</a></h2>
+              <a href="/libraries/{{templateLibrary._id}}/0">
+                <strong>
+                {{templateLibrary.name}} - {{vm.getCompanyName(templateLibrary.ownerCompanyId)}} - {{templateLibrary.createdAt | amDateFormat:'MMMM Do, YYYY'}}
+                </strong>
+              </a>
             </div>
             <div class="col-sm-4">
-              <a ng-click="vm.clone(templateLibrary)" class="close">Clone</a>
+              <a href="#" ng-click="vm.clone(templateLibrary)" class="pull-right">Clone</a>
             </div>
           </div>
         </li>
       </ul>
+      <span ng-show="!vm.templateLibraries.length">No matches found</span>
       <dir-pagination-controls on-page-change="vm.pageChanged(newPageNumber)"></dir-pagination-controls>
     </div>
   </div>

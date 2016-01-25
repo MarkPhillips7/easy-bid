@@ -11,7 +11,7 @@ Initialization.initializeJobs = function (companyInfo, userInfo) {
 
     job = {
       name: "Garage",
-      address: customer.address,
+      address: customer.profile.address,
       description: "Garage cabinets and workbench",
       notes: "May be raccoon living in the garage",
       provisions: "Payment terms: 50% deposit, balance due upon completion",
