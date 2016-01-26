@@ -39,14 +39,14 @@
         </span>
         <div class="btn-group eb-btn-group">
           <button type="button" class="btn btn-default btn-sm"
-                  data-ng-show="bids.areAnyBidsSelected"
-                  data-ng-click="vm.editTemplateDetails(vm.selectedTemplate)"
+                  data-ng-show="bids.areAnyItemsSelected"
+                  data-ng-click="vm.editSelected()"
                   tooltip="Edit">
             <i class="fa fa-edit"></i> Edit
           </button>
           <button type="button" class="btn btn-default btn-sm"
-                  data-ng-show="bids.areAnyBidsSelected"
-                  data-ng-click="vm.editTemplateDetails(vm.selectedTemplate)"
+                  data-ng-show="bids.areAnyItemsSelected"
+                  data-ng-click="vm.deleteSelected()"
                   tooltip="Delete">
             <i class="fa fa-times"></i> Delete
           </button>
@@ -67,8 +67,8 @@
       class="list-group-item eb-list-group-item">
       <div class="checkbox eb-list-group-item-left-checkbox">
        <label>
-         <input type="checkbox" ng-checked="bids.isBidSelected(bid._id)"
-                ng-click="bids.toggleBidSelection(bid._id)">
+         <input type="checkbox" ng-checked="bids.isItemSelected(bid._id)"
+                ng-click="bids.toggleItemSelection(bid._id)">
        </label>
      </div>
       <a href="/bids/{{bid._id}}?c={{bids.company._id}}" class="eb-list-group-item-main-a">
@@ -80,14 +80,13 @@
                - {{bid.address.addressLines}} {{bid.address.city}} {{bid.address.state}} {{bid.address.zipCode}}
             </span>
           </div>
-          <div class="col-sm-3">
+          <div class="col-sm-4">
             <div class="pull-right">
               <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>
             </div>
           </div>
         </div>
       </a>
-      <a ng-click="bids.removeBid(bid)" class="close eb-list-group-item-right">&times;</a>
     </li>
   </ul>
   <span ng-show="!bids.bids.length">No matches found</span>

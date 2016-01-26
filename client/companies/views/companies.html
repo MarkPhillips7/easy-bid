@@ -1,0 +1,109 @@
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="alert alert-info" ng-hide="$root.currentUser || $root.loggingIn">
+        Log in to view companies!
+      </div>
+      <!-- <form ng-show="$root.currentUser">
+        <h2>Create a new company:</h2>
+
+        <div class="form-group">
+          <label for="nameInput">Name</label>
+          <input ng-model="companies.newCompany.name" id="nameInput" type="text" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="public">
+            <input type="checkbox" ng-model="companies.newCompany.public" id="public"> Public
+          </label>
+        </div>
+        <button
+            ng-click="companies.newCompany.createdBy=$root.currentUser._id;companies.companies.push(companies.newCompany); companies.newCompany='';"
+            class="btn">Add
+        </button>
+      </form> -->
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+      <form class="form-inline search-form">
+        <div class="form-group">
+          <h2 class="eb-inline">Companies</h2>
+        </div>
+        <div class="form-group">
+          <label class="sr-only" for="search">Search</label>
+          <div class="input-group">
+            <div class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>
+            <input type="text" ng-model="companies.searchText" placeholder="Search" id="search" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="sr-only" for="sort-order">Sort Order</label>
+          <select ng-model="companies.orderProperty" class="form-control">
+            <option value="1">Ascending</option>
+            <option value="-1">Descending</option>
+          </select>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row eb-option-buttons">
+    <div class="col-sm-12">
+      <div class="pull-right">
+        <span class="label label-danger"
+              data-ng-show="companies.notShownSelectedCount > 0">
+          {{companies.notShownSelectedCount}} selected item{{companies.notShownSelectedCount > 1 ? 's' : ''}} not shown
+        </span>
+        <div class="btn-group eb-btn-group">
+          <button type="button" class="btn btn-default btn-sm"
+                  data-ng-show="companies.areAnyItemsSelected"
+                  data-ng-click="companies.editSelected()"
+                  tooltip="Edit">
+            <i class="fa fa-edit"></i> Edit
+          </button>
+          <button type="button" class="btn btn-default btn-sm"
+                  data-ng-show="companies.areAnyItemsSelected"
+                  data-ng-click="companies.deleteSelected(companies.selectedTemplate)"
+                  tooltip="Delete">
+            <i class="fa fa-times"></i> Delete
+          </button>
+        </div>
+        <div class="btn-group">
+          <a type="button" class="btn btn-default btn-sm"
+                  data-ng-show="companies.isLoggedIn"
+                  href="/companies/new"
+                  tooltip="Add">
+            <i class="fa fa-plus"></i> Add
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ul class="list-group">
+    <li dir-paginate="company in companies.companies | itemsPerPage: companies.perPage" total-items="companies.companiesCount.count"
+        class="list-group-item eb-list-group-item">
+      <div class="checkbox eb-list-group-item-left-checkbox">
+        <label>
+          <input type="checkbox" ng-checked="companies.isItemSelected(company._id)"
+                 ng-click="companies.toggleItemSelection(company._id)">
+        </label>
+       </div>
+       <a href="/companies/{{company._id}}" class="eb-list-group-item-main-a">
+        <div class="row">
+          <div class="col-sm-8">
+            <span class="eb-list-group-item-main-a-left">
+              <strong>{{company.name}}</strong>
+            </span>
+          </div>
+          <div class="col-sm-4">
+            <div class="pull-right">
+              <span data-toggle="tooltip" title="created {{company.createdAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="company.createdAt"></span>
+            </div>
+          </div>
+        </div>
+      </a>
+    </li>
+  </ul>
+  <span ng-show="!companies.companies.length">No matches found</span>
+  <dir-pagination-controls on-page-change="companies.pageChanged(newPageNumber)"></dir-pagination-controls>
+</div>

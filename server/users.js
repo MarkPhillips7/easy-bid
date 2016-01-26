@@ -91,7 +91,7 @@ function usersRelatedToCompany(userId, rolesToReturn, companyId, options, search
     }
   };
 
-  const _options = Object.assign(options || {}, {
+  const _options = Object.assign({}, options, {
     fields: {
       emails: 1,
       profile: 1,

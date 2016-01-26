@@ -1,57 +1,112 @@
-angular.module("app").controller("companies", ['$scope', '$meteor',
-  '$rootScope', '$state',
-  function($scope, $meteor, $rootScope, $state) {
-    var vm = this;
-    vm.page = 1;
-    vm.perPage = 3;
-    vm.sort = {
-      nameLower: 1
+let {
+  Component, View, SetModule, Inject, MeteorReactive, LocalInjectables
+} = angular2now;
+
+SetModule('app');
+
+@Component({
+  selector: 'companies'
+})
+@View({
+  templateUrl: () => 'client/companies/views/companies.html'
+})
+@Inject('$state', '$stateParams')
+@MeteorReactive
+@LocalInjectables
+class companies {
+  constructor() {
+    this.itemIdsSelected = [];
+    this.perPage = 3;
+    this.page = 1;
+    this.sort = {
+      'nameLower': 1
     };
-    vm.orderProperty = '1';
-    vm.canRemoveCompany = canRemoveCompany;
-    vm.remove = remove;
-    vm.pageChanged = pageChanged;
-    vm.companies = $meteor.collection(function() {
-      return Companies.find({}, {
-        sort: $scope.getReactively('vm.sort')
-      });
-    });
-    vm.search = '';
+    this.orderProperty = '1';
+    this.searchText = '';
 
-    $meteor.autorun($scope, function() {
-      //For some reason vm.perPage and vm.page get resolved to NaN at first, so...
-      if ($scope.vm) {
-        $meteor.subscribe('companies', {
-          limit: parseInt($scope.getReactively('vm.perPage')),
-          skip: (parseInt($scope.getReactively('vm.page')) - 1) *
-            parseInt($scope.getReactively('vm.perPage')),
-          sort: $scope.getReactively('vm.sort')
-        }, $scope.getReactively('vm.search')).then(function() {
-          vm.companiesCount = $meteor.object(Counts,
-            'numberOfCompanies', false);
-        });
-      }
+    this.helpers({
+      areAnyItemsSelected: this._areAnyItemsSelected,
+      currentUserId: this._currentUserId,
+      isLoggedIn: this._isLoggedIn,
+      notShownSelectedCount: this._notShownSelectedCount,      
+      companies: this._companiesCollection,
+      companiesCount: this._companiesCount
     });
 
-    function canRemoveCompany(company) {
-      return Roles.userIsInRole($rootScope.currentUser, [Config.roles.manageUsers,
-        Config.roles.systemAdmin
-      ], Roles.GLOBAL_GROUP);
-    }
-
-    function remove(company) {
-      vm.companies.splice(vm.companies.indexOf(company), 1);
-    };
-
-    function pageChanged(newPage) {
-      vm.page = newPage;
-    };
-
-    $scope.$watch('vm.orderProperty', function() {
-      if (vm.orderProperty)
-        vm.sort = {
-          nameLower: parseInt(vm.orderProperty)
-        };
-    });
+    this.subscribe('companies', this._companiesSubscription.bind(this));
   }
-]);
+
+  updateSort() {
+    this.sort = {
+      'dueAt': -1,
+      'nameLower': parseInt(this.orderProperty)
+    }
+  };
+
+  pageChanged(newPage) {
+    this.page = newPage;
+  };
+
+  _areAnyItemsSelected() {
+    return this.getReactively('itemIdsSelected').length;
+  };
+
+  _notShownSelectedCount() {
+    const items = this.companies;
+    const itemIdsSelected = this.getReactively('itemIdsSelected');
+    let shownCount = 0;
+    _.each(itemIdsSelected, (itemIdSelected) => {
+      shownCount += _.some(items, (item) => item._id === itemIdSelected) ? 1 : 0;
+    });
+
+    return itemIdsSelected.length - shownCount;
+  }
+
+  isItemSelected(itemId) {
+    const itemIdIndex = _.indexOf(this.itemIdsSelected, itemId);
+    return itemIdIndex != -1;
+  }
+
+  toggleItemSelection(itemId) {
+    const itemIdIndex = _.indexOf(this.itemIdsSelected, itemId);
+
+    if (itemIdIndex === -1) {
+      this.itemIdsSelected = [...this.itemIdsSelected, itemId];
+    } else {
+      this.itemIdsSelected = [
+        ...this.itemIdsSelected.slice(0, itemIdIndex),
+        ...this.itemIdsSelected.slice(itemIdIndex + 1)
+      ];
+    }
+  }
+
+  _currentUserId() {
+    return Meteor.userId();
+  }
+
+  _isLoggedIn() {
+    return Meteor.userId() !== null;
+  }
+
+  _companiesCollection() {
+    return Companies.find({}, {
+          sort: this.getReactively('sort')
+        }
+      );
+  }
+
+  _companiesCount() {
+    return Counts.get('numberOfCompanies');
+  }
+
+  _companiesSubscription() {
+    return [
+      {
+        limit: parseInt(this.perPage),
+        skip: parseInt((this.getReactively('page') - 1) * this.perPage),
+        sort: this.getReactively('sort')
+      },
+      this.getReactively('searchText')
+    ]
+  }
+}

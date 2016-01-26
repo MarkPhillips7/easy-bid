@@ -15,10 +15,9 @@ SetModule('app');
 @LocalInjectables
 class bids {
   constructor() {
-    this.bidIdsSelected = [];
+    this.itemIdsSelected = [];
     this.companyIdToFilterBy = this.$stateParams.c;
     this.customerIdToFilterBy = this.$stateParams.r;
-    this.now = new Date();
     this.perPage = 3;
     this.page = 1;
     this.sort = {
@@ -29,7 +28,7 @@ class bids {
     this.searchText = '';
 
     this.helpers({
-      areAnyBidsSelected: this._areAnyBidsSelected,
+      areAnyItemsSelected: this._areAnyItemsSelected,
       company: this._company,
       currentUserId: this._currentUserId,
       customer: this._customer,
@@ -74,35 +73,35 @@ class bids {
     }
   }
 
-  _areAnyBidsSelected() {
-    return this.getReactively('bidIdsSelected').length;
+  _areAnyItemsSelected() {
+    return this.getReactively('itemIdsSelected').length;
   };
 
   _notShownSelectedCount() {
-    const bidIdsSelected = this.getReactively('bidIdsSelected');
+    const itemIdsSelected = this.getReactively('itemIdsSelected');
     let shownCount = 0;
     const self = this;
-    _.each(bidIdsSelected, (bidIdSelected) => {
-      shownCount += _.some(self.bids, (bid) => bid._id === bidIdSelected) ? 1 : 0;
+    _.each(itemIdsSelected, (itemIdSelected) => {
+      shownCount += _.some(self.bids, (bid) => bid._id === itemIdSelected) ? 1 : 0;
     });
 
-    return bidIdsSelected.length - shownCount;
+    return itemIdsSelected.length - shownCount;
   }
 
-  isBidSelected(bidId) {
-    const bidIdIndex = _.indexOf(this.bidIdsSelected, bidId);
+  isItemSelected(bidId) {
+    const bidIdIndex = _.indexOf(this.itemIdsSelected, bidId);
     return bidIdIndex != -1;
   }
 
-  toggleBidSelection(bidId) {
-    const bidIdIndex = _.indexOf(this.bidIdsSelected, bidId);
+  toggleItemSelection(bidId) {
+    const bidIdIndex = _.indexOf(this.itemIdsSelected, bidId);
 
     if (bidIdIndex === -1) {
-      this.bidIdsSelected = [...this.bidIdsSelected, bidId];
+      this.itemIdsSelected = [...this.itemIdsSelected, bidId];
     } else {
-      this.bidIdsSelected = [
-        ...this.bidIdsSelected.slice(0, bidIdIndex),
-        ...this.bidIdsSelected.slice(bidIdIndex + 1)
+      this.itemIdsSelected = [
+        ...this.itemIdsSelected.slice(0, bidIdIndex),
+        ...this.itemIdsSelected.slice(bidIdIndex + 1)
       ];
     }
   }

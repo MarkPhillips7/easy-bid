@@ -137,8 +137,7 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
       })
       .state('companies', {
         url: '/companies',
-        templateUrl: 'client/companies/views/company-list.html',
-        controller: 'companies',
+        template: '<companies></companies>',
         resolve: {
           currentUser: ($q) => {
             if (Meteor.userId() == null) {

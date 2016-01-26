@@ -8,7 +8,7 @@ Meteor.publish("companies", function(options, searchString) {
   check(searchString, Match.Any);
 
   if (!this.userId) {
-    return null;
+    throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
   }
 
   if (searchString == null) {
@@ -18,7 +18,7 @@ Meteor.publish("companies", function(options, searchString) {
   let loggedInUser = Meteor.users.findOne(this.userId);
 
   if (!loggedInUser) {
-    return null;
+    throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
   }
 
   let selector;
