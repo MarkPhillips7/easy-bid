@@ -8,9 +8,6 @@ Meteor.publish("selectionData", function (jobId, options) {
     throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
   }
 
-  if (searchString == null)
-    searchString = '';
-
   const loggedInUser = Meteor.users.findOne(this.userId);
 
   if (!loggedInUser) {
@@ -22,7 +19,7 @@ Meteor.publish("selectionData", function (jobId, options) {
   }
 
   const selections = Selections.find({ 'jobId' : jobId }, options);
-  const selectionIds = _.map(selections, (selection) => selection._id);
+  const selectionIds = _.map(selections.fetch(), (selection) => selection._id);
   const selectionRelationships = SelectionRelationships.find({
     $or:[
       {"childSelectionId": { $in: selectionIds } },

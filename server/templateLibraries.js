@@ -50,3 +50,35 @@ Meteor.publish("templateLibraries", function (options, searchString) {
     }]
   },options);
 });
+
+// Including "Data" in the name of the publication to indicate that
+// multiple cursors are returned
+Meteor.publish("templateLibraryData", function (jobId, options) {
+  check(jobId, Match.OneOf(String, null));
+  check(options, Match.Any);
+
+  if (!this.userId) {
+    throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+  }
+
+  const loggedInUser = Meteor.users.findOne(this.userId);
+
+  if (!loggedInUser) {
+    throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
+  }
+
+  if (!Meteor.call('userCanViewJob', this.userId, jobId)) {
+    throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+  }
+
+  const jobsTemplateLibraries = JobsTemplateLibraries.find({ 'jobId' : jobId }, options);
+  const templateLibraryIds = _.map(jobsTemplateLibraries.fetch(), (jobTemplateLibrary) => jobTemplateLibrary.templateLibraryId);
+  const templeLibraries = TemplateLibraries.find({
+    _id: { $in: templateLibraryIds }
+  });
+
+  return [
+    jobsTemplateLibraries,
+    templeLibraries
+  ];
+});

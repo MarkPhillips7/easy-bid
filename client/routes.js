@@ -20,7 +20,7 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         template: '<test></test>'
       })
       .state('bid', {
-        url: '/bids/:userId?c&r',
+        url: '/bids/:bidId?c&r',
         template: '<bid></bid>',
         resolve: {
           currentUser: ($q) => {

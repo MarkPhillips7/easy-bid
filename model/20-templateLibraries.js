@@ -635,8 +635,8 @@ TemplateLibraries.allow({
     return true;
   },
   update: function (userId, templateLibrary, fields, modifier) {
-    if (!Roles.userIsInRole(userId, [Config.roles.systemAdmin, Config.roles.manageTemplates], Roles.GLOBAL_GROUP))
-    //&& !Roles.userIsInRole(userId, [Config.roles.manageUsers], templateLibrary.name))
+    if (!Roles.userIsInRole(userId, [Config.roles.systemAdmin, Config.roles.manageTemplates], Roles.GLOBAL_GROUP)
+      && !Roles.userIsInRole(userId, [Config.roles.manageTemplates], templateLibrary.ownerCompanyId))
       return false;
 
     return true;
@@ -892,6 +892,18 @@ function getTemplateById(templateLibrary, templateId) {
   });
 }
 
+function getTemplateByType(templateLibrary, templateType) {
+  if (!templateLibrary) {
+    throw 'templateLibrary must be set in getTemplateById';
+  }
+  //if (!templateId) {
+  //  throw 'templateId must be set in getTemplateById';
+  //}
+  return _.find(templateLibrary.templates, function (template) {
+    return template.templateType === templateType;
+  });
+}
+
 function getTemplateSettingByIds(templateLibrary, templateId, templateSettingId) {
   if (!templateLibrary) {
     throw 'templateLibrary must be set in getTemplateSettingByIds';
@@ -1044,6 +1056,7 @@ TemplateLibrariesHelper = {
   getParentTemplateRelationships: getParentTemplateRelationships,
   getRootTemplate: getRootTemplate,
   getTemplateById: getTemplateById,
+  getTemplateByType: getTemplateByType,
   getTemplateRelationshipById: getTemplateRelationshipById,
   getTemplateSettingByIds: getTemplateSettingByIds,
   getTemplateSettingByKeyAndIndex: getTemplateSettingByKeyAndIndex,

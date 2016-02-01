@@ -1,3 +1,23 @@
+Meteor.publish("job", function (jobId) {
+  check(jobId, Match.OneOf(String, null));
+
+  if (!this.userId) {
+    throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+  }
+
+  const loggedInUser = Meteor.users.findOne(this.userId);
+
+  if (!loggedInUser) {
+    throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
+  }
+
+  if (!Meteor.call('userCanViewJob', this.userId, jobId)) {
+    throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+  }
+
+  return jobId && Jobs.find({ _id: jobId });
+});
+
 Meteor.publish("jobs", function (companyId, customerId, options, searchString) {
   check(companyId, Match.OneOf(String, null, undefined));
   check(customerId, Match.OneOf(String, null, undefined));

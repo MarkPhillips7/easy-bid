@@ -71,7 +71,7 @@
                 ng-click="bids.toggleItemSelection(bid._id)">
        </label>
      </div>
-      <a href="/bids/{{bid._id}}?c={{bids.company._id}}" class="eb-list-group-item-main-a">
+      <a href="/bids/{{bid._id}}?c={{bid.companyId}}&r={{bid.customerId}}" class="eb-list-group-item-main-a">
         <div class="row">
           <div class="col-sm-8">
             <span class="eb-list-group-item-main-a-left">

@@ -80,6 +80,25 @@ function childSelections(selection) {
   return Selections.find({_id: { $in: childSelectionIds } }).fetch();
 }
 
+function childSelectionsWithTemplateId(selection, templateId) {
+  if (!selection) {
+    throw 'selection must be set in childSelections';
+  }
+  if (!templateId) {
+    throw 'templateId must be set in childSelections';
+  }
+
+  let childSelectionIds = SelectionRelationships.find({parentSelectionId: selection._id})
+    .map(function(relationship){
+      return relationship.childSelectionId;
+    });
+  return Selections.find(
+    {
+      _id: { $in: childSelectionIds },
+      templateId: templateId
+    }).fetch();
+}
+
 function parentSelections(selection) {
   if (!selection) {
     throw 'selection must be set in parentSelections';
@@ -139,7 +158,8 @@ function getSelectionToOverride(templateLibrary, selection, variableToOverride, 
 }
 
 SelectionsHelper = {
-  getSelectionToOverride: getSelectionToOverride,
   childSelections: childSelections,
+  childSelectionsWithTemplateId: childSelectionsWithTemplateId,
+  getSelectionToOverride: getSelectionToOverride,
   parentSelections: parentSelections
 }
