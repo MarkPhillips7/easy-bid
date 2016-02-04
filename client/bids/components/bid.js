@@ -15,16 +15,27 @@ SetModule('app');
 @LocalInjectables
 class bid {
   constructor($state, $stateParams, $timeout, bootstrapDialog) {
+    this.itemIdsSelected = [];
+    this.perPage = 3;
+    this.page = 1;
+
     this.areaSelectedId = '';
     this.areaToAdd = '';
     this.areaTree = {};
     this.areaTreeData = [];
+    this.bootstrapDialog = bootstrapDialog;
     this.companyId = this.$stateParams.c;
     this.customerId = this.$stateParams.r;
     this.jobId = this.$stateParams.bidId;
     this.selectedAreaBreadcrumbText = '[No Areas]';
+    // metadata used to keep track of ui state of various data
+    this.metadata = {
+    };
+    this.productSelections = [12,13];
 
     this.helpers({
+      areAnyItemsSelected: this._areAnyItemsSelected,
+      notShownSelectedCount: this._notShownSelectedCount,
       areaTreeData: this._areaTreeData,
       company: this._company,
       currentUserId: this._currentUserId,
@@ -49,18 +60,54 @@ class bid {
     this.subscribe('templateLibraryData', this._templateLibraryDataSubscription.bind(this));
   }
 
+  pageChanged(newPage) {
+    this.page = newPage;
+  };
+
+  _areAnyItemsSelected() {
+    return this.getReactively('itemIdsSelected').length;
+  };
+
+  _notShownSelectedCount() {
+    const itemIdsSelected = this.getReactively('itemIdsSelected');
+    let shownCount = 0;
+    const self = this;
+    _.each(itemIdsSelected, (itemIdSelected) => {
+      shownCount += _.some(self.productSelections, (productSelection) => productSelection._id === itemIdSelected) ? 1 : 0;
+    });
+
+    return itemIdsSelected.length - shownCount;
+  }
+
+  isItemSelected(itemId) {
+    const idIndex = _.indexOf(this.itemIdsSelected, itemId);
+    return idIndex != -1;
+  }
+
+  toggleItemSelection(itemId) {
+    const idIndex = _.indexOf(this.itemIdsSelected, itemId);
+
+    if (idIndex === -1) {
+      this.itemIdsSelected = [...this.itemIdsSelected, itemId];
+    } else {
+      this.itemIdsSelected = [
+        ...this.itemIdsSelected.slice(0, idIndex),
+        ...this.itemIdsSelected.slice(idIndex + 1)
+      ];
+    }
+  }
+
   initializeCompanyId() {
-    let self = this;
     if (!this.companyId) {
-      Meteor.call('companyIdsRelatedToUser', Meteor.userId(), function(err, result){
+      Meteor.call('companyIdsRelatedToUser', Meteor.userId(), (err, result) => {
         if (err) {
           console.log('failed to get companyIdsRelatedToUser', err);
         } else {
           // console.log('success getting companyIdsRelatedToUser', result);
 
-          self.companyId = result[0];
+          this.companyId = result[0];
           // console.log(`Changed companyId to ${self.companyId}. Rerouting...`);
-          self.$state.go(`bid/${self.$stateParams.bidId}`, {c: self.companyId, r: self.customerId});
+          this.$state.go(`bid/${self.$stateParams.bidId}`, {c: this.companyId, r: this.customerId});
         }
       });
     }
@@ -118,6 +165,19 @@ class bid {
     return text;
   }
 
+  selectionShouldDisplay(selection) {
+    return this.selectionInSelectedArea(selection);
+  }
+
+  selectionInSelectedArea(selection) {
+    if (selection._id === this.areaSelectedId) {
+      return true;
+    }
+
+    const parentSelection = SelectionsHelper.parentSelections(selection)[0];
+    return parentSelection && this.inSelectedArea(parentSelection);
+  }
+
   addItemToTreeData(areaTreeDataArray, areaSelection) {
     const areaTemplate = this.getReactively('areaTemplate');
     var i;
@@ -128,10 +188,6 @@ class bid {
         children: areaSelectionChildren
     }
     areaTreeDataArray.push(treeItem);
-
-    areaSelection.isAreaSelected = function () {
-        return areaSelection._id === this.areaSelectedId;
-    };
 
     const childSelections = SelectionsHelper.childSelectionsWithTemplateId(areaSelection, areaTemplate.id);
 
@@ -247,7 +303,7 @@ class bid {
       const selection = Selections.findOne(this.areaSelectedId);
       if (selection) {
         this.areaTree.expand_branch();
-        this.addAreaToArray(this.areaTree.get_selected_branch().children, data);
+        this.addAreaToArray(this.areaTree.get_selected_branch().children, selection);
       } else {
         console.log(`selection ${this.areaSelectedId} not found in addChildArea`);
       }
@@ -258,19 +314,18 @@ class bid {
 
   addAreaToArray(areaTreeDataArray, parentSelection) {
     let treeItem;
-    let newProductSelection;
-
+    let newSelection;
+    let something = 'something';
     if (this.areaToAdd) {
       const areaTemplate = this.getReactively('areaTemplate');
-      Meteor.call('addSelectionForTemplate', areaTemplate,
-          this.areaToAdd, this.jobSelection, parentSelection,
-          function(err, result) {
+      Meteor.call('addSelectionForTemplate', this.templateLibraries[0], this.jobId, areaTemplate,
+          this.areaToAdd, parentSelection, 0, (err, result) => {
         if (err) {
           console.log('failed to addSelectionForTemplate get in addAreaToArray', err);
         } else {
-          newProductSelection = result;
-          treeItem = addItemToTreeData(areaTreeDataArray, newProductSelection);
-          selectAreaTreeItem(treeItem);
+          newSelection = result;
+          treeItem = this.addItemToTreeData(areaTreeDataArray, newSelection);
+          this.selectAreaTreeItem(treeItem);
           this.areaToAdd = null;
         }
       });
@@ -278,18 +333,9 @@ class bid {
   }
 
   deleteArea() {
-    var selectedBranch = this.areaTree.get_selected_branch && this.areaTree.get_selected_branch();
-    if (selectedBranch) {
-      bootstrapDialog.confirmationDialog("Delete area and its selections", "Are you sure you want to delete '" + selectedBranch.label + "' and its selections and child areas?")
-      .then(confirmDelete, cancelDelete);
-    } else {
-      console.log("An area must be selected to delete");
-    }
+    let cancelDelete = () => {};
 
-    function cancelDelete() {
-    }
-
-    function confirmDelete() {
+    let confirmDelete = () => {
       const selection = Selections.findOne(this.areaSelectedId);
       if (selection) {
         var parentBranch = this.areaTree.get_parent_branch(selectedBranch);
@@ -297,7 +343,7 @@ class bid {
         var index;
         var branchToSelect;
 
-        Meteor.call('deleteSelectionAndRelated', selection, function(err, result){
+        Meteor.call('deleteSelectionAndRelated', selection, (err, result) => {
           if (err) {
             console.log('failed to deleteSelectionAndRelated', err);
           } else {
@@ -317,46 +363,14 @@ class bid {
           }
         });
       }
-    }
-  }
+    };
 
-  addArea(event) {
-    if (!this.areaToAdd) {
-      console.log("Please enter a name for the area and try again");
-      return;
-    }
-    this.addAreaToArray(this.areaTreeData, this.jobSelection);
-  }
-
-  addChildArea(event) {
-    if (!this.areaToAdd) {
-      console.log("Please enter a name for the area and try again");
-      return;
-    }
-
-    if (this.areaTree.get_selected_branch()) {
-      datacontext.getEntityById(model.entityNames.selection, this.areaSelectedId)
-      .then(function (data) {
-        this.areaTree.expand_branch();
-        this.addAreaToArray(this.areaTree.get_selected_branch().children, data);
-      }, failure);
+    var selectedBranch = this.areaTree.get_selected_branch && this.areaTree.get_selected_branch();
+    if (selectedBranch) {
+      this.bootstrapDialog.confirmationDialog("Delete area and its selections", "Are you sure you want to delete '" + selectedBranch.label + "' and its selections and child areas?")
+      .then(confirmDelete, cancelDelete);
     } else {
-      console.log("An area must be selected to add a child area");
-    }
-  }
-
-  addAreaToArray(areaTreeDataArray, parentSelection) {
-    var treeItem;
-    var newProductSelection;
-
-    if (this.areaToAdd) {
-      newProductSelection = datacontext.addSelectionForTemplate(areaTemplate, this.areaToAdd, this.jobSelection, parentSelection);
-      save()
-      .then(function () {
-        treeItem = addItemToTreeData(areaTreeDataArray, newProductSelection);
-        this.selectAreaTreeItem(treeItem);
-        this.areaToAdd = null;
-      }, failure);
+      console.log("An area must be selected to delete");
     }
   }
 
@@ -372,5 +386,17 @@ class bid {
     if (this.selectedAreaBreadcrumbText.length == 0) {
       this.selectedAreaBreadcrumbText = '[No Areas]';
     }
+  }
+
+  getStrongSelectionContent(productSelection) {
+    return 'Hello';
+  }
+
+  getMainSelectionContent(productSelection) {
+    return 'How you doin';
+  }
+
+  getRightSelectionContent(productSelection) {
+    return 'Yo';
   }
 }
