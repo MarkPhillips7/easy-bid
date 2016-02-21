@@ -5,6 +5,8 @@ Config = {};
 
 Constants = {};
 
+Filters = {};
+
 Initialization = {};
 
 Schema = {};
@@ -22,4 +24,10 @@ Config.accessLevels = {
   user: Config.accessFlags.user | Config.accessFlags.admin | Config.accessFlags.systemAdmin,
   admin: Config.accessFlags.admin | Config.accessFlags.systemAdmin,
   systemAdmin: Config.accessFlags.systemAdmin
+};
+
+Config.imageSettings = {
+  imageBasePath: '/images/',
+  unknownProductImageSource: 'unknown_product.jpg',
+  unknownPersonImageSource: 'unknown_person.jpg'
 };

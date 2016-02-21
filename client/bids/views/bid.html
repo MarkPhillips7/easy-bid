@@ -234,8 +234,10 @@
     </div>
   </div>
   <ul class="list-group">
-    <li dir-paginate="productSelection in bid.productSelections | itemsPerPage: bid.perPage" total-items="bid.productSelections.length"
-      class="list-group-item eb-list-group-item">
+    <li dir-paginate="productSelection in bid.productSelections | itemsPerPage: bid.perPage"
+        data-ng-show="bid.inSelectedArea(productSelection)"
+        total-items="bid.productSelections.length"
+        class="list-group-item eb-list-group-item">
       <div class="checkbox eb-list-group-item-left-checkbox">
        <label>
          <input type="checkbox" ng-checked="bid.isItemSelected(productSelection._id)"
@@ -243,48 +245,30 @@
        </label>
      </div>
       <a href="/selections/{{productSelection._id}}" class="eb-list-group-item-main-a">
-        <div class="row">
-          <div class="col-xs-8">
-            <span class="eb-list-group-item-main-a-left">
-              <strong>{{bid.getStrongSelectionContent(productSelection)}}</strong>
-              {{bid.getMainSelectionContent(productSelection)}}
-            </span>
-          </div>
-          <div class="col-xs-4">
-            <div class="pull-right">
-              {{bid.getRightSelectionContent(productSelection)}}
-              <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>
-            </div>
+        <img class="eb-list-group-item-main-a-image" data-eb-img-product="{{bid.getProductImage(productSelection)}}"/>
+        <div class="eb-list-group-item-main-a-quantity">
+          <span>{{bid.getQuantity(productSelection)}}</span>
+        </div>
+        <div class="eb-list-group-item-main-a-price-total eb-price">
+          {{bid.getPriceTotal(productSelection)}}
+          <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>
+        </div>
+        <div class="eb-list-group-item-main-a-title-and-description">
+          <span class="eb-list-group-item-main-a-title">{{bid.getTitle(productSelection)}}</span>
+          <br/>
+          {{bid.getMainSelectionContent(productSelection)}}
+          <div class="eb-price">
+            {{bid.getPriceEach(productSelection)}}
+            <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>
           </div>
         </div>
       </a>
     </li>
-    <!-- <li dir-paginate="productSelection in bid.productSelections | itemsPerPage: bid.perPage" total-items="bid.productSelections.length"
-      class="list-group-item eb-list-group-item">
-      <div class="checkbox eb-list-group-item-left-checkbox">
-       <label>
-         <input type="checkbox" ng-checked="bid.isItemSelected(productSelection._id)"
-                ng-click="bid.toggleItemSelection(productSelection._id)">
-       </label>
-     </div>
-      <a href="/selections/{{productSelection._id}}" class="eb-list-group-item-main-a">
-        <div class="row">
-          <div class="col-xs-8">
-            <span class="eb-list-group-item-main-a-left">
-              <strong>{{bid.getStrongSelectionContent(productSelection)}}</strong>
-              {{bid.getMainSelectionContent(productSelection)}}
-            </span>
-          </div>
-          <div class="col-xs-4">
-            <div class="pull-right">
-              {{bid.getRightSelectionContent(productSelection)}}
-              <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>
-            </div>
-          </div>
-        </div>
-      </a>
-    </li> -->
   </ul>
+  <div class="eb-price-subtotal">
+    <span class="eb-post-list-label">Subtotal</span>
+    <span class="eb-price">{{bid.subtotalSelections(bid.productSelections, true)}}</span>
+  </div>
   <span ng-show="!bid.productSelections.length">No matches found</span>
   <dir-pagination-controls on-page-change="bid.pageChanged(newPageNumber)"></dir-pagination-controls>
 </div>

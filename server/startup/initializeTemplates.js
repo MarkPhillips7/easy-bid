@@ -63,7 +63,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
   var templateJobSubtotal = {
     id: Random.id(),
-    name: "JobSubtotal",
+    name: "Job Subtotal",
     description: "Job Subtotal",
     templateType: Constants.templateTypes.function,
     templateSettings: [{
@@ -115,7 +115,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
   var templateAreaSubtotal = {
     id: Random.id(),
-    name: "AreaSubtotal",
+    name: "Area Subtotal",
     description: "Area Subtotal",
     templateType: Constants.templateTypes.function,
     templateSettings: [{
@@ -143,7 +143,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
   var templateProductSelection = {
     id: Random.id(),
-    name: "ProductSelection",
+    name: "Product Selection",
     description: "Product Selection",
     templateType: Constants.templateTypes.productSelection,
     templateSettings: [{
@@ -187,7 +187,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
   var templatePriceEach = {
     id: Random.id(),
-    name: "PriceEach",
+    name: "Price Each",
     description: "Price Each",
     templateType: Constants.templateTypes.calculation,
     templateSettings: [{
@@ -217,7 +217,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
   var templatePriceTotal = {
     id: Random.id(),
-    name: "PriceTotal",
+    name: "Price Total",
     description: "Price Total",
     templateType: Constants.templateTypes.calculation,
     templateSettings: [{
@@ -247,8 +247,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
   var templateAreaColumn = {
     id: Random.id(),
-    name: "AreaColumn",
-    description: "AreaColumn",
+    name: "Area Column",
+    description: "Area Column",
     templateType: Constants.templateTypes.variableDisplay,
     templateSettings: [{
       id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
@@ -342,7 +342,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateSheetMaterialData = {
       id: Random.id(),
-      name: "SheetMaterialData",
+      name: "Sheet Material Data",
       description: "Sheet material lookup data for quick access",
       templateType: Constants.templateTypes.lookupData,
       templateSettings: [{
@@ -390,7 +390,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       }, {
         id: Random.id(), key: "IsASubTemplate", value: "true"
       }, {
-        id: Random.id(), key: "ImageSource", value: "cabinet.png"
+        id: Random.id(), key: "ImageSource", value: "Cabinet.png"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateCabinet);
@@ -402,7 +402,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateLaborCostMultiplier = {
       id: Random.id(),
-      name: "LaborCostMultiplier",
+      name: "Labor Cost Multiplier",
       description: "Labor cost multiplier",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
@@ -426,7 +426,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateLaborSawingRate = {
       id: Random.id(),
-      name: "LaborSawingRate",
+      name: "Labor Sawing Rate",
       description: "Sawing hourly rate",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
@@ -454,7 +454,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateLaborSawingCost = {
       id: Random.id(),
-      name: "LaborSawingCost",
+      name: "Labor Sawing Cost",
       description: "Sawing cost",
       templateType: Constants.templateTypes.calculation,
       templateSettings: [{
@@ -504,7 +504,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateLaborSawingTime = {
       id: Random.id(),
-      name: "LaborSawingTime",
+      name: "Labor Sawing Time",
       description: "Sawing time",
       templateType: Constants.templateTypes.calculation,
       templateSettings: [{
@@ -528,7 +528,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateOneDoorBaseCabinet = {
       id: Random.id(),
-      name: "OneDoorBaseCabinet",
+      name: "One Door Base Cabinet",
       description: "One door base cabinet",
       templateType: Constants.templateTypes.product,
       templateSettings: [{
@@ -547,7 +547,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateOneDoorBaseQuantityOverride = {
       id: Random.id(),
-      name: "OneDoorBaseQuantityOverride",
+      name: "One Door Base Quantity Override",
       description: "Quantity",
       templateType: Constants.templateTypes.override,
       templateSettings: [{
@@ -569,7 +569,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateLazySusanCabinet = {
       id: Random.id(),
-      name: "LazySusanCabinet",
+      name: "Lazy Susan Cabinet",
       description: "Lazy Susan cabinet",
       templateType: Constants.templateTypes.product,
       templateSettings: [{
@@ -612,7 +612,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templatePriceEachOverride = {
       id: Random.id(),
-      name: "PriceEachOverride",
+      name: "Price Each Override",
       description: "Price each",
       templateType: Constants.templateTypes.override,
       templateSettings: [{
@@ -634,7 +634,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateCabinetWidth = {
       id: Random.id(),
-      name: "CabinetWidth",
+      name: "Cabinet Width",
       description: "Cabinet width",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
@@ -666,7 +666,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateCabinetHeight = {
       id: Random.id(),
-      name: "CabinetHeight",
+      name: "Cabinet Height",
       description: "Cabinet height",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
@@ -698,7 +698,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateCabinetDepth = {
       id: Random.id(),
-      name: "CabinetDepth",
+      name: "Cabinet Depth",
       description: "Cabinet depth",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
@@ -730,7 +730,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateNumAdjustableShelves = {
       id: Random.id(),
-      name: "NumAdjustableShelves",
+      name: "Num Adjustable Shelves",
       description: "Number of adjustable shelves",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
@@ -782,7 +782,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateInteriorMaterial = {
       id: Random.id(),
-      name: "InteriorMaterial",
+      name: "Interior Material",
       description: "Interior (case) material",
       templateType: Constants.templateTypes.input,
       templateSettings: [{

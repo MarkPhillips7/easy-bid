@@ -16,53 +16,153 @@ SetModule('app');
 class bid {
   constructor($state, $stateParams, $timeout, bootstrapDialog) {
     this.itemIdsSelected = [];
-    this.perPage = 3;
+    this.perPage = 50;
     this.page = 1;
 
     this.areaSelectedId = '';
+    this.areaTemplate = null;
     this.areaToAdd = '';
     this.areaTree = {};
     this.areaTreeData = [];
     this.bootstrapDialog = bootstrapDialog;
+    this.columnTemplates = [];
     this.companyId = this.$stateParams.c;
     this.customerId = this.$stateParams.r;
     this.jobId = this.$stateParams.bidId;
-    this.selectedAreaBreadcrumbText = '[No Areas]';
+    this.jobSelection = null;
+    this.jobTemplate = null;
     // metadata used to keep track of ui state of various data
-    this.metadata = {
-    };
-    this.productSelections = [12,13];
+    this.metadata = SelectionsHelper.getInitializedMetadata();
+    this.productSelectionTemplate = null;
+    this.selectedAreaBreadcrumbText = '[No Areas]';
+    this.selectedProductSelectionId = '';
+    this.subscriptionsReady = {};
+    this.productSelections = [];
 
     this.helpers({
       areAnyItemsSelected: this._areAnyItemsSelected,
       notShownSelectedCount: this._notShownSelectedCount,
-      areaTreeData: this._areaTreeData,
       company: this._company,
       currentUserId: this._currentUserId,
       customer: this._customer,
       job: this._job,
-      jobSelection: this._jobSelection,
-      areaTemplate: this._areaTemplate,
-      jobTemplate: this._jobTemplate,
       selections: this._selectionsCollection,
       selectionRelationships: this._selectionRelationshipsCollection,
       templateLibraries: this._templateLibrariesCollection,
       jobsTemplateLibraries: this._jobsTemplateLibrariesCollection,
-      isLoggedIn: this._isLoggedIn
+      isLoggedIn: this._isLoggedIn,
+      updateDependencies: this._updateDependencies
     });
 
     this.initializeCompanyId();
 
-    this.subscribe('company', this._companySubscription.bind(this));
-    this.subscribe('customer', this._customerSubscription.bind(this));
-    this.subscribe('job', this._jobSubscription.bind(this));
-    this.subscribe('selectionData', this._selectionDataSubscription.bind(this));
-    this.subscribe('templateLibraryData', this._templateLibraryDataSubscription.bind(this));
+    this.subscribe('company', this._companySubscription.bind(this), {
+      onReady: () => {this.subscriptionsReady.company = true;}});
+    this.subscribe('customer', this._customerSubscription.bind(this), {
+      onReady: () => {this.subscriptionsReady.customer = true;}});
+    this.subscribe('job', this._jobSubscription.bind(this), {
+      onReady: () => {this.subscriptionsReady.job = true;}});
+    this.subscribe('selectionData', this._selectionDataSubscription.bind(this), {
+      onReady: () => {this.subscriptionsReady.selectionData = true;}});
+    this.subscribe('templateLibraryData', this._templateLibraryDataSubscription.bind(this), {
+      onReady: () => {this.subscriptionsReady.templateLibraryData = true;}});
   }
 
   pageChanged(newPage) {
     this.page = newPage;
   };
+
+  // allSubscriptionsReady() {
+  //   const {company, customer, job, selectionData, templateLibraryData} = this.subscriptionsReady;
+  //   return company && customer && job && selectionData && templateLibraryData;
+  // }
+
+  // update pretty much all state dependent on subscriptions
+  _updateDependencies() {
+    if (!this.getReactively('subscriptionsReady.templateLibraryData')) {
+      return;
+    }
+    this.initializeTemplateVariables();
+
+    if (!this.getReactively('subscriptionsReady.selectionData')) {
+      return;
+    }
+    this.initializeSelectionVariables();
+  }
+
+  getTemplatesByTemplateSetting(templateSettingKey, templateSettingValue) {
+    let templates = TemplateLibrariesHelper.getTemplatesByTemplateSetting(
+      this.templateLibraries, templateSettingKey, templateSettingValue);
+    return _.sortBy(templates, (template) => {
+      const displayOrder = TemplateLibrariesHelper.getTemplateSettingByTemplateAndKeyAndIndex(template, 'DisplayOrder', 0);
+      return Number(displayOrder);
+    });
+  };
+
+  initializeTemplateVariables() {
+    this.areaTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.area);
+    this.jobTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.job);
+    this.productSelectionTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.productSelection);
+    this.columnTemplates = this.getTemplatesByTemplateSetting('DisplayCategory', 'PrimaryTableColumn');
+  }
+
+  initializeSelectionVariables() {
+    this.jobSelection = SelectionsHelper.getSelectionByTemplate(this.selections, this.jobTemplate);
+    this.productSelections = _.filter(this.selections, (selection) => {
+        return (selection.templateId === this.productSelectionTemplate.id);
+    });
+
+    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata);
+
+    _.each(this.productSelections, this.setProductSelectionSelections.bind(this));
+
+    //Initialize first selection as selected
+    if (this.productSelections.length > 0) {
+      this.selectedProductSelectionId = this.productSelections[0]._id;
+    }
+
+    this.areaTreeData = this.getAreaTreeData();
+  }
+
+  getSelectionsBySelectionParentAndTemplate(productSelection, columnTemplate) {
+    let selections = [];
+    _.each(this.templateLibraries, (templateLibrary) => {
+      selections = selections.concat(SelectionsHelper.getSelectionsBySelectionParentAndTemplate(
+        templateLibrary, this.selections, this.selectionRelationships, productSelection, columnTemplate));
+    });
+    return selections;
+  }
+
+  setProductSelectionSelections(productSelection) {
+    let columnSelections = [];
+    this.metadata.columnSelections[productSelection._id] = columnSelections;
+
+    const setColumnSelection = (columnTemplate) => {
+      var selections = this.getSelectionsBySelectionParentAndTemplate(productSelection, columnTemplate);
+      var selection;
+
+      //If there is no selection then just create a blank one
+      if (selections && selections.length === 0) {
+        selection = {
+          jobId: this.jobId,
+          templateLibraryId: columnTemplate.templateLibraryId,
+          templateId: columnTemplate.id,
+          value: ''
+        };
+      }
+      // Otherwise there must just be one selection or something went wrong
+      else if (selections && selections.length !== 1) {
+          throw new Error('Error: There must be exactly one selection for the given productSelection and columnTemplate');
+      }
+      else {
+          selection = selections[0];
+      }
+
+      columnSelections.push(selection);
+    }
+
+    _.each(this.columnTemplates, setColumnSelection.bind(this));
+  }
 
   _areAnyItemsSelected() {
     return this.getReactively('itemIdsSelected').length;
@@ -121,15 +221,15 @@ class bid {
     return Meteor.userId() !== null;
   }
 
-  _areaTreeData() {
-    const jobSelection = this.getReactively('jobSelection');
-    const areaTemplate = this.getReactively('areaTemplate');
+  getAreaTreeData() {
+    const jobSelection = this.jobSelection;
+    const areaTemplate = this.areaTemplate;
     let areaTreeData = [];
     let i;
     let treeItem;
 
     if (jobSelection && areaTemplate) {
-      const childSelections = SelectionsHelper.childSelectionsWithTemplateId(jobSelection, areaTemplate.id);
+      const childSelections = SelectionsHelper.getChildSelectionsWithTemplateId(jobSelection, areaTemplate.id);
 
       for (i = 0; i < childSelections.length; i += 1) {
         treeItem = this.addItemToTreeData(areaTreeData, childSelections[i]);
@@ -166,15 +266,15 @@ class bid {
   }
 
   selectionShouldDisplay(selection) {
-    return this.selectionInSelectedArea(selection);
+    return this.inSelectedArea(selection);
   }
 
-  selectionInSelectedArea(selection) {
+  inSelectedArea(selection) {
     if (selection._id === this.areaSelectedId) {
       return true;
     }
 
-    const parentSelection = SelectionsHelper.parentSelections(selection)[0];
+    const parentSelection = SelectionsHelper.getParentSelections(selection)[0];
     return parentSelection && this.inSelectedArea(parentSelection);
   }
 
@@ -189,45 +289,13 @@ class bid {
     }
     areaTreeDataArray.push(treeItem);
 
-    const childSelections = SelectionsHelper.childSelectionsWithTemplateId(areaSelection, areaTemplate.id);
+    const childSelections = SelectionsHelper.getChildSelectionsWithTemplateId(areaSelection, areaTemplate.id);
 
     for (i = 0; i < childSelections.length; i += 1) {
       treeItem = this.addItemToTreeData(areaSelectionChildren, childSelections[i]);
     }
 
     return treeItem;
-  }
-
-  _jobSelection() {
-    const jobTemplate = this.getReactively('jobTemplate');
-    if (jobTemplate) {
-      console.log(`looking for job selection for jobTemplate.id ${jobTemplate.id}`);
-      return Selections.findOne({
-        jobId: this.$stateParams.bidId,
-        templateId: jobTemplate.id
-      });
-    }
-    return null;
-  }
-
-  _areaTemplate() {
-    const templateLibraries = this.getReactively('templateLibraries');
-    if (templateLibraries && templateLibraries.length > 0) {
-      return _.find(templateLibraries[0].templates, function(template) {
-        return template.templateType === Constants.templateTypes.area;
-      });
-    }
-    return null;
-  }
-
-  _jobTemplate() {
-    const templateLibraries = this.getReactively('templateLibraries');
-    if (templateLibraries && templateLibraries.length > 0) {
-      return _.find(templateLibraries[0].templates, function(template) {
-        return template.templateType === Constants.templateTypes.job;
-      });
-    }
-    return null;
   }
 
   _selectionsCollection() {
@@ -388,15 +456,98 @@ class bid {
     }
   }
 
-  getStrongSelectionContent(productSelection) {
-    return 'Hello';
+  subtotalSelections(selections, onlyIfShouldDisplay) {
+    const selectionsToSum = _.filter(selections, (selection) =>
+        !onlyIfShouldDisplay || this.selectionShouldDisplay(selection));
+
+    const subtotal = SelectionsHelper.sumSelections(this.templateLibraries,
+      this.selections, this.selectionRelationships, this.metadata, selectionsToSum, 'priceTotal');
+
+    return Filters.unitsFilter(subtotal, '$');
+  }
+
+  getSelectionTemplateName(selection) {
+    const template = TemplateLibrariesHelper.getTemplateById(this.templateLibraries, selection.templateId);
+    if (template) {
+      return `${template.name}`;
+    }
+    return ``;
+  }
+
+  getTitle(productSelection) {
+    if (!productSelection) {
+      return '';
+    }
+    const columnSelections = this.metadata.columnSelections[productSelection._id];
+
+    if (columnSelections.length > 2) {
+      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[0]);
+    }
+    return '';
   }
 
   getMainSelectionContent(productSelection) {
-    return 'How you doin';
+    if (!productSelection) {
+      return '';
+    }
+    const columnSelections = this.metadata.columnSelections[productSelection._id];
+
+    if (columnSelections.length > 7) {
+      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[5])
+        + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[6])
+        + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[7]);
+    }
+    return '';
   }
 
-  getRightSelectionContent(productSelection) {
-    return 'Yo';
+  getPriceTotal(productSelection) {
+    if (!productSelection) {
+      return '';
+    }
+    const columnSelections = this.metadata.columnSelections[productSelection._id];
+
+    if (columnSelections.length > 2) {
+      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[2]);
+    }
+    return '';
+  }
+
+  getPriceEach(productSelection) {
+    if (!productSelection) {
+      return '';
+    }
+    const columnSelections = this.metadata.columnSelections[productSelection._id];
+
+    if (columnSelections.length > 2) {
+      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[1]);
+    }
+    return '';
+  }
+
+  getQuantity(productSelection) {
+    if (!productSelection) {
+      return '';
+    }
+    const columnSelections = this.metadata.columnSelections[productSelection._id];
+
+    if (columnSelections[4]) {
+      return columnSelections[4].value;
+    }
+    return '';
+  }
+
+  getProductImage(productSelection) {
+    if (!productSelection) {
+      return '';
+    }
+    const columnSelections = this.metadata.columnSelections[productSelection._id];
+
+    if (columnSelections[0]) {
+      const imageFileSetting = TemplateLibrariesHelper.getTemplateSettingByKeyAndIndex(
+        this.templateLibraries, columnSelections[0].templateId, Constants.templateSettingKeys.imageSource, 0
+      );
+      return imageFileSetting ? imageFileSetting.value : '';
+    }
+    return '';
   }
 }

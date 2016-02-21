@@ -38,6 +38,8 @@ body {
 }
 
 .eb-list-group-item-main-a {
+  position: relative;
+  overflow: hidden;
   display: block;
   padding: 10px 15px;
   text-decoration: none !important; // no hyperlink underline
@@ -45,15 +47,63 @@ body {
   margin-left: 30px; // leave room for check box on the left
 }
 
-.eb-list-group-item-main-a-left {
-  margin-left: -12px;
+.eb-list-group-item-main-a-image {
+  position: relative;
+  float: left;
+  margin-left: -10px;
+  margin-top: 0px;
+  width: 64px;
+  height: 64px;
 }
 
-.eb-list-group-item-right {
+.eb-list-group-item-main-a-quantity {
+  position: relative;
+  float: left;
+  font-weight: : bold;
+  font-size: 200%;
+  margin-left: 5px;
+  width: 50px;
+  height: 100%;
+  text-align: center;
+}
+
+.eb-list-group-item-main-a-title-and-description {
+  position: relative;
+  float: left;
+  margin-left: 5px;
+  margin-top: 0px;
+}
+
+.eb-list-group-item-main-a-title {
+  font-weight: : bold;
+  font-size: 150%;
+  color: #0066c0;
+}
+
+.eb-price {
+  font-weight: bold;
+  color: #b12704;
+}
+
+.eb-list-group-item-main-a-price-total {
   position: absolute;
-  top: 50%;
+  top: 15px;
   right: 15px;
-  margin-top: -15px;
+}
+
+.eb-post-list-label {
+  font-weight: : bold;
+  text-align: left;
+  display: inline-block;
+  width: 70px;
+}
+
+.eb-price-subtotal {
+  position: relative;
+  float: right;
+  font-size: 110%;
+  margin-right: 16px;
+  margin-top: 0px;
 }
 
 .eb-area-hierarchy {

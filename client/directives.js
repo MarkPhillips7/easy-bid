@@ -18,6 +18,25 @@ angular.module('app')
 //  }
 //}])
 
+  .directive('ebImgProduct', [function (config) {
+    //Usage:
+    //<img data-eb-img-product="{{s.product.imageSource}}"/>
+    var basePath = Config.imageSettings.imageBasePath;
+    var unknownImage = Config.imageSettings.unknownProductImageSource;
+    var directive = {
+        link: link,
+        restrict: 'A'
+    };
+    return directive;
+
+    function link(scope, element, attrs) {
+      attrs.$observe('ebImgProduct', function (value) {
+        value = basePath + (value || unknownImage);
+        attrs.$set('src', value);
+      });
+    }
+  }])
+
   .directive('ebRelevantTemplateTypeView', [function () {
     // Description:
     //  grid displaying template children based on child template type

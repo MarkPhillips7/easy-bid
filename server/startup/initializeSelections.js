@@ -94,21 +94,21 @@ function addSelectionsForTemplateChildren(templateLibrary, jobId, selection, tem
 }
 
 function addOrUpdateSelectionSettings(templateLibrary, selection, selectionSettingsToAddOrUpdate) {
+  let newSelectionSettings = selection.selectionSettings || [];
   if (selectionSettingsToAddOrUpdate) {
     _.each(selectionSettingsToAddOrUpdate, (selectionSettingToAddOrUpdate) => {
-      let existingSelectionSetting = _.find(selection.selectionSettings, (selectionSetting) => {
+      let existingSelectionSetting = _.find(newSelectionSettings, (selectionSetting) => {
         return selectionSetting.key === selectionSettingToAddOrUpdate.key;
       });
 
       if (existingSelectionSetting) {
         existingSelectionSetting.value = selectionSettingToAddOrUpdate.value;
-      } else if (selection.selectionSettings){
-        selection.selectionSettings.push(selectionSettingToAddOrUpdate);
       } else {
-        selection.selectionSettings = [ selectionSettingToAddOrUpdate ];
+        newSelectionSettings.push(selectionSettingToAddOrUpdate);
       }
     });
   }
+  Selections.update(selection._id, {$set: {selectionSettings: newSelectionSettings}});
 }
 
 function addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selection, template, selectionAddingMode, templateRelationship) {
@@ -173,7 +173,6 @@ function addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selec
           && _.find (childTemplate.templateSettings, (templateSetting) => {
             return templateSetting.key === "IsVariableOverride" && templateSetting.value === true.toString();
           })) {
-          debugger
           //Don't add a selection if this is a variable override (Because the selection for the template containing the variable is added separately)
           //But add the appropriate override selection setting to that selection
           let variableToOverride = _.find(childTemplate.templateSettings, (templateSetting) => {
