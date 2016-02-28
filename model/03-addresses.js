@@ -1,5 +1,9 @@
 
 Schema.Address = new SimpleSchema({
+  _id: {
+    type: String,
+    optional: true
+  },
   // Possibly multiple-line data representing street address with apartment number like this:
   // 150 Grayrock Dr
   // Suite B1

@@ -42,10 +42,12 @@ ejson
 spacebars
 
 
-npm-container
 angularutils:pagination
 urigo:angular-blaze-template
 angularui:angular-ui-bootstrap
 dotansimha:accounts-ui-angular
 pbastowski:angular2-now
 jasonaibrahim:angular-moment
+
+
+npm-container

@@ -1,6 +1,10 @@
 Companies = new Mongo.Collection("companies");
 
 Schema.Company = new SimpleSchema({
+  _id: {
+    type: String,
+    optional: true
+  },
   name: {
     type: String,
     regEx: /^[a-z0-9A-z .]{3,30}$/

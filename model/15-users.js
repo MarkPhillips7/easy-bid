@@ -162,6 +162,10 @@ Schema.UserProfile = new SimpleSchema({
 });
 
 Schema.User = new SimpleSchema({
+  _id: {
+    type: String,
+    optional: true
+  },
   username: {
     type: String,
     regEx: /^[a-z0-9A-Z_]{3,15}$/,

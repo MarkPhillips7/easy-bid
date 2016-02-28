@@ -79,7 +79,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     }, {
       id: Random.id(), key: "ApplicableTemplateType", value: "Area"
     }, {
-      id: Random.id(), key: "ParameterVariable", value: "areaSubtotal"
+      id: Random.id(), key: "ValueFormula", value: "areaSubtotal"
     }]
   };
   templateLibrary.templates.push(templateJobSubtotal);
@@ -129,9 +129,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     }, {
       id: Random.id(), key: "Function", value: "SUM"
     }, {
-      id: Random.id(), key: "ApplicableTemplateType", value: "productSelection"
+      id: Random.id(), key: "ApplicableTemplateType", value: "ProductSelection"
     }, {
-      id: Random.id(), key: "ParameterVariable", value: "priceSubtotal"
+      id: Random.id(), key: "ValueFormula", value: "priceTotal"
     }]
   };
   templateLibrary.templates.push(templateAreaSubtotal);

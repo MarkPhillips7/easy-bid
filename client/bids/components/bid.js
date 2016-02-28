@@ -84,7 +84,8 @@ class bid {
     }
     this.initializeTemplateVariables();
 
-    if (!this.getReactively('subscriptionsReady.selectionData')) {
+    if (!this.getReactively('subscriptionsReady.selectionData')
+        || !this.getReactively('subscriptionsReady.job')) {
       return;
     }
     this.initializeSelectionVariables();
@@ -106,6 +107,53 @@ class bid {
     this.columnTemplates = this.getTemplatesByTemplateSetting('DisplayCategory', 'PrimaryTableColumn');
   }
 
+  confirmSaveChanges() {
+    const pendingSelectionChangeMessages = SelectionsHelper.getPendingChangeMessages(this.templateLibraries,
+      this.selections, this.selectionRelationships, this.metadata);
+    const pendingJobChangeMessages = JobsHelper.getPendingChangeMessages(this.job);
+    const pendingChangeMessages = [...pendingJobChangeMessages, ...pendingSelectionChangeMessages];
+    if (pendingChangeMessages && pendingChangeMessages.length > 0) {
+      const cancelSave = (err) => {
+        if (err) {
+          console.log(err);
+        }
+      }
+
+      const confirmSave = () => {
+        Meteor.call('saveSelectionChanges', this.job,
+          _.filter(this.selections, (selection) => this.metadata.pendingSelectionChanges[selection._id]),
+          function(err, result) {
+          if (err) {
+            console.log('failed to save selection changes', err);
+          } else {
+            console.log('success saving selection changes', result);
+          }
+        });
+      }
+
+      this.bootstrapDialog.confirmationListDialog("Pending changes need to be saved",
+          `Are you sure you want to apply the following changes?`, pendingChangeMessages)
+        .then(confirmSave, cancelSave);
+    }
+  }
+
+  getJobSubtotal = () => {
+    const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName('jobSubtotal');
+    const variableCollectorSelection = SelectionsHelper.getVariableCollectorSelection(
+      this.templateLibraries, this.selections, this.selectionRelationships, this.jobSelection);
+    if (!variableCollectorSelection) {
+      return null;
+    }
+
+    return this.metadata.variables[variableCollectorSelection._id] &&
+        this.metadata.variables[variableCollectorSelection._id][jsonVariableName];
+        //parseFloat(this.metadata.variables[variableCollectorSelection._id][jsonVariableName]);
+  };
+
+  initializeJobVariables() {
+    this.job.estimateTotal = this.getJobSubtotal();
+  }
+
   initializeSelectionVariables() {
     this.jobSelection = SelectionsHelper.getSelectionByTemplate(this.selections, this.jobTemplate);
     this.productSelections = _.filter(this.selections, (selection) => {
@@ -113,6 +161,10 @@ class bid {
     });
 
     SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata);
+
+    this.initializeJobVariables();
+
+    this.confirmSaveChanges();
 
     _.each(this.productSelections, this.setProductSelectionSelections.bind(this));
 

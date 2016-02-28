@@ -1,6 +1,10 @@
 JobsTemplateLibraries = new Mongo.Collection("jobsTemplateLibraries");
 
 Schema.JobTemplateLibrary = new SimpleSchema({
+  _id: {
+    type: String,
+    optional: true
+  },
   jobId: {
     type: String
   },
@@ -34,4 +38,3 @@ JobsTemplateLibraries.allow({
     return false;
   }
 });
-

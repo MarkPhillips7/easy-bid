@@ -1,18 +1,20 @@
-Filters.unitsFilter = (input, unitsText) => {
-  if (unitsText === '$') {
-    let inputAsDecimal;
-    if (typeof input === 'number') {
-      inputAsDecimal = input.toFixed(2);
-    } else if (typeof input === 'string') {
-      inputAsDecimal = input.length > 0 ? Number(input).toFixed(2) : '0.00';
-    }
-    return `$${inputAsDecimal}`;
-  } else if (unitsText) {
-    return input + ' ' + unitsText;
-  } else {
-    return input;
-  }
-};
+// moved Filters to helpers/filters.js to be accessible from the server
+
+// Filters.unitsFilter = (input, unitsText) => {
+//   if (unitsText === '$') {
+//     let inputAsDecimal;
+//     if (typeof input === 'number') {
+//       inputAsDecimal = input.toFixed(2);
+//     } else if (typeof input === 'string') {
+//       inputAsDecimal = input.length > 0 ? Number(input).toFixed(2) : '0.00';
+//     }
+//     return `$${inputAsDecimal}`;
+//   } else if (unitsText) {
+//     return input + ' ' + unitsText;
+//   } else {
+//     return input;
+//   }
+// };
 
 angular.module('app')
   .filter('capitalize', ['$filter', function ($filter) {

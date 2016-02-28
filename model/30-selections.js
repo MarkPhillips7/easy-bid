@@ -14,7 +14,15 @@ Schema.SelectionSetting = new SimpleSchema({
 });
 
 Schema.Selection = new SimpleSchema({
+  _id: {
+    type: String,
+    optional: true
+  },
   value: {
+    type: String,
+    optional: true
+  },
+  valueSource: {
     type: String,
     optional: true
   },
@@ -43,6 +51,10 @@ Selections.attachSchema(Schema.Selection);
 SelectionRelationships = new Mongo.Collection("selectionRelationships");
 
 Schema.SelectionRelationship = new SimpleSchema({
+  _id: {
+    type: String,
+    optional: true
+  },
   parentSelectionId: {
     type: String
   },
@@ -400,18 +412,69 @@ const refreshSelectionsReferencingVariable =
   }
 };
 
+// const sumSelections = (templateLibraries, selections, selectionRelationships,
+//     metadata, selectionsToSum, parameterVariable, selectionReferencingVariable) => {
+//   if (!selectionsToSum) {
+//     return 0;
+//   }
+//
+//   const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(parameterVariable);
+//   const add = (previousValue, selection) => {
+//     const jsonVariableValue = SelectionsHelper.getJsonVariableValue(
+//       templateLibraries, selections, selectionRelationships, metadata,
+//       selection, jsonVariableName, selectionReferencingVariable);
+//     return previousValue + jsonVariableValue;
+//   };
+//
+//   return selectionsToSum.reduce(add, 0);
+// };
+
+const calculateFormulaValue = (templateLibraries, selections, selectionRelationships,
+    metadata, selection, valueFormula, selectionReferencingVariable) => {
+  if (!selection) {
+    return 0;
+  }
+
+  const expr = Parser.parse(valueFormula);
+  let formulaValue = 0;
+  let variableValues = {};
+  let allVariableValuesFound = true;
+  expr.variables().forEach((templateVariableName) => {
+    if (allVariableValuesFound) {
+      const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(templateVariableName);
+      const jsonVariableValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
+        selection, jsonVariableName, selectionReferencingVariable);
+
+      if (jsonVariableValue === undefined) {
+        allVariableValuesFound = false;
+        if (_.indexOf(metadata.variablesUndefined, jsonVariableName) === -1) {
+          metadata.variablesUndefined.push(jsonVariableName);
+        }
+      }
+      else {
+        variableValues[templateVariableName] = jsonVariableValue;
+      }
+    }
+  });
+
+  if (allVariableValuesFound) {
+    formulaValue = expr.evaluate(variableValues);
+  }
+
+  return {formulaValue, allVariableValuesFound};
+};
+
 const sumSelections = (templateLibraries, selections, selectionRelationships,
-    metadata, selectionsToSum, parameterVariable, selectionReferencingVariable) => {
+    metadata, selectionsToSum, valueFormula, selectionReferencingVariable) => {
   if (!selectionsToSum) {
     return 0;
   }
 
-  const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(parameterVariable);
   const add = (previousValue, selection) => {
-    const jsonVariableValue = SelectionsHelper.getJsonVariableValue(
-      templateLibraries, selections, selectionRelationships, metadata,
-      selection, jsonVariableName, selectionReferencingVariable);
-    return previousValue + jsonVariableValue;
+    const {formulaValue, allVariableValuesFound} = calculateFormulaValue(
+        templateLibraries, selections, selectionRelationships,
+        metadata, selection, valueFormula, selectionReferencingVariable)
+    return previousValue + formulaValue;
   };
 
   return selectionsToSum.reduce(add, 0);
@@ -426,7 +489,7 @@ const addDescendentSelectionsByTemplateType = (templateLibraries, selections, se
       const childSelectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, childSelection.templateId);
       if (childSelectionTemplate && childSelectionTemplate.templateType === templateType) {
         descendentSelections.push(childSelection);
-
+      } else {
         //Now add descendents of this child (but only for children with the requested templateType)
         addDescendentSelectionsByTemplateType(templateLibraries, selections, selectionRelationships, metadata, descendentSelections, childSelection, templateType);
       }
@@ -455,15 +518,41 @@ const applyFunctionOverChildrenOfParent = (templateLibraries, selections, select
     templateLibraries, selections, selectionRelationships, metadata, parentSelection, applicableTemplateType);
   const functionName = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
     selectionTemplate, 'Function');
-  const parameterVariable = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
-    selectionTemplate, 'ParameterVariable');
+  const valueFormula = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
+    selectionTemplate, 'ValueFormula');
 
   if (functionName.toUpperCase() === 'SUM') {
     returnValue = sumSelections(templateLibraries, selections, selectionRelationships,
-      metadata, descendentSelections, parameterVariable, selection);
+      metadata, descendentSelections, valueFormula, selection);
   }
   return returnValue;
 };
+
+const getDisplayValue = (templateLibraries, selections, selection) => {
+  if (selection) {
+    const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selection.templateId);
+    if (selectionTemplate) {
+      if (selectionTemplate.templateType === Constants.templateTypes.product) {
+        return selectionTemplate.name;
+      }
+      return Filters.unitsFilter(selection.value, ItemTemplatesHelper.getUnitsText(selectionTemplate));
+    }
+    return selection.value;
+  }
+  return '';
+};
+
+const getPendingChangeMessagesByOriginalAndCurrentInfo = (originalValue, originalDisplayValue,
+  originalValueSource, currentValue, currentDisplayValue, currentValueSource) => {
+  let pendingChangeMessages = [];
+  if (originalValueSource !== currentValueSource) {
+    pendingChangeMessages.push(`source change from ${originalValueSource} to ${currentValueSource}`);
+  }
+  if (originalValue !== currentValue) {
+    pendingChangeMessages.push(`value change from ${originalDisplayValue} to ${currentDisplayValue}`);
+  }
+  return pendingChangeMessages;
+}
 
 const getSelectionValue = (templateLibraries, selections, selectionRelationships, metadata, selection) => {
   if (!selection) {
@@ -474,9 +563,9 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
   let selectionValueSource = selection.valueSource;
   const variableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selection);
   let variableCollectorSelectionVariableSet = false;
-  let expr;
-  let variableValues = {};
-  let allVariableValuesFound = true;
+  // let expr;
+  // let variableValues = {};
+  // let allVariableValuesFound = true;
   let valueFormula;
   let variableToDisplay;
   let defaultValue;
@@ -501,28 +590,10 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
     //Check for valueFormula, which evaluates based on variables.
     else if (valueFormula = getSettingValue(selection,
       selectionTemplate, Constants.templateSettingKeys.valueFormula)) {
-      expr = Parser.parse(valueFormula);
-      expr.variables().forEach(
-        function (templateVariableName) {
-          if (allVariableValuesFound) {
-            const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(templateVariableName);
-            const jsonVariableValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
-              selection, jsonVariableName, selection);
-
-            if (jsonVariableValue === undefined) {
-              allVariableValuesFound = false;
-              if (_.indexOf(metadata.variablesUndefined, jsonVariableName) === -1) {
-                metadata.variablesUndefined.push(jsonVariableName);
-              }
-            }
-            else {
-              variableValues[templateVariableName] = jsonVariableValue;
-            }
-          }
-        });
-
+      const {formulaValue, allVariableValuesFound} = calculateFormulaValue(templateLibraries, selections, selectionRelationships,
+          metadata, selection, valueFormula, selection);
       if (allVariableValuesFound) {
-        selectionValue = expr.evaluate(variableValues);
+        selectionValue = formulaValue;
         selectionValueSource = Constants.valueSources.calculatedValue;
       }
     }
@@ -561,21 +632,48 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
     selectionValueSource = Constants.valueSources.userEntry;
   }
 
+  const originalValueSource = selectionValueSource;
   if (selection.valueSource !== selectionValueSource) {
     selection.valueSource = selectionValueSource;
   }
 
   //Store selectionValue in selection's value
+  const originalValue = selection.value;
+  const originalDisplayValue = getDisplayValue(templateLibraries, selections, selection);
   if (selectionValue !== undefined
       && selectionValue !== null &&
       (variableCollectorSelectionVariableSet || selection.value !== selectionValue.toString())) {
-    selection.value = selectionValue.toString();
-    // afterSettingValue(selection);
+    if (selection.value !== selectionValue.toString()) {
+      selection.value = selectionValue.toString();
+      // afterSettingValue(selection);
+    }
 
     // Make sure formulas that reference this selection's variable get updated
     if (selectionJsonVariableName && variableCollectorSelection) {
       refreshSelectionsReferencingVariable(templateLibraries, selections, selectionRelationships,
         metadata, variableCollectorSelection, selectionJsonVariableName);
+    }
+  }
+
+  const currentDisplayValue = getDisplayValue(templateLibraries, selections, selection);
+  let displayMessages = getPendingChangeMessagesByOriginalAndCurrentInfo(originalValue, originalDisplayValue,
+    originalValueSource, selection.value, currentDisplayValue, selectionValueSource);
+  if (displayMessages.length > 0) {
+    if (!metadata.pendingSelectionChanges[selection._id]) {
+      metadata.pendingSelectionChanges[selection._id] = {
+        originalValue,
+        originalDisplayValue,
+        originalValueSource,
+        displayMessages
+      };
+    } else {
+      // Get displayMessages using the truly original values (current original ones represent altered values).
+      displayMessages = getPendingChangeMessagesByOriginalAndCurrentInfo(
+        metadata.pendingSelectionChanges[selection._id].originalValue,
+        metadata.pendingSelectionChanges[selection._id].originalDisplayValue,
+        metadata.pendingSelectionChanges[selection._id].originalValueSource,
+        selection.value, currentDisplayValue, selectionValueSource);
+      metadata.pendingSelectionChanges[selection._id].displayMessages = displayMessages;
     }
   }
 
@@ -604,14 +702,12 @@ const refreshValueToUse = (templateLibraries, selections, selectionRelationships
     });
 
     // Make sure formulas that reference selection's variable get updated
-    if (metadata.selectionsReferencingVariables) {
-      _.each(metadata.selectionsReferencingVariables, (selectionsReferencingVariable) => {
-        _.each(selectionsReferencingVariable.selectionIds, (selectionId) => {
-          const selectionReferencingVariable = _.find(selections, (_selection) => _selection._id === selectionId);
-          if (selectionReferencingVariable) {
-            getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, selectionReferencingVariable);
-          }
-        });
+    if (metadata.selectionIdsReferencingVariables[selection._id]) {
+      _.each(metadata.selectionIdsReferencingVariables[selection._id].selectionIds, (selectionId) => {
+        const selectionReferencingVariable = _.find(selections, (_selection) => _selection._id === selectionId);
+        if (selectionReferencingVariable) {
+          getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, selectionReferencingVariable);
+        }
       });
     }
   }
@@ -664,7 +760,7 @@ const initializeMetadata = (metadata) => {
   //     }, ...
   //   ], ...
   // }
-  metadata.selectionIdsReferencingVariables = [];
+  metadata.selectionIdsReferencingVariables = {};
 
   // variablesUndefined should be like
   // [
@@ -676,14 +772,32 @@ const initializeMetadata = (metadata) => {
   // variables should be like
   // {
   //   wHHJKRr2MhLdc4GkT: // id of variableCollector selection
-  //   [
+  //   {
   //     varpriceeach: // jsonVariableName
   //       '99.99',    // variable value
   //     varheight:    // jsonVariableName
   //       '16.5', ... // variable value
-  //   ]
+  //   }
   // }
   metadata.variables = {};
+
+  // pendingSelectionChanges should be like
+  // {
+  //   wHHJKRr2MhLdc4GkT: // id of selection with pending change
+  //   {
+  //     originalValue: '11.11',
+  //     originalDisplayValue: '$11.11',
+  //     originalValueSource: 'defaultValue',
+  //     displayMessages: [
+  //       'source change from undefined to defaultValue',
+  //       'value change from $11.11 to $22.22',
+  //     ], ...
+  //   }
+  // }
+  // Sometimes a variable will make multiple transitions, like from 55 to 0 to 55. We store originalValue
+  // so that we can identify pending changes that are not really changes.
+  // Cannot just remove the key or the originalValue or originalValueSource could be wrong.
+  metadata.pendingSelectionChanges = {};
 };
 
 const getInitializedMetadata = () => {
@@ -720,19 +834,43 @@ const initializeSelectionVariables = (templateLibraries, selections, selectionRe
   refreshValueToUse(templateLibraries, selections, selectionRelationships, metadata, companySelection);
 };
 
-const getDisplayValue = (templateLibraries, selections, selection) => {
+const getDisplayDescription = (templateLibraries, selections, selectionRelationships, selection) => {
   if (selection) {
     const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selection.templateId);
     if (selectionTemplate) {
-      if (selectionTemplate.templateType === Constants.templateTypes.product) {
-        return selectionTemplate.name;
+      const templateVariableName = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, 'VariableName');
+      if (templateVariableName) {
+        const parentSelection = SelectionsHelper.getParentSelections(selection, selections, selectionRelationships)[0];
+        if (parentSelection) {
+          const parentSelectionDisplayDescription = getDisplayDescription(templateLibraries, selections, selectionRelationships, parentSelection);
+          return `${parentSelectionDisplayDescription} ${templateVariableName}`;
+        }
+        return templateVariableName;
       }
-      return Filters.unitsFilter(selection.value, ItemTemplatesHelper.getUnitsText(selectionTemplate));
+      return selectionTemplate.name;
     }
     return selection.value;
   }
   return '';
-};
+}
+
+const getPendingChangeMessages = (templateLibraries, selections, selectionRelationships, metadata) => {
+  return _.reduce(
+    metadata.pendingSelectionChanges,
+    (pendingChangeMessages, pendingChangeMessagesWithoutSelectionDescription, selectionId) => {
+      const selection = _.find(selections, (selection) => selection._id === selectionId);
+      const selectionDisplayDescription = getDisplayDescription(templateLibraries, selections, selectionRelationships, selection);
+      let newPendingChangeMessages = [];
+      _.each(pendingChangeMessagesWithoutSelectionDescription.displayMessages, (pendingChangeMessageWithoutSelectionDescription) => {
+        const newPendingChangeMessage = selectionDisplayDescription + ' ' + pendingChangeMessageWithoutSelectionDescription;
+        if (pendingChangeMessages.indexOf(newPendingChangeMessage) === -1) {
+          newPendingChangeMessages.push(newPendingChangeMessage);
+        }
+      });
+      return [...pendingChangeMessages, ...newPendingChangeMessages];
+    },
+    []);
+}
 
 SelectionsHelper = {
   applyFunctionOverChildrenOfParent: applyFunctionOverChildrenOfParent,
@@ -743,11 +881,13 @@ SelectionsHelper = {
   getInitializedMetadata: getInitializedMetadata,
   getJsonVariableValue: getJsonVariableValue,
   getParentSelections: getParentSelections,
+  getPendingChangeMessages: getPendingChangeMessages,
   getSelectionByTemplate: getSelectionByTemplate,
   getSelectionSettingValueForSelection: getSelectionSettingValueForSelection,
   getSelectionToOverride: getSelectionToOverride,
   getSelectionsBySelectionParentAndTemplate: getSelectionsBySelectionParentAndTemplate,
   getSelectionValue: getSelectionValue,
+  getVariableCollectorSelection: getVariableCollectorSelection,
   initializeSelectionVariables: initializeSelectionVariables,
   sumSelections: sumSelections,
 }

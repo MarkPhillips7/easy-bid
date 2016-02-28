@@ -1,6 +1,10 @@
 Jobs = new Mongo.Collection("jobs");
 
 Schema.Job = new SimpleSchema({
+  _id: {
+    type: String,
+    optional: true
+  },
   name: {
     type: String,
     regEx: /^[a-z0-9A-z .]{3,30}$/
@@ -81,6 +85,11 @@ Schema.Job = new SimpleSchema({
     type: String,
     optional: true
   },
+  estimateTotal: {
+    type: Number,
+    decimal: true,
+    optional: true
+  },
   exclusions: {
     type: String,
     optional: true
@@ -125,5 +134,19 @@ Jobs.allow({
   }
 });
 
+const getPendingChangeMessages = (candidateJob) => {
+  const job = Jobs.findOne(candidateJob._id);
+  if (job.estimateTotal !== candidateJob.estimateTotal) {
+    const displayJobEstimateTotal = Filters.unitsFilter(job.estimateTotal, '$');
+    const displayCandidateJobEstimateTotal = Filters.unitsFilter(candidateJob.estimateTotal, '$');
+    return [`Estimate Total change from ${displayJobEstimateTotal} to ${displayCandidateJobEstimateTotal}`];
+  }
+  return [];
+  // const diff = Meteor.npmRequire('rus-diff').diff;
+  // const mods = diff(job, candidateJob);
+  // return mods && [_.values(mods.$set)];
+}
+
 JobsHelper = {
+  getPendingChangeMessages: getPendingChangeMessages
 };

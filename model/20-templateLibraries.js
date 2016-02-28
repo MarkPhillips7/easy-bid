@@ -52,6 +52,9 @@ TemplateTypeInfoList = [{
     name: 'Calculations',
     templateType: Constants.templateTypes.calculation
   }, {
+    name: 'Functions',
+    templateType: Constants.templateTypes.function
+  }, {
     name: 'Overrides',
     templateType: Constants.templateTypes.override
   }]
@@ -409,6 +412,76 @@ TemplateTypeInfoList = [{
     canEdit: false,
     viewShow: true,
     editShow: false
+  }, {
+    name: 'Formula',
+    templateSettingKey: Constants.templateSettingKeys.valueFormula,
+    minCount: 1,
+    maxCount: 1,
+    canDelete: false,
+    canEdit: true,
+    viewShow: true,
+    editShow: true
+  }],
+  relevantTemplateTypes: []
+}, {
+  templateType: Constants.templateTypes.function,
+  displayInHierarchy: false,
+  templateSettingInfoList: [{
+    name: 'Variable',
+    templateSettingKey: Constants.templateSettingKeys.variableName,
+    minCount: 1,
+    maxCount: 1,
+    canDelete: false,
+    canEdit: true,
+    viewShow: true,
+    editShow: true
+  }, {
+    name: 'Numerator Units',
+    templateSettingKey: Constants.templateSettingKeys.numeratorUnit,
+    minCount: 0,
+    maxCount: -1,
+    options: UnitOfMeasure.unitOptions,
+    canDelete: false,
+    canEdit: true,
+    viewShow: false,
+    editShow: true
+  }, {
+    name: 'Denominator Units',
+    templateSettingKey: Constants.templateSettingKeys.denominatorUnit,
+    minCount: 0,
+    maxCount: -1,
+    options: UnitOfMeasure.unitOptions,
+    canDelete: false,
+    canEdit: true,
+    viewShow: false,
+    editShow: true
+  }, {
+    name: 'Units',
+    templateSettingKey: Constants.templateSettingKeys.unitsText,
+    minCount: 0,
+    maxCount: 0,//Because not a true template setting
+    canDelete: false,
+    canEdit: false,
+    viewShow: true,
+    editShow: true
+  }, {
+    name: 'Belongs To',
+    templateSettingKey: Constants.templateSettingKeys.belongsTo,
+    minCount: 0,
+    maxCount: 0,//Because not a true template setting
+    canDelete: false,
+    canEdit: false,
+    viewShow: true,
+    editShow: false
+  }, {
+    name: 'Function',
+    templateSettingKey: Constants.templateSettingKeys.function,
+    minCount: 1,
+    maxCount: 1,
+    canDelete: false,
+    canEdit: true,
+    viewShow: true,
+    editShow: true
   }, {
     name: 'Formula',
     templateSettingKey: Constants.templateSettingKeys.valueFormula,

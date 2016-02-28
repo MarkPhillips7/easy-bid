@@ -54,6 +54,7 @@ Constants.templateSettingKeys = {
   displayCaption:"DisplayCaption",
   displayCategory:"DisplayCategory",
   displayOrder:"DisplayOrder",
+  function:"Function",
   imageSource:"ImageSource",
   isABaseTemplate:"IsABaseTemplate",
   isASubTemplate:"IsASubTemplate",

@@ -106,7 +106,7 @@ function getUnitOfMeasureTextByUnits(units) {
     var uniqueUnits = [];
     var unitsWithCounts = {};
     units.sort().forEach(function (unit) {
-      if ($.inArray(unit, uniqueUnits) !== -1) {
+      if (_.indexOf(uniqueUnits, unit) !== -1) {
         unitsWithCounts[unit]++;
       }
       else {
