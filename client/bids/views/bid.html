@@ -196,12 +196,15 @@
               </div>
           </div>
       </div>
-
     </div>
   </div>
   <div class="row eb-option-buttons">
     <div class="col-xs-12">
       <h4 class="sub-header">{{bid.selectedAreaBreadcrumbText}}
+        <span class="eb-heading-option">
+          <input type="checkbox" ng-checked="bid.includeChildAreas"
+                 data-ng-click="bid.toggleIncludeChildAreas()">Include child areas
+        </span>
         <div class="pull-right">
           <span class="label label-danger"
                 data-ng-show="bid.notShownSelectedCount > 0">

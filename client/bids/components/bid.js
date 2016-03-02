@@ -28,6 +28,7 @@ class bid {
     this.columnTemplates = [];
     this.companyId = this.$stateParams.c;
     this.customerId = this.$stateParams.r;
+    this.includeChildAreas = false;
     this.jobId = this.$stateParams.bidId;
     this.jobSelection = null;
     this.jobTemplate = null;
@@ -173,7 +174,7 @@ class bid {
       this.selectedProductSelectionId = this.productSelections[0]._id;
     }
 
-    this.areaTreeData = this.getAreaTreeData();
+    this.setAreaTreeData();
   }
 
   getSelectionsBySelectionParentAndTemplate(productSelection, columnTemplate) {
@@ -273,30 +274,85 @@ class bid {
     return Meteor.userId() !== null;
   }
 
-  getAreaTreeData() {
-    const jobSelection = this.jobSelection;
-    const areaTemplate = this.areaTemplate;
-    let areaTreeData = [];
-    let i;
-    let treeItem;
+  getFirstTreeLeaf(treeItems) {
+    if (treeItems && treeItems[0]) {
+      return treeItems[0].children && treeItems[0].children[0]
+          ? this.getFirstTreeLeaf(treeItems[0].children)
+          : treeItems[0];
+    }
+    return null;
+  }
 
-    if (jobSelection && areaTemplate) {
-      const childSelections = SelectionsHelper.getChildSelectionsWithTemplateId(jobSelection, areaTemplate.id);
-
-      for (i = 0; i < childSelections.length; i += 1) {
-        treeItem = this.addItemToTreeData(areaTreeData, childSelections[i]);
+  getTreeItemSelected(treeItems) {
+    if (treeItems) {
+      let selectedTreeItem = _.find(treeItems, (treeItem) => treeItem.data.selectionId === this.areaSelectedId);
+      if (selectedTreeItem) {
+        return selectedTreeItem;
       }
+      _.each(treeItems, (treeItem) => {
+        selectedTreeItem = this.getTreeItemSelected(treeItem.children);
+        if (selectedTreeItem) {
+          return selectedTreeItem;
+        }
+      })
+    }
+    return null;
+  }
 
+  // Cannot use _.isEqual because tree data in use will include properties
+  // like expanded and uid that would not be in pending tree data
+  isTreeDataEqual(a, b) {
+    const _isItemEqual = (itemA, itemB) => {
+      return (itemA && itemA.data && itemA.data.selectionId &&
+        itemB && itemB.data && itemB.data.selectionId &&
+        itemA.data.selectionId === itemB.data.selectionId &&
+        this.isTreeDataEqual(itemA.children, itemB.children));
+    };
+
+    if (!(a && b && a.length === b.length)) {
+      return false;
+    }
+    for (let index = 0; index < a.length; index = index + 1) {
+      if (!_isItemEqual(a[index], b[index])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  setAreaTreeData() {
+    const pendingAreaTreeData = this.getPendingAreaTreeData();
+    const treeItemSelected = this.getTreeItemSelected(pendingAreaTreeData);
+    if (!this.isTreeDataEqual(this.areaTreeData, pendingAreaTreeData)) {
+      this.areaTreeData = pendingAreaTreeData;
+      const treeItemToSelect = treeItemSelected || this.getFirstTreeLeaf(this.areaTreeData);
       //Even the demo code did not work in attempting to expand all here rather than after a timeout
       //if (this.areaTree) {
       //    this.areaTree.expand_all();
       //}
       this.$timeout(() => {
         this.areaTree.expand_all();
-        this.selectAreaTreeItem(treeItem);
+        this.selectAreaTreeItem(treeItemToSelect);
       }, 50);
     }
-    return areaTreeData;
+  }
+
+  getPendingAreaTreeData() {
+    const jobSelection = this.jobSelection;
+    const areaTemplate = this.areaTemplate;
+    let pendingAreaTreeData = [];
+    let treeItemSelected = null;
+    let i;
+
+    if (jobSelection && areaTemplate) {
+      const childSelections = SelectionsHelper.getChildSelectionsWithTemplateId(jobSelection, areaTemplate.id);
+
+      for (i = 0; i < childSelections.length; i += 1) {
+        const childSelection = childSelections[i];
+        this.addItemToTreeData(pendingAreaTreeData, childSelection);
+      }
+    }
+    return pendingAreaTreeData;
   }
 
   getBreadcrumbText(branch, text) {
@@ -321,9 +377,20 @@ class bid {
     return this.inSelectedArea(selection);
   }
 
+  toggleIncludeChildAreas() {
+    this.includeChildAreas = !this.includeChildAreas;
+  }
+
   inSelectedArea(selection) {
     if (selection._id === this.areaSelectedId) {
       return true;
+    }
+
+    if (!this.getReactively('includeChildAreas')) {
+      const selectionTemplate = TemplateLibrariesHelper.getTemplateById(this.templateLibraries, selection.templateId);
+      if (selectionTemplate.templateType === Constants.templateTypes.area) {
+        return false;
+      }
     }
 
     const parentSelection = SelectionsHelper.getParentSelections(selection)[0];
@@ -435,7 +502,6 @@ class bid {
   addAreaToArray(areaTreeDataArray, parentSelection) {
     let treeItem;
     let newSelection;
-    let something = 'something';
     if (this.areaToAdd) {
       const areaTemplate = this.getReactively('areaTemplate');
       Meteor.call('addSelectionForTemplate', this.templateLibraries[0], this.jobId, areaTemplate,
