@@ -147,6 +147,16 @@ const getPendingChangeMessages = (candidateJob) => {
   // return mods && [_.values(mods.$set)];
 }
 
+const getSummary = (job) => {
+  const customerProfile = job  && job.customerProfile;
+  const firstName = customerProfile && customerProfile.firstName;
+  const lastName = customerProfile && customerProfile.lastName;
+  const customerName = (firstName || lastName) ? `${firstName} ${lastName}` : '[no customer]'
+  let jobName = (job && job.name) || '[no name]';
+  return `${customerName} - ${jobName}`;
+};
+
 JobsHelper = {
-  getPendingChangeMessages: getPendingChangeMessages
+  getPendingChangeMessages: getPendingChangeMessages,
+  getSummary: getSummary,
 };

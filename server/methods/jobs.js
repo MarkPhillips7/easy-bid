@@ -124,98 +124,91 @@ Meteor.methods({
     check(jobToSave, Schema.Job);
     check(selectionsToSave, [Schema.Selection]);
 
-    if (selectionsToSave.length === 0) {
-      return;
-    }
-    if (_.any(selectionsToSave, (selection) => selection.jobId !== jobToSave._id)) {
+    const jobId = jobToSave._id;
+    if (_.any(selectionsToSave, (selection) => selection.jobId !== jobId)) {
       throw new Meteor.Error('can-update-selections-for-only-specified-job', 'Sorry, can only update selections for specified job.');
     }
-    const jobId = selectionsToSave[0].jobId;
     if (!Meteor.call("userCanUpdateJob", this.userId, jobId)) {
       throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
     }
 
-    const job = Jobs.findOne({_id: jobToSave._id});
-
-    // In order to validate the changes must load template libraries and all selections and verify all selection values are allowed
-    const jobsTemplateLibraries = JobsTemplateLibraries.find({ 'jobId' : jobId });
-    const templateLibraryIds = _.map(jobsTemplateLibraries.fetch(), (jobTemplateLibrary) => jobTemplateLibrary.templateLibraryId);
-    const templateLibraries = TemplateLibraries.find({
-      _id: { $in: templateLibraryIds }
-    }).fetch();
-    const selections = Selections.find({ 'jobId' : jobId }).fetch();
-    const selectionIds = _.map(selections, (selection) => selection._id);
-    const selectionRelationships = SelectionRelationships.find({
-      $or:[
-        {"childSelectionId": { $in: selectionIds } },
-        {"parentSelectionId": { $in: selectionIds } }
-      ]}).fetch();
+    const job = Jobs.findOne({_id: jobId});
 
     const diff = Meteor.npmRequire('rus-diff').diff;
-    let selectionsWithUpdates = selections;
-    let selectionUpdates = [];
-    let selectionInserts = [];
-    // Replace selections from database with pending selections to perform validation
-    _.each(selectionsToSave, (selectionToSave) => {
-      let selection;
-      const indexOfSelection = selectionsWithUpdates.findIndex((_selection) => {
-        selection = _selection;
-        return _selection._id === selectionToSave._id;
-      });
-      if (indexOfSelection === -1) {
-        selectionInserts = [...selectionInserts, selectionToSave];
-        selectionsWithUpdates = [
-          ...selectionsWithUpdates,
-          selectionToSave
-        ];
-      } else {
-        const selectionUpdate = {
-          _id: selectionToSave._id,
-          mods: diff(selection, selectionToSave)
-        };
-        // if (selection.value !== selectionToSave.value) {
-        //   selectionUpdate.$set.value = selectionToSave.value;
-        // }
-        // if (selection.valueSource !== selectionToSave.valueSource) {
-        //   selectionUpdate.$set.valueSource = selectionToSave.valueSource;
-        // }
-        // if (selection.isOverridingDefault !== selectionToSave.isOverridingDefault) {
-        //   selectionUpdate.$set.isOverridingDefault = selectionToSave.isOverridingDefault;
-        // }
-        selectionUpdates = [...selectionUpdates, selectionUpdate];
-        selectionsWithUpdates = [
-          ...selectionsWithUpdates.slice(0, indexOfSelection),
-          selectionToSave,
-          ...selectionsWithUpdates.slice(indexOfSelection + 1)
-        ];
-      }
-    });
-    let metadata = {};
-    SelectionsHelper.initializeSelectionVariables(templateLibraries, selectionsWithUpdates, selectionRelationships, metadata);
+    if (selectionsToSave.length > 0) {
+      // In order to validate the changes must load template libraries and all selections and verify all selection values are allowed
+      const jobsTemplateLibraries = JobsTemplateLibraries.find({ 'jobId' : jobId });
+      const templateLibraryIds = _.map(jobsTemplateLibraries.fetch(), (jobTemplateLibrary) => jobTemplateLibrary.templateLibraryId);
+      const templateLibraries = TemplateLibraries.find({
+        _id: { $in: templateLibraryIds }
+      }).fetch();
+      const selections = Selections.find({ 'jobId' : jobId }).fetch();
+      const selectionIds = _.map(selections, (selection) => selection._id);
+      const selectionRelationships = SelectionRelationships.find({
+        $or:[
+          {"childSelectionId": { $in: selectionIds } },
+          {"parentSelectionId": { $in: selectionIds } }
+        ]}).fetch();
 
-    // The existence of pending changes with display messages means the changes are invalid
-    const truePendingChanges = _.filter(metadata.pendingSelectionChanges, (pendingChange) => {
-      return pendingChange.displayMessages.length > 0;
-    });
-    if (truePendingChanges.length > 0) {
-      _.each(truePendingChanges, (pendingChange) => {
-        _.each(pendingChange.displayMessages, (displayMessage) => {
-          console.log(`inconsistent data pending change: ${displayMessage}`);
+      let selectionsWithUpdates = selections;
+      let selectionUpdates = [];
+      let selectionInserts = [];
+      // Replace selections from database with pending selections to perform validation
+      _.each(selectionsToSave, (selectionToSave) => {
+        let selection;
+        const indexOfSelection = selectionsWithUpdates.findIndex((_selection) => {
+          selection = _selection;
+          return _selection._id === selectionToSave._id;
         });
+        if (indexOfSelection === -1) {
+          selectionInserts = [...selectionInserts, selectionToSave];
+          selectionsWithUpdates = [
+            ...selectionsWithUpdates,
+            selectionToSave
+          ];
+        } else {
+          const selectionMods = diff(selection, selectionToSave);
+          if (selectionMods) {
+            const selectionUpdate = {
+              _id: selectionToSave._id,
+              mods: selectionMods
+            };
+            selectionUpdates = [...selectionUpdates, selectionUpdate];
+            selectionsWithUpdates = [
+              ...selectionsWithUpdates.slice(0, indexOfSelection),
+              selectionToSave,
+              ...selectionsWithUpdates.slice(indexOfSelection + 1)
+            ];
+          }
+        }
       });
-      throw new Meteor.Error('inconsistent-data-request', 'Sorry, the requested changes would cause inconsistent data.');
+      let metadata = {};
+      SelectionsHelper.initializeSelectionVariables(templateLibraries, selectionsWithUpdates, selectionRelationships, metadata);
+
+      // The existence of pending changes with display messages means the changes are invalid
+      const truePendingChanges = _.filter(metadata.pendingSelectionChanges, (pendingChange) => {
+        return pendingChange.displayMessages.length > 0;
+      });
+      if (truePendingChanges.length > 0) {
+        _.each(truePendingChanges, (pendingChange) => {
+          _.each(pendingChange.displayMessages, (displayMessage) => {
+            console.log(`inconsistent data pending change: ${displayMessage}`);
+          });
+        });
+        throw new Meteor.Error('inconsistent-data-request', 'Sorry, the requested changes would cause inconsistent data.');
+      }
+
+      _.each(selectionUpdates, (selectionUpdate) => {
+        Selections.update({_id: selectionUpdate._id}, selectionUpdate.mods);
+      });
+      _.each(selectionInserts, (selectionToInsert) => {
+        Selections.insert(selectionToInsert);
+      });
     }
 
-    _.each(selectionUpdates, (selectionUpdate) => {
-      Selections.update({_id: selectionUpdate._id}, selectionUpdate.mods);
-    });
-    _.each(selectionInserts, (selectionToInsert) => {
-      Selections.insert(selectionToInsert);
-    });
-
     const jobMods = diff(job, jobToSave);
-    if (_.keys(jobMods).length > 0) {
-      Jobs.update({_id: jobToSave._id}, jobMods);      
+    if (jobMods) {
+      Jobs.update({_id: jobToSave._id}, jobMods);
     }
   }
 });

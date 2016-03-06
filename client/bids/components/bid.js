@@ -10,11 +10,11 @@ SetModule('app');
 @View({
   templateUrl: () => 'client/bids/views/bid.html'
 })
-@Inject('$state', '$stateParams', '$timeout', 'bootstrap.dialog')
+@Inject('$modal', '$state', '$stateParams', '$timeout', 'bootstrap.dialog')
 @MeteorReactive
 @LocalInjectables
 class bid {
-  constructor($state, $stateParams, $timeout, bootstrapDialog) {
+  constructor($modal, $state, $stateParams, $timeout, bootstrapDialog) {
     this.itemIdsSelected = [];
     this.perPage = 50;
     this.page = 1;
@@ -108,6 +108,21 @@ class bid {
     this.columnTemplates = this.getTemplatesByTemplateSetting('DisplayCategory', 'PrimaryTableColumn');
   }
 
+  save() {
+    Meteor.call('saveSelectionChanges', this.job,
+      _.filter(this.selections, (selection) => this.metadata.pendingSelectionChanges[selection._id]
+          && this.metadata.pendingSelectionChanges[selection._id].displayMessages
+          && this.metadata.pendingSelectionChanges[selection._id].displayMessages.length > 0
+        ),
+      function(err, result) {
+      if (err) {
+        console.log('failed to save selection changes', err);
+      } else {
+        console.log('success saving selection changes', result);
+      }
+    });
+  }
+
   confirmSaveChanges() {
     const pendingSelectionChangeMessages = SelectionsHelper.getPendingChangeMessages(this.templateLibraries,
       this.selections, this.selectionRelationships, this.metadata);
@@ -121,15 +136,7 @@ class bid {
       }
 
       const confirmSave = () => {
-        Meteor.call('saveSelectionChanges', this.job,
-          _.filter(this.selections, (selection) => this.metadata.pendingSelectionChanges[selection._id]),
-          function(err, result) {
-          if (err) {
-            console.log('failed to save selection changes', err);
-          } else {
-            console.log('success saving selection changes', result);
-          }
-        });
+        this.save();
       }
 
       this.bootstrapDialog.confirmationListDialog("Pending changes need to be saved",
@@ -582,6 +589,36 @@ class bid {
       this.selections, this.selectionRelationships, this.metadata, selectionsToSum, 'priceTotal');
 
     return Filters.unitsFilter(subtotal, '$');
+  }
+
+  editBidDetails(event) {
+    const modalInstance = this.$modal.open({
+      // template: '<bid-details></bid-details>',
+      templateUrl: 'client/bids/views/bid-details-edit.html',
+      controller: 'bidDetails',
+      size: 'lg',
+      // scope: $scope,
+      resolve: {
+        'bid': () => {
+          return this;
+        },
+        // 'company': () => {
+        //   return this.company;
+        // },
+        // 'customer': () => {
+        //   return this.customer;
+        // },
+        // 'job': () => {
+        //   return this.job;
+        // },
+      }
+    });
+
+    modalInstance.result.then((selectedItem) => {
+      this.save();
+    }, () => {
+      console.log('Modal dismissed at: ' + new Date());
+    });
   }
 
   getSelectionTemplateName(selection) {

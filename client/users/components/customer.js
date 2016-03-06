@@ -22,7 +22,7 @@ class customer {
     this.helpers({
       company: this._company,
       customer: this._customer,
-      isDirty: this._isDirty,
+      // isDirty: this._isDirty,
       isLoggedIn: this._isLoggedIn
     });
 
@@ -42,7 +42,7 @@ class customer {
     return Meteor.userId();
   }
 
-  _isDirty() {
+  isDirty() {
     return !_.isEqual(this.customer, this.savedCustomer);
   }
 
