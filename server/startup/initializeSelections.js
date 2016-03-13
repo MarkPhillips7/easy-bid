@@ -54,7 +54,7 @@ function addSelectionsForTemplateChildren(templateLibrary, jobId, selection, tem
   {
     //If a child template exists with the same type as templateToStopAt then just return.
     if (templateToStopAt &&
-      _.find(TemplateLibrariesHelper.templateChildren(templateLibrary, template), (templateChild) => {return templateChild.templateType == templateToStopAt.templateType;})){
+      _.find(TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template), (templateChild) => {return templateChild.templateType == templateToStopAt.templateType;})){
       return;
     }
 

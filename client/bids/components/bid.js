@@ -35,10 +35,14 @@ class bid {
     // metadata used to keep track of ui state of various data
     this.metadata = SelectionsHelper.getInitializedMetadata();
     this.productSelectionTemplate = null;
+    this.productToAdd = null;
     this.selectedAreaBreadcrumbText = '[No Areas]';
     this.selectedProductSelectionId = '';
     this.subscriptionsReady = {};
     this.productSelections = [];
+    this.productSelectionEditItems = [];
+    this.productSelectionItems = [];
+    this.tabs = [];
 
     this.helpers({
       areAnyItemsSelected: this._areAnyItemsSelected,
@@ -106,6 +110,10 @@ class bid {
     this.jobTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.job);
     this.productSelectionTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.productSelection);
     this.columnTemplates = this.getTemplatesByTemplateSetting('DisplayCategory', 'PrimaryTableColumn');
+  }
+
+  cancel() {
+    // ToDo: cancel pending changes
   }
 
   save() {
@@ -512,7 +520,7 @@ class bid {
     if (this.areaToAdd) {
       const areaTemplate = this.getReactively('areaTemplate');
       Meteor.call('addSelectionForTemplate', this.templateLibraries[0], this.jobId, areaTemplate,
-          this.areaToAdd, parentSelection, 0, (err, result) => {
+          this.areaToAdd, parentSelection._id, 0, (err, result) => {
         if (err) {
           console.log('failed to addSelectionForTemplate get in addAreaToArray', err);
         } else {
@@ -593,24 +601,13 @@ class bid {
 
   editBidDetails(event) {
     const modalInstance = this.$modal.open({
-      // template: '<bid-details></bid-details>',
       templateUrl: 'client/bids/views/bid-details-edit.html',
       controller: 'bidDetails',
       size: 'lg',
-      // scope: $scope,
       resolve: {
         'bid': () => {
           return this;
         },
-        // 'company': () => {
-        //   return this.company;
-        // },
-        // 'customer': () => {
-        //   return this.customer;
-        // },
-        // 'job': () => {
-        //   return this.job;
-        // },
       }
     });
 
@@ -618,6 +615,49 @@ class bid {
       this.save();
     }, () => {
       console.log('Modal dismissed at: ' + new Date());
+      this.cancel();
+    });
+  }
+
+  addProductSelection() {
+    const parentSelectionId = this.areaSelectedId;
+    const parentSelection =  _.find(this.selections, (selection) => selection._id === parentSelectionId);
+    Meteor.call('addProductSelectionAndChildren', this.templateLibraries[0], this.jobId, parentSelection,
+        this.productSelectionTemplate, this.productToAdd, 0,
+        (err, result) => {
+      if (err) {
+        console.log('failed to addSelectionForTemplate get in addProductSelection', err);
+      } else {
+        const newProductSelection = result;
+        this.selectedProductSelectionId = newProductSelection._id;
+        this.productToAdd = null;
+        this.editProductSelection(newProductSelection, null, true);
+      }
+    });
+  }
+
+  editProductSelection(data, event, deleteIfCanceled) {
+    this.selectedProductSelectionId = data._id;
+    this.setTabs();
+    const modalInstance = this.$modal.open({
+      templateUrl: 'client/product-selections/views/product-selection-edit.html',
+      controller: 'productSelection',
+      // size: 'lg',
+      resolve: {
+        'bid': () => {
+          return this;
+        },
+      }
+    });
+
+    modalInstance.result.then((selectedItem) => {
+      this.save();
+    }, () => {
+      console.log('Modal dismissed at: ' + new Date());
+      if (deleteIfCanceled) {
+        this.deleteProductSelection(this.selectedProductSelection);
+      }
+      this.cancel();
     });
   }
 
@@ -627,6 +667,15 @@ class bid {
       return `${template.name}`;
     }
     return ``;
+  }
+
+  getSelectedProductDisplaySummary() {
+    const selectedProductSelection = _.find(this.selections, (selection) => selection._id === this.selectedProductSelectionId);
+    const titleText = this.getTitle(selectedProductSelection);
+    const priceEachText = this.getPriceEach(selectedProductSelection);
+    const priceTotalText = this.getPriceTotal(selectedProductSelection);
+    const quantityText = this.getQuantity(selectedProductSelection);
+    return `${titleText} x ${quantityText} at ${priceEachText} each = ${priceTotalText}`;
   }
 
   getTitle(productSelection) {
@@ -704,5 +753,60 @@ class bid {
       return imageFileSetting ? imageFileSetting.value : '';
     }
     return '';
+  }
+
+  // returns array of TabSection objects
+  getTabsFromTemplates(templatesForTabs) {
+    var tabs = [];
+    if (templatesForTabs) {
+      _.each(templatesForTabs, (templateForTab) => {
+        const templateSettingsForTabs = TemplateLibrariesHelper.getTemplateSettingsForTabs(templateForTab);
+        _.each(templateSettingsForTabs, (templateSetting) => {
+          const tabMatch = _.find(tabs, (tab) => tab.title === templateSetting.value);
+          const selectedProductSelection = _.find(this.selections, (selection) => selection._id === this.selectedProductSelectionId);
+          if (tabMatch) {
+            tabMatch.inputSelectionItems.push(new InputSelectionItem(this.templateLibraries,
+              this.selections, this.selectionRelationships, templateForTab, selectedProductSelection));
+          }
+          else {
+            const newTab = new TabSection(templateSetting.value, this.templateLibraries,
+              this.selections, this.selectionRelationships, templateForTab, selectedProductSelection);
+              //Ultimately need a better way of ordering tabs, but for now just make Primary the first
+            if (templateSetting.value === 'Primary') {
+              tabs.unshift(newTab);
+            } else {
+              tabs.push(newTab);
+            }
+          }
+        });
+      });
+    }
+
+    return tabs;
+  };
+
+  setTabs() {
+    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(this.templateLibraries);
+    this.tabs = this.getTabsFromTemplates(templatesForTabs);
+
+    //Initialize first tab as selected
+    if (this.tabs && this.tabs.length > 0) {
+        this.tabs[0].active = true;
+    }
+    this.setProductSelectionEditItems(templatesForTabs);
+  }
+
+  setProductSelectionEditItems(templatesForTabs) {
+    this.productSelectionEditItems = [];
+    const selectedProductSelection = _.find(this.selections, (selection) => selection._id === this.selectedProductSelectionId);
+
+    _.each(templatesForTabs, (templateForTab) => {
+      this.productSelectionEditItems.push(new InputSelectionItem(this.templateLibraries,
+        this.selections, this.selectionRelationships, templateForTab, selectedProductSelection));
+    });
+  }
+
+  getUnitsText(template) {
+    return ItemTemplatesHelper.getUnitsText(template);
   }
 }

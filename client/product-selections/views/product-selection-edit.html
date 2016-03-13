@@ -1,0 +1,31 @@
+<!-- <div class="modal-dialog">
+    <div class="modal-content"> -->
+<div class="modal-header">
+  <!--<data-eb-table-cell-display data-bid="bid" data-selection="bid.productSelectionEditItems[0].getSelection()"></data-eb-table-cell-display>-->
+  <h3>{{getSelectionSummary()}}</h3>
+</div>
+<div class="modal-body">
+  <!--<form class="form-horizontal" role="form">
+      <div class="form-group" data-ng-repeat="selectionItem in bid.productSelectionEditItems">
+          <data-eb-edit-selector data-bid="bid" data-input-selection-item="selectionItem"></data-eb-edit-selector>
+      </div>
+  </form>-->
+  <tabset>
+    <tab ng-repeat="tab in bid.tabs" heading="{{tab.title}}" active="tab.active" disabled="tab.disabled">
+      <form class="form-horizontal" role="form">
+        <div class="form-group col-sm-12"
+            data-ng-repeat="item in tab.inputSelectionItems">
+            <!-- data-ng-show="item.getSelection() && item.template.shouldDisplay"> -->
+          <data-eb-tab-selector data-thebid="bid" data-input-selection-item="item"></data-eb-tab-selector>
+        </div>
+      </form>
+    </tab>
+  </tabset>
+  <div class="clearfix"></div>
+</div>
+<div class="modal-footer">
+  <button class="btn btn-primary" ng-click="save()">Save</button>
+  <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+</div>
+    <!-- </div>
+</div> -->

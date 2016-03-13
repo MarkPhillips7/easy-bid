@@ -1,3 +1,117 @@
+const addSelectionForTemplate = (templateLibrary, jobId, template,
+    selectionValue, parentSelectionId, childOrder) => {
+  check(templateLibrary, Match.Any);// Schema.TemplateLibrary);
+  check(jobId, Match.Any);// String);
+  check(template, Match.Any);// Schema.ItemTemplate);
+  check(selectionValue, Match.Any);// Match.OneOf(String, null));
+  check(parentSelectionId, Match.Any);// Schema.Selection);
+  check(childOrder, Match.Any);// Match.OneOf(Number, null));
+
+  let selection = {
+    jobId: jobId,
+    templateLibraryId: templateLibrary._id,
+    templateId: template.id,
+    value: selectionValue || ''
+  };
+
+  let selectionId = Selections.insert(selection);
+  selection._id = selectionId;
+
+  if (parentSelectionId) {
+    let selectionRelationship = {
+      parentSelectionId: parentSelectionId,
+      childSelectionId: selectionId,
+      order: childOrder
+    }
+    SelectionRelationships.insert(selectionRelationship);
+  }
+
+  // ToDo: add selection settings?
+
+  return selection;
+};
+
+const addSelectionsForTemplateChildren = (templateLibrary, jobId, selection, template,
+    selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt) => {
+  if (selection && template)
+  {
+    //If a child template exists with the same type as templateToStopAt then just return.
+    if (templateToStopAt &&
+      _.find(TemplateLibrariesHelper.templateChildren(templateLibrary, template), (templateChild) => {return templateChild.templateType == templateToStopAt.templateType;})){
+      return;
+    }
+
+    //Add selections for template children that are not SubItems (sub templates) first so that everything that might be overridden by sub template exists.
+    _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(templateLibrary, template.id))
+      .filter((templateRelationship) => {return templateRelationship.relationToItem != Constants.relationToItem.subItem;})
+      .each((templateRelationship, index, list) => {
+        addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selection, template, selectionAddingMode, templateRelationship);
+      });
+
+    //Now it's safe to add selections for template children that are SubItems.
+    _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(templateLibrary, template.id))
+      .filter((templateRelationship) => {return templateRelationship.relationToItem == Constants.relationToItem.subItem;})
+      .each((templateRelationship, index, list) => {
+        addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selection, template, selectionAddingMode, templateRelationship);
+      });
+
+    //Handle case where this is a sub template but also a parent of a sub template. So need to add the template children of the base template
+    if (selectionAddingMode == Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates) {
+      let isABaseTemplate = template.templateSettings
+        && _.find(template.templateSettings, (templateSetting) => {
+          return templateSetting.key === "IsABaseTemplate" && templateSetting.value === true.toString();
+        });
+
+      //To get here must be a sub template or base template, so go ahead and add selections for children
+      addSelectionsForTemplateChildren(templateLibrary, jobId, selection, template, Constants.selectionAddingModes.ignoreSubTemplates);
+
+      //If this template is not a base template then still need to add selections for children of parent template(s)
+      if (!isABaseTemplate)
+      {
+        _.each(TemplateLibrariesHelper.parentTemplates(templateLibrary, template), (parentTemplate) => {
+          addSelectionsForTemplateChildren(templateLibrary, jobId, selection, parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates);
+        });
+      }
+    }
+  }
+};
+
+const addSelectionsForTemplateAndChildren = (templateLibrary, jobId, template, selectionValue, parentSelection, childOrder,
+      selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt) => {
+  let selection = addSelectionForTemplate(templateLibrary, jobId, template, selectionValue, parentSelection, childOrder);
+  addSelectionsForTemplateChildren(templateLibrary, jobId, selection, template, selectionAddingMode, templateToStopAt);
+
+  return selection;
+};
+
+const addProductSelectionAndChildren = (templateLibrary, jobId, parentSelection,
+    productSelectionTemplate, productTemplate, childOrder) => {
+      check(templateLibrary, Schema.TemplateLibrary);
+      check(jobId, String);
+      check(template, Schema.ItemTemplate);
+      check(selectionValue, Match.Any);// Match.OneOf(String, null));
+      check(parentSelectionId, String);// Schema.Selection);
+      check(childOrder, Match.Any);// Match.OneOf(Number, null));
+
+  //Add selection for productSelectionTemplate
+  var productSelection = addSelectionsForTemplateAndChildren(templateLibrary, jobId,
+      productSelectionTemplate, null, parentSelection, childOrder, selectionAddingModes.ignoreBaseTemplates);
+
+  //Add selection for productTemplate (sub template) (will add template children for sub template after adding template children of base template)
+  var subTemplateSelection = addSelectionForTemplate(templateLibrary, jobId,
+      productTemplate, productTemplate.id.toString(), productSelection._id, 0);
+
+  //Add the template children of the base template before the sub template children because they override some of these
+  addSelectionsForTemplateChildren(templateLibrary, jobId, subTemplateSelection,
+      productTemplate.firstParentTemplate, selectionAddingModes.addBaseTemplateChildrenForSubTemplates);
+
+  //Add selection and template children for productTemplate (sub template)
+  addSelectionsForTemplateChildren(templateLibrary, jobId, subTemplateSelection,
+      subTemplateSelection.template, selectionAddingModes.ignoreSubTemplates);
+
+  return productSelection;
+};
+
 Meteor.methods({
   userCanUpdateJob: function (userId, job, fields, modifier) {
     check(userId, String);
@@ -29,58 +143,8 @@ Meteor.methods({
 
     return true;
   },
-  addSelectionForTemplate: function(templateLibrary, jobId, template, selectionValue, parentSelection, childOrder) {
-    check(templateLibrary, Match.Any);// Schema.TemplateLibrary);
-    check(jobId, Match.Any);// String);
-    check(template, Match.Any);// Schema.ItemTemplate);
-    check(selectionValue, Match.Any);// Match.OneOf(String, null));
-    check(parentSelection, Match.Any);// Schema.Selection);
-    check(childOrder, Match.Any);// Match.OneOf(Number, null));
-
-    let selection = {
-      jobId: jobId,
-      templateLibraryId: templateLibrary._id,
-      templateId: template.id,
-      value: selectionValue || ''
-    };
-
-    let selectionId = Selections.insert(selection);
-    selection._id = selectionId;
-
-    if (parentSelection) {
-      let selectionRelationship = {
-        parentSelectionId: parentSelection._id,
-        childSelectionId: selectionId,
-        order: childOrder
-      }
-      SelectionRelationships.insert(selectionRelationship);
-    }
-
-    // ToDo: add selection settings?
-
-    return selection;
-  },
-  // addSelectionForTemplate: function(job, templateLibrary, template,
-  //   selectionValue, parentSelectionId) {
-  //   let selectionId = Selections.insert({
-  //     value: selectionValue,
-  //     jobId: job._id,
-  //     templateLibraryId: templateLibrary._id,
-  //     templateId: template.id,
-  //     selectionSettings: null,
-  //     isOverridingDefault: false
-  //   });
-  //
-  //   if (parentSelection) {
-  //     SelectionRelationships.insert({
-  //       parentSelectionId: parentSelectionId,
-  //       childSelectionId: selectionId,
-  //       order: 0
-  //     });
-  //   }
-  //
-  //   return Selections.findOne(selectionId);
-  // },
+  addSelectionForTemplate,
+  addProductSelectionAndChildren,
   // Actually deletes selection, parent selection relationships (but not parent selection), child selection relationships,
   // and all descendent selections (children, grandchildren, etc.)
   deleteSelectionAndRelated: function (selection) {

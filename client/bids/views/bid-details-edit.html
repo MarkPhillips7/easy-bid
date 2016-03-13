@@ -1,5 +1,5 @@
-<div class="modal-dialog">
-  <div class="modal-content">
+<!-- <div class="modal-dialog">
+  <div class="modal-content"> -->
     <div class="modal-header">
       <h3>{{getSummary()}}</h3>
     </div>
@@ -8,7 +8,7 @@
         <div class="form-group">
           <label class="col-sm-3 control-label" for="BidCustomer">Customer</label>
           <div class="col-sm-9">
-            <select class="form-control" ng-model="bid.job.customerId" id="BidCustomer" ng-change="changeCustomer()" 
+            <select class="form-control" ng-model="bid.job.customerId" id="BidCustomer" ng-change="changeCustomer()"
             ng-options="customer._id as (customer.profile.firstName + ' ' + customer.profile.lastName) for customer in customers"></select>
           </div>
         </div>
@@ -71,5 +71,5 @@
       <button class="btn btn-primary" ng-click="save()">Save</button>
       <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
     </div>
-  </div>
-</div>
+  <!-- </div>
+</div> -->

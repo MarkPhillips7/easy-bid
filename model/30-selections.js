@@ -216,7 +216,7 @@ function populateTemplateIds(templateLibrary, templateIds, template, onlyIfBaseO
 
   //Now include template IDs for children if this is a base template or a sub template
   if (isABaseTemplate || isASubTemplate) {
-    _.each(TemplateLibrariesHelper.templateChildren(templateLibrary, template), (childTemplate) => {
+    _.each(TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template), (childTemplate) => {
       populateTemplateIds(templateLibrary, templateIds, childTemplate, true);
     });
   }
@@ -798,6 +798,29 @@ const initializeMetadata = (metadata) => {
   // so that we can identify pending changes that are not really changes.
   // Cannot just remove the key or the originalValue or originalValueSource could be wrong.
   metadata.pendingSelectionChanges = {};
+
+  // selectOptions should be like
+  // {
+  //   wHHJKRr2MhLdc4GkT: // id of template with select options
+  //   [
+  //     template1, // full ItemTemplate object representing select option
+  //     template2, // full ItemTemplate object representing select option
+  //   ]
+  // }
+  metadata.selectOptions = {};
+
+  // selectOptionsBasic should be like
+  // {
+  //   wHHJKRr2MhLdc4GkT: // id of template with select options
+  //   [
+  //     {
+  //       id: 'wHHJKRr2MhLdc4GkT': // id of template representing select option
+  //       name: 'Lazy Susan Cabinet',
+  //       description: 'a corner cabinet'
+  //     },
+  //   ]
+  // }
+  metadata.selectOptionsBasic = {};
 };
 
 const getInitializedMetadata = () => {
@@ -883,7 +906,7 @@ SelectionsHelper = {
   getParentSelections: getParentSelections,
   getPendingChangeMessages: getPendingChangeMessages,
   getSelectionByTemplate: getSelectionByTemplate,
-  getSelectionSettingValueForSelection: getSelectionSettingValueForSelection,
+  getSettingValue: getSettingValue,
   getSelectionToOverride: getSelectionToOverride,
   getSelectionsBySelectionParentAndTemplate: getSelectionsBySelectionParentAndTemplate,
   getSelectionValue: getSelectionValue,

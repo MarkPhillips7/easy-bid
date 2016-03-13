@@ -1,6 +1,7 @@
 angular.module('app', [
   'accounts.ui',
   'angular-meteor',
+  'ngSanitize',
   'angularBootstrapNavTree',
   'angularMoment',
   'angularUtils.directives.dirPagination',
@@ -35,4 +36,3 @@ if (Meteor.isCordova)
   angular.element(document).on("deviceready", onReady);
 else
   angular.element(document).ready(onReady);
-

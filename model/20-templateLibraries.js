@@ -919,7 +919,7 @@ function parentTemplates(templateLibrary, template, dependenciesToIgnore) {
   return parentTemplates;
 }
 
-function templateChildren(templateLibrary, template, dependenciesToIgnore) {
+function getTemplateChildren(templateLibrary, template, dependenciesToIgnore) {
   var templateChildren = [];
 
   if (templateLibrary && template) {
@@ -1213,7 +1213,7 @@ function getAllSubTemplatesOfBaseTemplateChild(templateLibrary, template) {
 
   var subTemplateList = [];
 
-  var baseTemplateChild = _.chain(TemplateLibrariesHelper.templateChildren(templateLibrary, template))
+  var baseTemplateChild = _.chain(TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template))
     .find((childTemplate) => { return ItemTemplatesHelper.isABaseTemplate(childTemplate); })
     .value();
 
@@ -1223,13 +1223,139 @@ function getAllSubTemplatesOfBaseTemplateChild(templateLibrary, template) {
 }
 
 function populateSubTemplateListWithTemplateChildren(templateLibrary, template, subTemplateList) {
-  _.each(TemplateLibrariesHelper.templateChildren(templateLibrary, template),
+  _.each(TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template),
     (childTemplate) => {
       if (ItemTemplatesHelper.isASubTemplate(childTemplate)) {
         subTemplateList.push(childTemplate);
         populateSubTemplateListWithTemplateChildren(templateLibrary, childTemplate, subTemplateList);
       }
     });
+}
+
+const getTemplateSettingsForTabs = (template) => {
+  return _.filter(template.templateSettings, (templateSetting) => {
+    return templateSetting.key === Constants.templateSettingKeys.displayCategory
+        && templateSetting.value !== 'PrimaryTableColumn'
+        && templateSetting.value !== 'PrimaryTableRow';
+  });
+};
+
+const getTemplatesForTabs = (templateLibraries) => {
+  const templates = [];
+  const templateToTemplateLibrary = {};
+  _.each(templateLibraries, (templateLibrary) => {
+    _.each(templateLibrary.templates, (template) => {
+      const templateSettingsForTabs = getTemplateSettingsForTabs(template);
+      if (templateSettingsForTabs.length > 0 && _.indexOf(templates, template) === -1 ) {
+        templates.push(template);
+        templateToTemplateLibrary[template] = templateLibrary;
+      }
+    });
+  });
+  return _.sortBy(templates, (template) => {
+    const templateLibrary = templateToTemplateLibrary[template];
+    return getTemplateSettingByKeyAndIndex(templateLibrary, template.id, Constants.templateSettingKeys.displayOrder, 0);
+  });
+};
+
+const addSelectOptions = (templateLibrary, selectOptions, template) => {
+  if (!template)
+      return;
+
+  const selectionType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.selectionType);
+  if (selectionType === Constants.selectionTypes.selectOption) {
+    selectOptions.push(template);
+  }
+
+  const templateChildren = TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template);
+  _.each(templateChildren, (childTemplate) => {
+    addSelectOptions(templateLibrary, selectOptions, childTemplate);
+  });
+}
+
+const getTemplateLibraryWithTemplate = (templateLibraries, templateId) => {
+  return _.find(templateLibraries, (templateLibrary) => _.some(templateLibrary.templates, (template) => template.id === templateId));
+};
+
+            // const populateCustomOptions = (templateLibrary, template, metadata, electOptions) => {
+            //     var customOptions = getTemplateSettingValueForTemplate(template, 'CustomOptions');
+            //     var sheetMaterialData;
+            //     var skusAdded = [];
+            //
+            //     if (customOptions) {
+            //         if (customOptions === 'GetCoreSheetMaterialOptions') {
+            //             sheetMaterialData = getLookupDataFromTemplateName(template, 'SheetMaterialData');
+            //
+            //             if (sheetMaterialData) {
+            //                 sheetMaterialData.forEach(function (sheetMaterial) {
+            //                     if (sheetMaterial.coreMaterial && sheetMaterial.coreMaterial.sku) {
+            //                         if ($.inArray(sheetMaterial.coreMaterial.sku, skusAdded) == -1) {
+            //                             selectOptions.push({
+            //                                 id: sheetMaterial.coreMaterial.sku,
+            //                                 name: sheetMaterial.coreMaterial.name,
+            //                                 description: sheetMaterial.coreMaterial.description
+            //                             });
+            //                             skusAdded.push(sheetMaterial.coreMaterial.sku);
+            //                         }
+            //                     }
+            //                 });
+            //             }
+            //         } else {
+            //             throw new Error('Unexpected CustomOptions: ' + customOptions);
+            //         }
+            //     }
+            // }
+
+// populates select options if necessary. Returns select options
+const populateSelectOptions = (templateLibraries, template, metadata, forceRefresh) => {
+  if (!templateLibraries) {
+    throw 'templateLibraries must be set in populateSelectOptions';
+  }
+  if (!template) {
+    throw 'template must be set in populateSelectOptions';
+  }
+  if (!metadata) {
+    throw 'metadata must be set in populateSelectOptions';
+  }
+
+  if (!forceRefresh && metadata.selectOptions
+    && metadata.selectOptions[template.id] && metadata.selectOptions[template.id].length > 0) {
+    return metadata.selectOptions;
+  }
+
+  const templateLibrary = getTemplateLibraryWithTemplate(templateLibraries, template.id);
+  let selectOptions = [];
+
+  if (ItemTemplatesHelper.isASubTemplate(template)) {
+    const parentTemplate = TemplateLibrariesHelper.parentTemplate(templateLibrary, template);
+    if (parentTemplate) {
+      selectOptions = populateSelectOptions(templateLibraries, parentTemplate, metadata, forceRefresh);
+    }
+  }
+  else if (ItemTemplatesHelper.isABaseTemplate(template)) {
+    addSelectOptions(templateLibrary, selectOptions, template);
+  }
+  else {
+    // populateCustomOptions(templateLibrary, template, selectOptions);
+  }
+
+  metadata.selectOptions[template.id] = selectOptions;
+
+  //Angular typeahead has issues with the many properties on breeze objects or something like that.
+  //Also don't really want to search from every property.
+  //Need a list of simpler objects for the typeahead
+  //Object.defineProperty(Template.prototype, 'selectOptionsBasic', {
+  // get: function () {
+  metadata.selectOptionsBasic[template.id] = [];
+  selectOptions.forEach(function (selectOption) {
+    metadata.selectOptionsBasic[template.id].push({
+      id: selectOption.id,
+      name: selectOption.name,
+      description: selectOption.description
+    });
+  });
+
+  return selectOptions;
 }
 
 TemplateLibrariesHelper = {
@@ -1244,12 +1370,16 @@ TemplateLibrariesHelper = {
   getRootTemplate: getRootTemplate,
   getTemplateById: getTemplateById,
   getTemplateByType: getTemplateByType,
+  getTemplateLibraryWithTemplate: getTemplateLibraryWithTemplate,
   getTemplateRelationshipById: getTemplateRelationshipById,
   getTemplateSettingByIds: getTemplateSettingByIds,
   getTemplateSettingByKeyAndIndex: getTemplateSettingByKeyAndIndex,
   getTemplateSettingByTemplateAndKeyAndIndex: getTemplateSettingByTemplateAndKeyAndIndex,
   getTemplatesByTemplateSetting: getTemplatesByTemplateSetting,
+  getTemplatesForTabs: getTemplatesForTabs,
+  getTemplateSettingsForTabs: getTemplateSettingsForTabs,
   parentTemplate: parentTemplate,
   parentTemplates: parentTemplates,
-  templateChildren: templateChildren
+  populateSelectOptions: populateSelectOptions,
+  getTemplateChildren: getTemplateChildren
 }

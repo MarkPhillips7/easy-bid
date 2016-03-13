@@ -51,3 +51,5 @@ jasonaibrahim:angular-moment
 
 
 npm-container
+dburles:collection-helpers
+angular:angular-sanitize

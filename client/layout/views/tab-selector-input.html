@@ -1,0 +1,9 @@
+<label class="col-sm-5 control-label" for="{{inputSelectionItem.id}}">{{inputSelectionItem.template.description}}</label>
+<div class="col-sm-7 input-group">
+  <span class="input-group-addon" ng-bind-html="thebid.getUnitsText(inputSelectionItem.template)"
+        data-ng-show="thebid.getUnitsText(inputSelectionItem.template) === '$'"></span>
+  <input class="form-control" type="text" id="{{inputSelectionItem.id}}"
+         ng-model="inputSelectionItem.getSelection().value" />
+  <span class="input-group-addon" ng-bind-html="thebid.getUnitsText(inputSelectionItem.template)"
+        data-ng-show="thebid.getUnitsText(inputSelectionItem.template) !== '' && thebid.getUnitsText(inputSelectionItem.template) !== '$'"></span>
+</div>

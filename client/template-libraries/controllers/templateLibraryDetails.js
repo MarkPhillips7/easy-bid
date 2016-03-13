@@ -155,7 +155,7 @@ angular.module("app").controller("templateLibraryDetails",
       else if (recordAction === Constants.recordActions.cancel){
         return vm.usageMode === Constants.usageModes.classicEdit
           && canPerformAction(recordAction, template);
-      }    
+      }
     }
 
     function setUsageMode(usageMode) {
@@ -447,7 +447,7 @@ angular.module("app").controller("templateLibraryDetails",
         }
       }
 
-      var templateChildren = TemplateLibrariesHelper.templateChildren(vm.templateLibrary, template);
+      var templateChildren = TemplateLibrariesHelper.getTemplateChildren(vm.templateLibrary, template);
       for (var i = 0; i < templateChildren.length; i++) {
         populateRelevantSubProductTemplates(templateChildren[i], visitedTemplates, false);
       }
@@ -513,7 +513,7 @@ angular.module("app").controller("templateLibraryDetails",
       }
 
       //Now populate children (but ignore sub templates)
-      var templateChildren = TemplateLibrariesHelper.templateChildren(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
+      var templateChildren = TemplateLibrariesHelper.getTemplateChildren(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
       for (var i = 0; i < templateChildren.length; i++) {
         //Decided to only populate children if this template type is primary
         if (!ignoreSubTemplates || isThisTemplateTypePrimary) {
@@ -571,7 +571,7 @@ angular.module("app").controller("templateLibraryDetails",
     }
 
     function getTreeDataChildren(template, visitedTemplates) {
-      var templateChildren = TemplateLibrariesHelper.templateChildren(vm.templateLibrary, template);
+      var templateChildren = TemplateLibrariesHelper.getTemplateChildren(vm.templateLibrary, template);
       var treeDataChildren = [];
 
       _.each(templateChildren, function (templateChild) {

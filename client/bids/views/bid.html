@@ -247,7 +247,7 @@
                 ng-click="bid.toggleItemSelection(productSelection._id)">
        </label>
      </div>
-      <a href="/selections/{{productSelection._id}}" class="eb-list-group-item-main-a">
+      <a href="" ng-click="bid.editProductSelection(productSelection, $event)" class="eb-list-group-item-main-a">
         <img class="eb-list-group-item-main-a-image" data-eb-img-product="{{bid.getProductImage(productSelection)}}"/>
         <div class="eb-list-group-item-main-a-quantity">
           <span>{{bid.getQuantity(productSelection)}}</span>
