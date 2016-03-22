@@ -28,12 +28,17 @@ class bid {
     this.columnTemplates = [];
     this.companyId = this.$stateParams.c;
     this.customerId = this.$stateParams.r;
+    this.fullHierarchyTree = {};
+    this.fullHierarchyTreeData = [];
     this.includeChildAreas = false;
     this.jobId = this.$stateParams.bidId;
     this.jobSelection = null;
     this.jobTemplate = null;
     // metadata used to keep track of ui state of various data
     this.metadata = SelectionsHelper.getInitializedMetadata();
+    this.originalSelections = null;
+    this.originalJob = null;
+    this.originalSelectionRelationships = null;
     this.productSelectionTemplate = null;
     this.productToAdd = null;
     this.selectedAreaBreadcrumbText = '[No Areas]';
@@ -77,11 +82,6 @@ class bid {
     this.page = newPage;
   };
 
-  // allSubscriptionsReady() {
-  //   const {company, customer, job, selectionData, templateLibraryData} = this.subscriptionsReady;
-  //   return company && customer && job && selectionData && templateLibraryData;
-  // }
-
   // update pretty much all state dependent on subscriptions
   _updateDependencies() {
     if (!this.getReactively('subscriptionsReady.templateLibraryData')) {
@@ -90,9 +90,12 @@ class bid {
     this.initializeTemplateVariables();
 
     if (!this.getReactively('subscriptionsReady.selectionData')
-        || !this.getReactively('subscriptionsReady.job')) {
+        || !this.getReactively('subscriptionsReady.job')
+        || !this.getReactively('subscriptionsReady.company')
+      ) {
       return;
     }
+
     this.initializeSelectionVariables();
   }
 
@@ -112,8 +115,21 @@ class bid {
     this.columnTemplates = this.getTemplatesByTemplateSetting('DisplayCategory', 'PrimaryTableColumn');
   }
 
+  restoreOriginalData() {
+    if (!this.originalSelections
+      || !this.originalSelectionRelationships
+      || !this.originalJob) {
+      return;
+    }
+
+    this.selections = this.originalSelections;
+    this.selectionRelationships = this.originalSelectionRelationships;
+    this.job = this.originalJob;
+  }
+
   cancel() {
-    // ToDo: cancel pending changes
+    this.restoreOriginalData();
+    this._updateDependencies();
   }
 
   save() {
@@ -190,6 +206,7 @@ class bid {
     }
 
     this.setAreaTreeData();
+    // this.setFullHierarchyTreeData();
   }
 
   getSelectionsBySelectionParentAndTemplate(productSelection, columnTemplate) {
@@ -217,6 +234,7 @@ class bid {
           templateId: columnTemplate.id,
           value: ''
         };
+        this.selections.push(selection);
       }
       // Otherwise there must just be one selection or something went wrong
       else if (selections && selections.length !== 1) {
@@ -413,7 +431,7 @@ class bid {
   }
 
   addItemToTreeData(areaTreeDataArray, areaSelection) {
-    const areaTemplate = this.getReactively('areaTemplate');
+    const areaTemplate = this.areaTemplate;
     var i;
     var areaSelectionChildren = [];
     var treeItem = {
@@ -433,11 +451,13 @@ class bid {
   }
 
   _selectionsCollection() {
-    return Selections.find({});
+    const selections = Selections.find({jobId: this.$stateParams.bidId});
+    return selections;
   }
 
   _selectionRelationshipsCollection() {
-    return SelectionRelationships.find({});
+    const selectionRelationships = SelectionRelationships.find({});
+    return selectionRelationships;
   }
 
   _selectionDataSubscription() {
@@ -445,7 +465,8 @@ class bid {
   }
 
   _templateLibrariesCollection() {
-    return TemplateLibraries.find({});
+    const templateLibraries = TemplateLibraries.find({});
+    return templateLibraries;
   }
 
   _jobsTemplateLibrariesCollection() {
@@ -458,7 +479,8 @@ class bid {
 
   _company() {
     // console.log(`about to get companyId ${this.companyId}`);
-    return Companies.findOne({ _id: this.getReactively('companyId') });
+    const company = Companies.findOne({ _id: this.getReactively('companyId') });
+    return company;
   }
 
   _companySubscription() {
@@ -469,7 +491,8 @@ class bid {
 
   _customer() {
     // console.log(`about to get customerId ${this.customerId}`);
-    return Meteor.users.findOne({ _id: this.getReactively('customerId') });
+    const customer = Meteor.users.findOne({ _id: this.getReactively('customerId') });
+    return customer;
   }
 
   _customerSubscription() {
@@ -480,7 +503,8 @@ class bid {
 
   _job() {
     // console.log(`about to get jobId ${this.jobId}`);
-    return Jobs.findOne(this.$stateParams.bidId);
+    const job = Jobs.findOne(this.$stateParams.bidId);
+    return job;
   }
 
   _jobSubscription() {
@@ -636,7 +660,14 @@ class bid {
     });
   }
 
+  setOriginalSelectionData() {
+    this.originalJob = _.clone(this.job);
+    this.originalSelections = _.map(this.selections, _.clone);
+    this.originalSelectionRelationships = _.map(this.selectionRelationships, _.clone);
+  };
+
   editProductSelection(data, event, deleteIfCanceled) {
+    this.setOriginalSelectionData();
     this.selectedProductSelectionId = data._id;
     this.setTabs();
     const modalInstance = this.$modal.open({
@@ -651,6 +682,7 @@ class bid {
     });
 
     modalInstance.result.then((selectedItem) => {
+      this.job.estimateTotal = this.getJobSubtotal();
       this.save();
     }, () => {
       console.log('Modal dismissed at: ' + new Date());
@@ -809,4 +841,52 @@ class bid {
   getUnitsText(template) {
     return ItemTemplatesHelper.getUnitsText(template);
   }
+
+  // this is primarily for debugging
+  setFullHierarchyTreeData() {
+    const pendingFullHierarchyTreeData = this.getPendingFullHierarchyTreeData();
+    // const treeItemSelected = this.getTreeItemSelected(pendingFullHierarchyTreeData);
+    // if (!this.isTreeDataEqual(this.areaTreeData, pendingFullHierarchyTreeData)) {
+    this.fullHierarchyTreeData = pendingFullHierarchyTreeData;
+    this.$timeout(() => {
+      this.fullHierarchyTree.expand_all();
+    }, 50);
+  }
+
+  getPendingFullHierarchyTreeData() {
+    const jobSelection = this.jobSelection;
+    const companyTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.company);
+    const companySelection = SelectionsHelper.getSelectionByTemplate(this.selections, companyTemplate);
+    let pendingFullHierarchyTreeData = [];
+    let treeItemSelected = null;
+    let i;
+
+    if (jobSelection && companySelection) {
+      this.addItemToFullHierarchyTreeData(pendingFullHierarchyTreeData, companySelection);
+    }
+    return pendingFullHierarchyTreeData;
+  }
+
+  addItemToFullHierarchyTreeData(treeDataArray, selection) {
+    var i;
+    var selectionChildren = [];
+    const selectionTemplate = TemplateLibrariesHelper.getTemplateById(this.templateLibraries, selection.templateId);
+    const templateDisplayValue = selectionTemplate && ItemTemplatesHelper.getDisplayCaption(selectionTemplate);
+    const selectionDisplayValue = SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, selection);
+    var treeItem = {
+        data: {selectionId: selection._id},
+        label: `${templateDisplayValue} - ${selectionDisplayValue}`,
+        children: selectionChildren
+    }
+    treeDataArray.push(treeItem);
+
+    const childSelections = SelectionsHelper.getChildSelections(selection, this.selections, this.selectionRelationships);
+
+    for (i = 0; i < childSelections.length; i += 1) {
+      treeItem = this.addItemToFullHierarchyTreeData(selectionChildren, childSelections[i]);
+    }
+
+    return treeItem;
+  }
+
 }

@@ -383,7 +383,7 @@ angular.module('app')
           ? SelectionsHelper.getSettingValue(selection, template, Constants.templateSettingKeys.valueFormula)
           : ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.valueFormula);
 
-        if (!valueFormula) {
+        if (selection && !valueFormula) {
           const selectionType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.selectionType);
           if (selectionType === Constants.selectionTypes.selectOption || selectionType === Constants.selectionTypes.select) {
             scope.contentUrl = 'client/layout/views/tab-selector-select.html';
@@ -391,14 +391,16 @@ angular.module('app')
             scope.contentUrl = 'client/layout/views/tab-selector-input.html';
           }
         }
+
+        scope.$watch('inputSelectionItem.getSelection().value', function (newValue, oldValue) {
+          if (scope.inputSelectionItem && selection) {
+            SelectionsHelper.setSelectionValue(scope.thebid.templateLibraries, scope.thebid.selections,
+              scope.thebid.selectionRelationships, scope.thebid.metadata, selection, newValue, oldValue,
+              selection.valueSource, Constants.valueSources.userEntry);
+          }
+        }, true);
       }
 
-      // scope.$watch('inputSelectionItem.getSelection().value', function (newValue, oldValue) {
-      //     if (scope.inputSelectionItem && scope.inputSelectionItem.getSelection()) {
-      //         scope.inputSelectionItem.getSelection().setValue(newValue, oldValue);
-      //     }
-      // }, true);
-      //
       // scope.$watch('inputSelectionItem.getSelection().selectedOption', function (newValue, oldValue) {
       //     if (scope.inputSelectionItem && scope.inputSelectionItem.getSelection()) {
       //         if (newValue && newValue.id) {

@@ -274,4 +274,13 @@
   </div>
   <span ng-show="!bid.productSelections.length">No matches found</span>
   <dir-pagination-controls on-page-change="bid.pageChanged(newPageNumber)"></dir-pagination-controls>
+  <div class="eb-area-hierarchy">
+    <abn-tree tree-data="bid.fullHierarchyTreeData"
+              tree-control="bid.fullHierarchyTree"
+              icon-leaf=""
+              icon-expand="fa fa-plus"
+              icon-collapse="fa fa-minus"
+              expand-level="2">
+    </abn-tree>
+  </div>
 </div>

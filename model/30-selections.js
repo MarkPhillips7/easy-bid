@@ -100,7 +100,7 @@ function getChildSelections(selection, selections, selectionRelationships) {
   }
 }
 
-function getChildSelectionsWithTemplateId(selection, templateId) {
+function getChildSelectionsWithTemplateId(selection, templateId, selections, selectionRelationships) {
   if (!selection) {
     throw 'selection must be set in getChildSelectionsWithTemplateId';
   }
@@ -108,15 +108,23 @@ function getChildSelectionsWithTemplateId(selection, templateId) {
     throw 'templateId must be set in getChildSelectionsWithTemplateId';
   }
 
-  let childSelectionIds = SelectionRelationships.find({parentSelectionId: selection._id})
-    .map(function(relationship){
-      return relationship.childSelectionId;
-    });
-  return Selections.find(
-    {
-      _id: { $in: childSelectionIds },
-      templateId: templateId
-    }).fetch();
+  if (selections && selectionRelationships) {
+    const childSelectionIds = _.chain(selectionRelationships)
+        .filter((selectionRelationship) => selectionRelationship.parentSelectionId === selection._id)
+        .map((selectionRelationship) => selectionRelationship.childSelectionId);
+    return _.map(selections, (_selection) => _selection.templateId === templateId &&
+        _.some(childSelectionIds, (childSelectionId) => childSelectionId === _selection._id));
+  } else {
+    const childSelectionIds = SelectionRelationships.find({parentSelectionId: selection._id})
+      .map(function(relationship){
+        return relationship.childSelectionId;
+      });
+    return Selections.find(
+      {
+        _id: { $in: childSelectionIds },
+        templateId: templateId
+      }).fetch();
+    }
 }
 
 function getChildSelectionsWithTemplateIds(selection, templateIds) {
@@ -637,45 +645,48 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
     selection.valueSource = selectionValueSource;
   }
 
-  //Store selectionValue in selection's value
-  const originalValue = selection.value;
-  const originalDisplayValue = getDisplayValue(templateLibraries, selections, selection);
-  if (selectionValue !== undefined
-      && selectionValue !== null &&
-      (variableCollectorSelectionVariableSet || selection.value !== selectionValue.toString())) {
-    if (selection.value !== selectionValue.toString()) {
-      selection.value = selectionValue.toString();
-      // afterSettingValue(selection);
-    }
-
-    // Make sure formulas that reference this selection's variable get updated
-    if (selectionJsonVariableName && variableCollectorSelection) {
-      refreshSelectionsReferencingVariable(templateLibraries, selections, selectionRelationships,
-        metadata, variableCollectorSelection, selectionJsonVariableName);
-    }
-  }
-
-  const currentDisplayValue = getDisplayValue(templateLibraries, selections, selection);
-  let displayMessages = getPendingChangeMessagesByOriginalAndCurrentInfo(originalValue, originalDisplayValue,
-    originalValueSource, selection.value, currentDisplayValue, selectionValueSource);
-  if (displayMessages.length > 0) {
-    if (!metadata.pendingSelectionChanges[selection._id]) {
-      metadata.pendingSelectionChanges[selection._id] = {
-        originalValue,
-        originalDisplayValue,
-        originalValueSource,
-        displayMessages
-      };
-    } else {
-      // Get displayMessages using the truly original values (current original ones represent altered values).
-      displayMessages = getPendingChangeMessagesByOriginalAndCurrentInfo(
-        metadata.pendingSelectionChanges[selection._id].originalValue,
-        metadata.pendingSelectionChanges[selection._id].originalDisplayValue,
-        metadata.pendingSelectionChanges[selection._id].originalValueSource,
-        selection.value, currentDisplayValue, selectionValueSource);
-      metadata.pendingSelectionChanges[selection._id].displayMessages = displayMessages;
-    }
-  }
+  storeSelectionValueAndUpdatePendingChanges(templateLibraries, selections, selectionRelationships,
+    metadata, selection, selectionValue, selection.value, variableCollectorSelection,
+    variableCollectorSelectionVariableSet, originalValueSource, selectionValueSource, selectionJsonVariableName);
+  // //Store selectionValue in selection's value
+  // const originalValue = selection.value;
+  // const originalDisplayValue = getDisplayValue(templateLibraries, selections, selection);
+  // if (selectionValue !== undefined
+  //     && selectionValue !== null &&
+  //     (variableCollectorSelectionVariableSet || selection.value !== selectionValue.toString())) {
+  //   if (selection.value !== selectionValue.toString()) {
+  //     selection.value = selectionValue.toString();
+  //     // afterSettingValue(selection);
+  //   }
+  //
+  //   // Make sure formulas that reference this selection's variable get updated
+  //   if (selectionJsonVariableName && variableCollectorSelection) {
+  //     refreshSelectionsReferencingVariable(templateLibraries, selections, selectionRelationships,
+  //       metadata, variableCollectorSelection, selectionJsonVariableName);
+  //   }
+  // }
+  //
+  // const currentDisplayValue = getDisplayValue(templateLibraries, selections, selection);
+  // let displayMessages = getPendingChangeMessagesByOriginalAndCurrentInfo(originalValue, originalDisplayValue,
+  //   originalValueSource, selection.value, currentDisplayValue, selectionValueSource);
+  // if (displayMessages.length > 0) {
+  //   if (!metadata.pendingSelectionChanges[selection._id]) {
+  //     metadata.pendingSelectionChanges[selection._id] = {
+  //       originalValue,
+  //       originalDisplayValue,
+  //       originalValueSource,
+  //       displayMessages
+  //     };
+  //   } else {
+  //     // Get displayMessages using the truly original values (current original ones represent altered values).
+  //     displayMessages = getPendingChangeMessagesByOriginalAndCurrentInfo(
+  //       metadata.pendingSelectionChanges[selection._id].originalValue,
+  //       metadata.pendingSelectionChanges[selection._id].originalDisplayValue,
+  //       metadata.pendingSelectionChanges[selection._id].originalValueSource,
+  //       selection.value, currentDisplayValue, selectionValueSource);
+  //     metadata.pendingSelectionChanges[selection._id].displayMessages = displayMessages;
+  //   }
+  // }
 
   return selectionValue;
 };
@@ -803,24 +814,13 @@ const initializeMetadata = (metadata) => {
   // {
   //   wHHJKRr2MhLdc4GkT: // id of template with select options
   //   [
-  //     template1, // full ItemTemplate object representing select option
-  //     template2, // full ItemTemplate object representing select option
-  //   ]
-  // }
-  metadata.selectOptions = {};
-
-  // selectOptionsBasic should be like
-  // {
-  //   wHHJKRr2MhLdc4GkT: // id of template with select options
-  //   [
   //     {
   //       id: 'wHHJKRr2MhLdc4GkT': // id of template representing select option
   //       name: 'Lazy Susan Cabinet',
-  //       description: 'a corner cabinet'
-  //     },
+  //     }
   //   ]
   // }
-  metadata.selectOptionsBasic = {};
+  metadata.selectOptions = {};
 };
 
 const getInitializedMetadata = () => {
@@ -895,6 +895,93 @@ const getPendingChangeMessages = (templateLibraries, selections, selectionRelati
     []);
 }
 
+const storeSelectionValueAndUpdatePendingChanges = (templateLibraries, selections,
+    selectionRelationships, metadata, selection, selectionValue, oldValue, variableCollectorSelection,
+    variableCollectorSelectionVariableSet, originalValueSource, selectionValueSource, selectionJsonVariableName) => {
+  const originalValue = oldValue;
+  const originalDisplayValue = getDisplayValue(templateLibraries, selections, selection);
+  if (selectionValue !== undefined
+      && selectionValue !== null &&
+      (variableCollectorSelectionVariableSet || oldValue !== selectionValue.toString())) {
+    if (oldValue !== selectionValue.toString()) {
+      selection.value = selectionValue.toString();
+      // afterSettingValue(selection);
+    }
+
+    // Make sure formulas that reference this selection's variable get updated
+    if (selectionJsonVariableName && variableCollectorSelection) {
+      refreshSelectionsReferencingVariable(templateLibraries, selections, selectionRelationships,
+        metadata, variableCollectorSelection, selectionJsonVariableName);
+    }
+  }
+
+  const currentDisplayValue = getDisplayValue(templateLibraries, selections, selection);
+  let displayMessages = getPendingChangeMessagesByOriginalAndCurrentInfo(originalValue, originalDisplayValue,
+    originalValueSource, selection.value, currentDisplayValue, selectionValueSource);
+  if (displayMessages.length > 0) {
+    if (!metadata.pendingSelectionChanges[selection._id]) {
+      metadata.pendingSelectionChanges[selection._id] = {
+        originalValue,
+        originalDisplayValue,
+        originalValueSource,
+        displayMessages
+      };
+    } else {
+      // Get displayMessages using the truly original values (current original ones represent altered values).
+      displayMessages = getPendingChangeMessagesByOriginalAndCurrentInfo(
+        metadata.pendingSelectionChanges[selection._id].originalValue,
+        metadata.pendingSelectionChanges[selection._id].originalDisplayValue,
+        metadata.pendingSelectionChanges[selection._id].originalValueSource,
+        selection.value, currentDisplayValue, selectionValueSource);
+      metadata.pendingSelectionChanges[selection._id].displayMessages = displayMessages;
+    }
+  }
+}
+
+const setSelectionValue = (templateLibraries, selections, selectionRelationships,
+    metadata, selection, selectionValue, oldValue, originalValueSource, selectionValueSource) => {
+  const templateLibrary = TemplateLibrariesHelper.getTemplateLibraryWithTemplate(templateLibraries, selection.templateId);
+  const selectionTemplate = _.find(templateLibrary.templates, (template) => template.id === selection.templateId);
+  let variableCollectorSelection;
+  let variableCollectorSelectionVariableSet = false;
+  let jsonVariableName;
+
+  if (selectionValue !== null && selectionValue !== undefined) {
+    selectionValue = selectionValue.toString();
+  }
+
+  if (oldValue !== selectionValue) {
+    //This may not be right. May need another mechanism to determine isOverridingDefault.
+    const defaultValue = getSettingValue(selection, selectionTemplate, Constants.templateSettingKeys.defaultValue)
+    if (defaultValue !== selectionValue) {
+      selection.isOverridingDefault = true;
+    }
+    // afterSettingValue(self);
+  }
+
+  if (selectionTemplate) {
+    variableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selection);
+    jsonVariableName = ItemTemplatesHelper.getJsonVariableName(selectionTemplate);
+
+    if (jsonVariableName && variableCollectorSelection
+      && metadata.variables
+      && metadata.variables[variableCollectorSelection._id]
+      && metadata.variables[variableCollectorSelection._id][jsonVariableName] !== selectionValue) {
+      metadata.variables[variableCollectorSelection._id][jsonVariableName] = selectionValue;
+
+      variableCollectorSelectionVariableSet = true;
+      // refreshSelectionsReferencingVariable(templateLibraries, selections,
+      //   selectionRelationships, metadata, variableCollectorSelection, jsonVariableName);
+    }
+  }
+
+  if (oldValue !== selectionValue || variableCollectorSelectionVariableSet) {
+    storeSelectionValueAndUpdatePendingChanges(templateLibraries, selections,
+      selectionRelationships, metadata, selection, selectionValue, oldValue, variableCollectorSelection,
+      variableCollectorSelectionVariableSet, originalValueSource, selectionValueSource, jsonVariableName);
+  }
+}
+
 SelectionsHelper = {
   applyFunctionOverChildrenOfParent: applyFunctionOverChildrenOfParent,
   getChildSelections: getChildSelections,
@@ -912,5 +999,6 @@ SelectionsHelper = {
   getSelectionValue: getSelectionValue,
   getVariableCollectorSelection: getVariableCollectorSelection,
   initializeSelectionVariables: initializeSelectionVariables,
+  setSelectionValue: setSelectionValue,
   sumSelections: sumSelections,
 }

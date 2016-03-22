@@ -1264,7 +1264,10 @@ const addSelectOptions = (templateLibrary, selectOptions, template) => {
 
   const selectionType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.selectionType);
   if (selectionType === Constants.selectionTypes.selectOption) {
-    selectOptions.push(template);
+    selectOptions.push({
+      id: template.id,
+      name: template.name
+    });
   }
 
   const templateChildren = TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template);
@@ -1340,20 +1343,6 @@ const populateSelectOptions = (templateLibraries, template, metadata, forceRefre
   }
 
   metadata.selectOptions[template.id] = selectOptions;
-
-  //Angular typeahead has issues with the many properties on breeze objects or something like that.
-  //Also don't really want to search from every property.
-  //Need a list of simpler objects for the typeahead
-  //Object.defineProperty(Template.prototype, 'selectOptionsBasic', {
-  // get: function () {
-  metadata.selectOptionsBasic[template.id] = [];
-  selectOptions.forEach(function (selectOption) {
-    metadata.selectOptionsBasic[template.id].push({
-      id: selectOption.id,
-      name: selectOption.name,
-      description: selectOption.description
-    });
-  });
 
   return selectOptions;
 }
