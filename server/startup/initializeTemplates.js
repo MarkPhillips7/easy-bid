@@ -415,6 +415,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         id: Random.id(), key: "VariableName", value: "laborCostMultiplier"
       }, {
         id: Random.id(), key: "DefaultValue", value: "1"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "5"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateLaborCostMultiplier);
@@ -443,6 +445,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         id: Random.id(), key: "VariableName", value: "laborSawingRate"
       }, {
         id: Random.id(), key: "DefaultValue", value: "60"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "0"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateLaborSawingRate);

@@ -624,6 +624,7 @@ class bid {
   }
 
   editBidDetails(event) {
+    this.setOriginalSelectionData();
     const modalInstance = this.$modal.open({
       templateUrl: 'client/bids/views/bid-details-edit.html',
       controller: 'bidDetails',
@@ -798,11 +799,11 @@ class bid {
           const selectedProductSelection = _.find(this.selections, (selection) => selection._id === this.selectedProductSelectionId);
           if (tabMatch) {
             tabMatch.inputSelectionItems.push(new InputSelectionItem(this.templateLibraries,
-              this.selections, this.selectionRelationships, templateForTab, selectedProductSelection));
+              this.selections, this.selectionRelationships, templateForTab, selectedProductSelection, this.metadata));
           }
           else {
             const newTab = new TabSection(templateSetting.value, this.templateLibraries,
-              this.selections, this.selectionRelationships, templateForTab, selectedProductSelection);
+              this.selections, this.selectionRelationships, templateForTab, selectedProductSelection, this.metadata);
               //Ultimately need a better way of ordering tabs, but for now just make Primary the first
             if (templateSetting.value === 'Primary') {
               tabs.unshift(newTab);
@@ -834,7 +835,7 @@ class bid {
 
     _.each(templatesForTabs, (templateForTab) => {
       this.productSelectionEditItems.push(new InputSelectionItem(this.templateLibraries,
-        this.selections, this.selectionRelationships, templateForTab, selectedProductSelection));
+        this.selections, this.selectionRelationships, templateForTab, selectedProductSelection, this.metadata));
     });
   }
 

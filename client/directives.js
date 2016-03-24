@@ -371,13 +371,13 @@ angular.module('app')
         template = scope.inputSelectionItem.template;
         selectOptions = TemplateLibrariesHelper.populateSelectOptions(scope.thebid.templateLibraries, template, scope.thebid.metadata);
         selection = scope.inputSelectionItem.getSelection();
-        if (selection && selectOptions) {
-          for (var i = 0; i < selectOptions.length; i++) {
-            if (selectOptions[i].id == selection.value) {
-              //  selection.selectedOption = selectOptions[i];
-            }
-          }
-        }
+        // if (selection && selectOptions) {
+        //   for (var i = 0; i < selectOptions.length; i++) {
+        //     if (selectOptions[i].id == selection.value) {
+        //       //  selection.selectedOption = selectOptions[i];
+        //     }
+        //   }
+        // }
 
         valueFormula = selection
           ? SelectionsHelper.getSettingValue(selection, template, Constants.templateSettingKeys.valueFormula)

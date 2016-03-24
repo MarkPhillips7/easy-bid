@@ -60,6 +60,7 @@ Constants.templateSettingKeys = {
   isASubTemplate:"IsASubTemplate",
   isVariableCollector:"IsVariableCollector",
   isVariableOverride:"IsVariableOverride",
+  levelsDeepCanOverride:"LevelsDeepCanOverride",
   numeratorUnit:"NumeratorUnit",
   overrideValue:"OverrideValue",
   propertyToOverride:"PropertyToOverride",

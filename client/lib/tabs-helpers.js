@@ -9,7 +9,7 @@ const getSelectionsBySelectionParentAndTemplate = (templateLibraries, allSelecti
   return selections;
 };
 
-InputSelectionItem = function (templateLibraries, allSelections, selectionRelationships, template, productSelection) {
+InputSelectionItem = function (templateLibraries, allSelections, selectionRelationships, template, productSelection, metadata) {
   var inputSelectionItem = this;
   inputSelectionItem.id = nextId++;
   inputSelectionItem.template = template;
@@ -20,12 +20,24 @@ InputSelectionItem = function (templateLibraries, allSelections, selectionRelati
     }
     return null;
   }
+  inputSelectionItem.getValue = function () {
+    var selection = inputSelectionItem.getSelection();
+    if (selection) {
+      return selection.value;
+    }
+    const jsonVariableName = ItemTemplatesHelper.getJsonVariableName(template);
+    if (jsonVariableName) {
+      return SelectionsHelper.getJsonVariableValue(templateLibraries, allSelections, selectionRelationships, metadata,
+        productSelection, jsonVariableName);
+    }
+    return null;
+  }
 };
 
-TabSection = function (title, templateLibraries, selections, selectionRelationships, template, productSelection) {
+TabSection = function (title, templateLibraries, selections, selectionRelationships, template, productSelection, metadata) {
   var tab = this;
   tab.title = title;
   tab.active = false;
   tab.disabled = false;
-  tab.inputSelectionItems = [new InputSelectionItem(templateLibraries, selections, selectionRelationships, template, productSelection)];
+  tab.inputSelectionItems = [new InputSelectionItem(templateLibraries, selections, selectionRelationships, template, productSelection, metadata)];
 };
