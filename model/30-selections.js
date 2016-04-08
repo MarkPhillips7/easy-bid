@@ -255,7 +255,7 @@ function getSelectionsBySelectionParentAndTemplateIds(templateLibrary, selection
       const childSelections = getChildSelections(selectionParent, selections,
         selectionRelationships);
       _.each(childSelections, (childSelection) => {
-        if (_.indexOf(templateIds, childSelection.templateId) !== -1) {
+        if (_.contains(templateIds, childSelection.templateId)) {
           selectionsToReturn.push(childSelection);
         } else {
           // Check for descendent selections for the template. Often the desired selection is a grandchild of the original selectionParent.

@@ -39,8 +39,12 @@ class bid {
     this.originalSelections = null;
     this.originalJob = null;
     this.originalSelectionRelationships = null;
+    this.productCategories = [];
+    this.productOptions = [];
     this.productSelectionTemplate = null;
+    this.productTemplate = null;
     this.productToAdd = null;
+    this.productTypeaheadText = '';
     this.selectedAreaBreadcrumbText = '[No Areas]';
     this.selectedProductSelectionId = '';
     this.subscriptionsReady = {};
@@ -112,7 +116,23 @@ class bid {
     this.areaTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.area);
     this.jobTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.job);
     this.productSelectionTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.productSelection);
+    this.productTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.product);
     this.columnTemplates = this.getTemplatesByTemplateSetting('DisplayCategory', 'PrimaryTableColumn');
+    this.productCategories = [
+      {
+        icon: "<img src=../Content/images/Cabinet.png />",
+        name: "Cabinetry",
+        maker: "(Standard)",
+        ticked: true
+      },
+      {
+        icon: "<img src=../Content/images/Yellow-Smiley-128.png />",
+        name: "Flooring",
+        maker: "(Sand)",
+        ticked: false
+      }
+    ];
+    this.productOptions = TemplateLibrariesHelper.populateSelectOptions(this.templateLibraries, this.productTemplate, this.metadata);
   }
 
   restoreOriginalData() {
@@ -147,7 +167,7 @@ class bid {
     });
   }
 
-  confirmSaveChanges() {
+  confirmSaveChanges(saveWithoutPrompting = false) {
     const pendingSelectionChangeMessages = SelectionsHelper.getPendingChangeMessages(this.templateLibraries,
       this.selections, this.selectionRelationships, this.metadata);
     const pendingJobChangeMessages = JobsHelper.getPendingChangeMessages(this.job);
@@ -163,9 +183,13 @@ class bid {
         this.save();
       }
 
-      this.bootstrapDialog.confirmationListDialog("Pending changes need to be saved",
-          `Are you sure you want to apply the following changes?`, pendingChangeMessages)
-        .then(confirmSave, cancelSave);
+      if (saveWithoutPrompting) {
+        this.save();
+      } else {
+        this.bootstrapDialog.confirmationListDialog("Pending changes need to be saved",
+            `Are you sure you want to apply the following changes?`, pendingChangeMessages)
+          .then(confirmSave, cancelSave);
+      }
     }
   }
 
@@ -206,7 +230,7 @@ class bid {
     }
 
     this.setAreaTreeData();
-    // this.setFullHierarchyTreeData();
+    this.setFullHierarchyTreeData();
   }
 
   getSelectionsBySelectionParentAndTemplate(productSelection, columnTemplate) {
@@ -238,10 +262,10 @@ class bid {
       }
       // Otherwise there must just be one selection or something went wrong
       else if (selections && selections.length !== 1) {
-          throw new Error('Error: There must be exactly one selection for the given productSelection and columnTemplate');
+        // throw new Error('Error: There must be exactly one selection for the given productSelection and columnTemplate');
       }
       else {
-          selection = selections[0];
+        selection = selections[0];
       }
 
       columnSelections.push(selection);
@@ -644,6 +668,18 @@ class bid {
     });
   }
 
+  addProductSelectionOptionBasic($item, $model, $label) {
+    if ($item && $item.id) {
+      this.addProductSelectionOption(option);
+      this.productTypeaheadText = '';
+    }
+  };
+
+  addProductSelectionOption(option) {
+    this.productToAdd = option && TemplateLibrariesHelper.getTemplateById(this.templateLibraries, option.id);
+    this.addProductSelection();
+  }
+
   addProductSelection() {
     const parentSelectionId = this.areaSelectedId;
     const parentSelection =  _.find(this.selections, (selection) => selection._id === parentSelectionId);
@@ -656,6 +692,11 @@ class bid {
         const newProductSelection = result;
         this.selectedProductSelectionId = newProductSelection._id;
         this.productToAdd = null;
+
+        // SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata);
+        // this.initializeJobVariables();
+        // this.confirmSaveChanges(true);
+
         this.editProductSelection(newProductSelection, null, true);
       }
     });
@@ -889,5 +930,4 @@ class bid {
 
     return treeItem;
   }
-
 }

@@ -31,6 +31,80 @@ const addSelectionForTemplate = (templateLibrary, jobId, template,
   return selection;
 };
 
+const addOrUpdateSelectionSettings = (templateLibrary, selection, selectionSettingsToAddOrUpdate) => {
+  let newSelectionSettings = selection.selectionSettings || [];
+  if (selectionSettingsToAddOrUpdate) {
+    _.each(selectionSettingsToAddOrUpdate, (selectionSettingToAddOrUpdate) => {
+      let existingSelectionSetting = _.find(newSelectionSettings, (selectionSetting) => {
+        return selectionSetting.key === selectionSettingToAddOrUpdate.key;
+      });
+
+      if (existingSelectionSetting) {
+        existingSelectionSetting.value = selectionSettingToAddOrUpdate.value;
+      } else {
+        newSelectionSettings.push(selectionSettingToAddOrUpdate);
+      }
+    });
+  }
+  Selections.update(selection._id, {$set: {selectionSettings: newSelectionSettings}});
+}
+
+const addSelectionsForChildTemplateRelationship = (templateLibrary, jobId, selection, template,
+    selectionAddingMode, templateRelationship, templateToStopAt) => {
+  const childTemplate = TemplateLibrariesHelper.getTemplateById(templateLibrary, templateRelationship.childTemplateId);
+  if (!childTemplate) {
+    return;
+  }
+  const isABaseTemplate = ItemTemplatesHelper.isABaseTemplate(childTemplate);
+  const isASubTemplate = ItemTemplatesHelper.isASubTemplate(childTemplate);
+
+  if (selectionAddingMode === Constants.selectionAddingModes.handleAnything
+      ||
+      (!isABaseTemplate && selectionAddingMode === Constants.selectionAddingModes.ignoreBaseTemplates)
+      ||
+      (isASubTemplate && selectionAddingMode === Constants.selectionAddingModes.onlySubTemplates)
+      ||
+      (!isASubTemplate && selectionAddingMode === Constants.selectionAddingModes.ignoreSubTemplates)) {
+    const isVariableOverride = childTemplate.templateSettings
+        && _.find(childTemplate.templateSettings, (templateSetting) => {
+          return templateSetting.key === Constants.templateSettingKeys.isVariableOverride && templateSetting.value === true.toString();
+        });
+    if (childTemplate.templateType !== Constants.templateTypes.productSelection) {
+      if (templateToStopAt && childTemplate.templateType === templateToStopAt.templateType) {
+        //Do nothing except establish relationship because child represents the master selection that has already been created.
+        //Moved to addSelectionsForTemplateChildren
+        //createSelectionRelationship({
+        //    parentSelection: selection,
+        //    childSelection: masterSelection,
+        //    order: 0 //template.order(),
+        //});
+      } else if (isVariableOverride) {
+        //Don't add a selection if this is a variable override (Because the selection for the template containing the variable is added separately)
+        //But add the appropriate override selection setting to that selection
+        let variableToOverride = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.variableToOverride);
+        let propertyToOverride = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.propertyToOverride);
+        let overrideValue = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.overrideValue);
+        let selectionToOverride = SelectionsHelper.getSelectionToOverride(templateLibrary, selection, variableToOverride, []);
+        if (selectionToOverride) {
+          addOrUpdateSelectionSettings(templateLibrary, selectionToOverride, [ { key: propertyToOverride, value: overrideValue } ]);
+        }
+      } else if (isASubTemplate) {
+        //Don't do anything. Sub templates are now handled in ProductSelection case.
+      } else if (isABaseTemplate) {
+        //If template IsABaseTemplate then don't add selection for this template now, just add selections for all of
+        //its child sub templates (and they will add this template's other children).
+        addSelectionsForTemplateChildren(templateLibrary, jobId, selection, childTemplate, Constants.selectionAddingModes.onlySubTemplates, templateToStopAt);
+      } else {
+        // SelectionsHelper.getSelectionValue(templateLibraries[0], selections, selectionRelationships, metadata, selection) => {
+        const defaultValue = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.defaultValue);
+
+        //Not a base template or a sub template, so no matter the adding mode should go back to handling everything
+        addSelectionsForTemplateAndChildren(templateLibrary, jobId, childTemplate, defaultValue, selection, 0, Constants.selectionAddingModes.handleAnything, templateToStopAt);
+      }
+    }
+  }
+};
+
 const addSelectionsForTemplateChildren = (templateLibrary, jobId, selection, template,
     selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt) => {
   if (selection && template)
@@ -78,36 +152,51 @@ const addSelectionsForTemplateChildren = (templateLibrary, jobId, selection, tem
 
 const addSelectionsForTemplateAndChildren = (templateLibrary, jobId, template, selectionValue, parentSelection, childOrder,
       selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt) => {
-  let selection = addSelectionForTemplate(templateLibrary, jobId, template, selectionValue, parentSelection, childOrder);
+  let selection = addSelectionForTemplate(templateLibrary, jobId, template, selectionValue, parentSelection._id, childOrder);
   addSelectionsForTemplateChildren(templateLibrary, jobId, selection, template, selectionAddingMode, templateToStopAt);
 
   return selection;
 };
 
+const addSelectionChildrenOfProduct = (templateLibrary, jobId, subTemplateSelection,
+    productTemplate) => {
+  //Add the template children of the base template before the sub template children because they override some of these
+  const parentTemplate =  TemplateLibrariesHelper.parentTemplate(templateLibrary, productTemplate);
+  const isABaseTemplate = ItemTemplatesHelper.isABaseTemplate(parentTemplate);
+  const isASubTemplate = ItemTemplatesHelper.isASubTemplate(parentTemplate);
+  if (!isABaseTemplate && !isASubTemplate) {
+    return;
+  }
+
+  addSelectionChildrenOfProduct(templateLibrary, jobId, subTemplateSelection, parentTemplate);
+
+  addSelectionsForTemplateChildren(templateLibrary, jobId, subTemplateSelection,
+      parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates);
+
+  //Add selection and template children for productTemplate (sub template)
+  const subTemplateSelectionTemplate =  TemplateLibrariesHelper.getTemplateById(templateLibrary, subTemplateSelection.templateId);
+  addSelectionsForTemplateChildren(templateLibrary, jobId, subTemplateSelection,
+      subTemplateSelectionTemplate, Constants.selectionAddingModes.ignoreSubTemplates);
+};
+
 const addProductSelectionAndChildren = (templateLibrary, jobId, parentSelection,
     productSelectionTemplate, productTemplate, childOrder) => {
-      check(templateLibrary, Schema.TemplateLibrary);
-      check(jobId, String);
-      check(template, Schema.ItemTemplate);
-      check(selectionValue, Match.Any);// Match.OneOf(String, null));
-      check(parentSelectionId, String);// Schema.Selection);
-      check(childOrder, Match.Any);// Match.OneOf(Number, null));
+  check(templateLibrary, Schema.TemplateLibrary);
+  check(jobId, String);
+  check(parentSelection, Schema.Selection);
+  check(productSelectionTemplate, Schema.ItemTemplate);
+  check(productTemplate, Schema.ItemTemplate);
+  check(childOrder, Match.Any);// Match.OneOf(Number, null));
 
   //Add selection for productSelectionTemplate
   var productSelection = addSelectionsForTemplateAndChildren(templateLibrary, jobId,
-      productSelectionTemplate, null, parentSelection, childOrder, selectionAddingModes.ignoreBaseTemplates);
+      productSelectionTemplate, null, parentSelection, childOrder, Constants.selectionAddingModes.ignoreBaseTemplates);
 
   //Add selection for productTemplate (sub template) (will add template children for sub template after adding template children of base template)
   var subTemplateSelection = addSelectionForTemplate(templateLibrary, jobId,
-      productTemplate, productTemplate.id.toString(), productSelection._id, 0);
+      productTemplate, productTemplate.id, productSelection._id, 0);
 
-  //Add the template children of the base template before the sub template children because they override some of these
-  addSelectionsForTemplateChildren(templateLibrary, jobId, subTemplateSelection,
-      productTemplate.firstParentTemplate, selectionAddingModes.addBaseTemplateChildrenForSubTemplates);
-
-  //Add selection and template children for productTemplate (sub template)
-  addSelectionsForTemplateChildren(templateLibrary, jobId, subTemplateSelection,
-      subTemplateSelection.template, selectionAddingModes.ignoreSubTemplates);
+  addSelectionChildrenOfProduct(templateLibrary, jobId, subTemplateSelection, productTemplate);
 
   return productSelection;
 };

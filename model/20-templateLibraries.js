@@ -160,7 +160,7 @@ TemplateTypeInfoList = [{
   }, {
     name: 'Sub Template?',
     templateSettingKey: Constants.templateSettingKeys.isASubTemplate,
-    templateSettingValue: 'True',
+    templateSettingValue: 'true',
     minCount: 1, //Required
     maxCount: 1,
     canDelete: false,
@@ -319,7 +319,7 @@ TemplateTypeInfoList = [{
   }, {
     name: 'Is Variable Override',
     templateSettingKey: Constants.templateSettingKeys.isVariableOverride,
-    templateSettingValue: 'True',
+    templateSettingValue: 'true',
     minCount: 1,
     maxCount: 1,
     canDelete: false,
@@ -1347,28 +1347,34 @@ const populateSelectOptions = (templateLibraries, template, metadata, forceRefre
   return selectOptions;
 }
 
+const getSelectOptions = (metadata, template) => {
+  if (metadata && metadata.selectOptions && template)
+  return metadata.selectOptions[template.id];
+}
+
 TemplateLibrariesHelper = {
-  addTemplate: addTemplate,
-  addTemplateSetting: addTemplateSetting,
-  cloneTemplateLibrary: cloneTemplateLibrary,
-  deleteTemplate: deleteTemplate,
-  deleteTemplateSetting: deleteTemplateSetting,
-  getAllSubTemplatesOfBaseTemplateChild: getAllSubTemplatesOfBaseTemplateChild,
-  getChildTemplateRelationships: getChildTemplateRelationships,
-  getParentTemplateRelationships: getParentTemplateRelationships,
-  getRootTemplate: getRootTemplate,
-  getTemplateById: getTemplateById,
-  getTemplateByType: getTemplateByType,
-  getTemplateLibraryWithTemplate: getTemplateLibraryWithTemplate,
-  getTemplateRelationshipById: getTemplateRelationshipById,
-  getTemplateSettingByIds: getTemplateSettingByIds,
-  getTemplateSettingByKeyAndIndex: getTemplateSettingByKeyAndIndex,
-  getTemplateSettingByTemplateAndKeyAndIndex: getTemplateSettingByTemplateAndKeyAndIndex,
-  getTemplatesByTemplateSetting: getTemplatesByTemplateSetting,
-  getTemplatesForTabs: getTemplatesForTabs,
-  getTemplateSettingsForTabs: getTemplateSettingsForTabs,
-  parentTemplate: parentTemplate,
-  parentTemplates: parentTemplates,
-  populateSelectOptions: populateSelectOptions,
-  getTemplateChildren: getTemplateChildren
+  addTemplate,
+  addTemplateSetting,
+  cloneTemplateLibrary,
+  deleteTemplate,
+  deleteTemplateSetting,
+  getAllSubTemplatesOfBaseTemplateChild,
+  getChildTemplateRelationships,
+  getParentTemplateRelationships,
+  getRootTemplate,
+  getSelectOptions,
+  getTemplateById,
+  getTemplateByType,
+  getTemplateChildren,
+  getTemplateLibraryWithTemplate,
+  getTemplateRelationshipById,
+  getTemplateSettingByIds,
+  getTemplateSettingByKeyAndIndex,
+  getTemplateSettingByTemplateAndKeyAndIndex,
+  getTemplatesByTemplateSetting,
+  getTemplatesForTabs,
+  getTemplateSettingsForTabs,
+  parentTemplate,
+  parentTemplates,
+  populateSelectOptions,
 }
