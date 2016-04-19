@@ -70,15 +70,16 @@ class bid {
 
     this.initializeCompanyId();
 
-    this.subscribe('company', this._companySubscription.bind(this), {
+    this.companySubscriptionHandle = this.subscribe('company', this._companySubscription.bind(this), {
       onReady: () => {this.subscriptionsReady.company = true;}});
-    this.subscribe('customer', this._customerSubscription.bind(this), {
+    this.customerSubscriptionHandle = this.subscribe('customer', this._customerSubscription.bind(this), {
       onReady: () => {this.subscriptionsReady.customer = true;}});
-    this.subscribe('job', this._jobSubscription.bind(this), {
+    // this.startJobAndSelectionSubscriptions();
+    this.jobSubscriptionHandle = this.subscribe('job', this._jobSubscription.bind(this), {
       onReady: () => {this.subscriptionsReady.job = true;}});
-    this.subscribe('selectionData', this._selectionDataSubscription.bind(this), {
+    this.selectionDataSubscriptionHandle = this.subscribe('selectionData', this._selectionDataSubscription.bind(this), {
       onReady: () => {this.subscriptionsReady.selectionData = true;}});
-    this.subscribe('templateLibraryData', this._templateLibraryDataSubscription.bind(this), {
+    this.templateLibraryDataSubscriptionHandle = this.subscribe('templateLibraryData', this._templateLibraryDataSubscription.bind(this), {
       onReady: () => {this.subscriptionsReady.templateLibraryData = true;}});
   }
 
@@ -149,7 +150,8 @@ class bid {
 
   cancel() {
     this.restoreOriginalData();
-    this._updateDependencies();
+    // this.startJobAndSelectionSubscriptions();
+    // this._updateDependencies();
   }
 
   save() {
@@ -158,22 +160,26 @@ class bid {
           && this.metadata.pendingSelectionChanges[selection._id].displayMessages
           && this.metadata.pendingSelectionChanges[selection._id].displayMessages.length > 0
         ),
+      this.selectionRelationships,
       function(err, result) {
       if (err) {
         console.log('failed to save selection changes', err);
       } else {
         console.log('success saving selection changes', result);
       }
+      // this.startJobAndSelectionSubscriptions();
     });
   }
 
   confirmSaveChanges(saveWithoutPrompting = false) {
+    // this.stopJobAndSelectionSubscriptions();
     const pendingSelectionChangeMessages = SelectionsHelper.getPendingChangeMessages(this.templateLibraries,
       this.selections, this.selectionRelationships, this.metadata);
     const pendingJobChangeMessages = JobsHelper.getPendingChangeMessages(this.job);
     const pendingChangeMessages = [...pendingJobChangeMessages, ...pendingSelectionChangeMessages];
     if (pendingChangeMessages && pendingChangeMessages.length > 0) {
       const cancelSave = (err) => {
+        this.cancel();
         if (err) {
           console.log(err);
         }
@@ -215,14 +221,11 @@ class bid {
     this.productSelections = _.filter(this.selections, (selection) => {
         return (selection.templateId === this.productSelectionTemplate.id);
     });
-
-    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata);
-
-    this.initializeJobVariables();
-
-    this.confirmSaveChanges();
-
+    SelectionsHelper.initializeMetadata(this.metadata);
     _.each(this.productSelections, this.setProductSelectionSelections.bind(this));
+    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata);
+    this.initializeJobVariables();
+    this.confirmSaveChanges();
 
     //Initialize first selection as selected
     if (this.productSelections.length > 0) {
@@ -248,17 +251,12 @@ class bid {
 
     const setColumnSelection = (columnTemplate) => {
       var selections = this.getSelectionsBySelectionParentAndTemplate(productSelection, columnTemplate);
-      var selection;
+      let selection;
 
       //If there is no selection then just create a blank one
       if (selections && selections.length === 0) {
-        selection = {
-          jobId: this.jobId,
-          templateLibraryId: columnTemplate.templateLibraryId,
-          templateId: columnTemplate.id,
-          value: ''
-        };
-        this.selections.push(selection);
+        selection = SelectionsHelper.addSelectionForTemplate(this.templateLibraries[0], this.selections, this.selectionRelationships,
+            this.jobId, columnTemplate, '', productSelection._id, 0);
       }
       // Otherwise there must just be one selection or something went wrong
       else if (selections && selections.length !== 1) {
@@ -268,7 +266,9 @@ class bid {
         selection = selections[0];
       }
 
-      columnSelections.push(selection);
+      if (selection) {
+        columnSelections.push(selection);
+      }
     }
 
     _.each(this.columnTemplates, setColumnSelection.bind(this));
@@ -450,7 +450,7 @@ class bid {
       }
     }
 
-    const parentSelection = SelectionsHelper.getParentSelections(selection)[0];
+    const parentSelection = SelectionsHelper.getParentSelections(selection, this.selections, this.selectionRelationships)[0];
     return parentSelection && this.inSelectedArea(parentSelection);
   }
 
@@ -567,8 +567,8 @@ class bid {
     let newSelection;
     if (this.areaToAdd) {
       const areaTemplate = this.getReactively('areaTemplate');
-      Meteor.call('addSelectionForTemplate', this.templateLibraries[0], this.jobId, areaTemplate,
-          this.areaToAdd, parentSelection._id, 0, (err, result) => {
+      Meteor.call('addSelectionForTemplate', this.templateLibraries[0],
+          this.jobId, areaTemplate, this.areaToAdd, parentSelection._id, 0, (err, result) => {
         if (err) {
           console.log('failed to addSelectionForTemplate get in addAreaToArray', err);
         } else {
@@ -648,6 +648,7 @@ class bid {
   }
 
   editBidDetails(event) {
+    // this.stopJobAndSelectionSubscriptions();
     this.setOriginalSelectionData();
     const modalInstance = this.$modal.open({
       templateUrl: 'client/bids/views/bid-details-edit.html',
@@ -679,27 +680,43 @@ class bid {
     this.productToAdd = option && TemplateLibrariesHelper.getTemplateById(this.templateLibraries, option.id);
     this.addProductSelection();
   }
+  //
+  // stopJobAndSelectionSubscriptions() {
+  //   this.jobSubscriptionHandle.stop();
+  //   this.subscriptionsReady.job = false;
+  //   this.selectionDataSubscriptionHandle.stop();
+  //   this.subscriptionsReady.selectionData = false;
+  // }
+  //
+  // startJobAndSelectionSubscriptions() {
+  //   this.jobSubscriptionHandle = this.subscribe('job', this._jobSubscription.bind(this), {
+  //     onReady: () => {this.subscriptionsReady.job = true;}});
+  //   this.selectionDataSubscriptionHandle = this.subscribe('selectionData', this._selectionDataSubscription.bind(this), {
+  //     onReady: () => {this.subscriptionsReady.selectionData = true;}});
+  // }
 
   addProductSelection() {
+    // this.stopJobAndSelectionSubscriptions();
     const parentSelectionId = this.areaSelectedId;
     const parentSelection =  _.find(this.selections, (selection) => selection._id === parentSelectionId);
-    Meteor.call('addProductSelectionAndChildren', this.templateLibraries[0], this.jobId, parentSelection,
-        this.productSelectionTemplate, this.productToAdd, 0,
-        (err, result) => {
-      if (err) {
-        console.log('failed to addSelectionForTemplate get in addProductSelection', err);
-      } else {
-        const newProductSelection = result;
-        this.selectedProductSelectionId = newProductSelection._id;
-        this.productToAdd = null;
-
-        // SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata);
-        // this.initializeJobVariables();
-        // this.confirmSaveChanges(true);
-
-        this.editProductSelection(newProductSelection, null, true);
-      }
-    });
+    SelectionsHelper.addProductSelectionAndChildren(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata,
+      this.jobId, parentSelection, this.productSelectionTemplate, this.productToAdd, 0);
+    SelectionsHelper.initializeMetadata(this.metadata, true);
+    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata);
+    this.initializeJobVariables();
+    this.confirmSaveChanges(true);
+    // Meteor.call('addProductSelectionAndChildren', this.templateLibraries, this.selections, this.selectionRelationships, this.metadata,
+    //     this.jobId, parentSelection, this.productSelectionTemplate, this.productToAdd, 0,
+    //     (err, result) => {
+    //   if (err) {
+    //     console.log('failed to addSelectionForTemplate get in addProductSelection', err);
+    //   } else {
+    //     const newProductSelection = result;
+    //     this.selectedProductSelectionId = newProductSelection._id;
+    //     this.productToAdd = null;
+    //     this.editProductSelection(newProductSelection, null, true);
+    //   }
+    // });
   }
 
   setOriginalSelectionData() {
@@ -709,6 +726,7 @@ class bid {
   };
 
   editProductSelection(data, event, deleteIfCanceled) {
+    // this.stopJobAndSelectionSubscriptions();
     this.setOriginalSelectionData();
     this.selectedProductSelectionId = data._id;
     this.setTabs();
@@ -758,7 +776,7 @@ class bid {
     }
     const columnSelections = this.metadata.columnSelections[productSelection._id];
 
-    if (columnSelections.length > 2) {
+    if (columnSelections && columnSelections.length > 2) {
       return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[0]);
     }
     return '';
@@ -770,7 +788,7 @@ class bid {
     }
     const columnSelections = this.metadata.columnSelections[productSelection._id];
 
-    if (columnSelections.length > 7) {
+    if (columnSelections && columnSelections.length > 7) {
       return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[5])
         + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[6])
         + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[7]);
@@ -784,7 +802,7 @@ class bid {
     }
     const columnSelections = this.metadata.columnSelections[productSelection._id];
 
-    if (columnSelections.length > 2) {
+    if (columnSelections && columnSelections.length > 2) {
       return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[2]);
     }
     return '';
@@ -796,7 +814,7 @@ class bid {
     }
     const columnSelections = this.metadata.columnSelections[productSelection._id];
 
-    if (columnSelections.length > 2) {
+    if (columnSelections && columnSelections.length > 2) {
       return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[1]);
     }
     return '';
@@ -808,7 +826,7 @@ class bid {
     }
     const columnSelections = this.metadata.columnSelections[productSelection._id];
 
-    if (columnSelections[4]) {
+    if (columnSelections && columnSelections[4]) {
       return columnSelections[4].value;
     }
     return '';
@@ -820,7 +838,7 @@ class bid {
     }
     const columnSelections = this.metadata.columnSelections[productSelection._id];
 
-    if (columnSelections[0]) {
+    if (columnSelections && columnSelections[0]) {
       const imageFileSetting = TemplateLibrariesHelper.getTemplateSettingByKeyAndIndex(
         this.templateLibraries, columnSelections[0].templateId, Constants.templateSettingKeys.imageSource, 0
       );
@@ -917,7 +935,7 @@ class bid {
     const selectionDisplayValue = SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, selection);
     var treeItem = {
         data: {selectionId: selection._id},
-        label: `${templateDisplayValue} - ${selectionDisplayValue}`,
+        label: `${templateDisplayValue} - ${selectionDisplayValue} (${selection._id})`,
         children: selectionChildren
     }
     treeDataArray.push(treeItem);

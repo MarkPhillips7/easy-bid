@@ -278,7 +278,7 @@
     </div>
   </div>
   <ul class="list-group">
-    <li dir-paginate="productSelection in bid.productSelections | itemsPerPage: bid.perPage"
+    <li dir-paginate="productSelection in bid.productSelections | itemsPerPage: bid.perPage track by $index"
         data-ng-show="bid.inSelectedArea(productSelection)"
         total-items="bid.productSelections.length"
         class="list-group-item eb-list-group-item">

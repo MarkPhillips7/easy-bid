@@ -62,7 +62,8 @@ Schema.SelectionRelationship = new SimpleSchema({
     type: String
   },
   order: {
-    type: Number
+    type: Number,
+    optional: true
   }
 });
 
@@ -168,7 +169,7 @@ function getParentSelections(selection, selections, selectionRelationships) {
 
 // Return the first selection most closely related to this selection whose template defines a variable named variableToOverride.
 // First check if this selection could be it, then child selections, then parent selections.
-function getSelectionToOverride(templateLibrary, selection, variableToOverride, selectionIdsToIgnore) {
+function getSelectionToOverride(templateLibrary, selection, variableToOverride, selectionIdsToIgnore, selections, selectionRelationships) {
   var selectionToOverride = null;
 
   if (!_.contains(selectionIdsToIgnore, selection._id)) {
@@ -185,12 +186,13 @@ function getSelectionToOverride(templateLibrary, selection, variableToOverride, 
 
     //Next check child selections
     //if (selectionTemplate.templateType !== Constants.templateTypes.productSelection) {
-    let childSelections = SelectionsHelper.getChildSelections(selection);
+    let childSelections = SelectionsHelper.getChildSelections(selection, selections, selectionRelationships);
     if (!selectionToOverride && childSelections) {
       childSelections.forEach(function (childSelection) {
-        if (!selectionToOverride &&
-          !ItemTemplatesHelper.isASubTemplate(childSelection.templateId)) {
-          selectionToOverride = getSelectionToOverride(templateLibrary, childSelection, variableToOverride, selectionIdsToIgnore);
+        const childSelectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibrary, childSelection.templateId);
+        if (!selectionToOverride && childSelectionTemplate &&
+          !ItemTemplatesHelper.isASubTemplate(childSelectionTemplate)) {
+          selectionToOverride = getSelectionToOverride(templateLibrary, childSelection, variableToOverride, selectionIdsToIgnore, selections, selectionRelationships);
         }
       });
     }
@@ -199,11 +201,11 @@ function getSelectionToOverride(templateLibrary, selection, variableToOverride, 
     //Next check selections of base templates?
 
     //Lastly check parent selections
-    let parentSelections = SelectionsHelper.getParentSelections(selection);
+    let parentSelections = SelectionsHelper.getParentSelections(selection, selections, selectionRelationships);
     if (!selectionToOverride && parentSelections) {
       parentSelections.forEach(function (parentSelection) {
         if (!selectionToOverride) {
-          selectionToOverride = getSelectionToOverride(templateLibrary, parentSelection, variableToOverride, selectionIdsToIgnore);
+          selectionToOverride = getSelectionToOverride(templateLibrary, parentSelection, variableToOverride, selectionIdsToIgnore, selections, selectionRelationships);
         }
       });
     }
@@ -521,7 +523,7 @@ const applyFunctionOverChildrenOfParent = (templateLibraries, selections, select
   const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selection.templateId);
   const applicableTemplateType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
     selectionTemplate, 'ApplicableTemplateType');
-  const parentSelection = SelectionsHelper.getParentSelections(selection)[0];
+  const parentSelection = SelectionsHelper.getParentSelections(selection, selections, selectionRelationships)[0];
   const descendentSelections = getDescendentSelectionsByTemplateType(
     templateLibraries, selections, selectionRelationships, metadata, parentSelection, applicableTemplateType);
   const functionName = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
@@ -551,13 +553,17 @@ const getDisplayValue = (templateLibraries, selections, selection) => {
 };
 
 const getPendingChangeMessagesByOriginalAndCurrentInfo = (originalValue, originalDisplayValue,
-  originalValueSource, currentValue, currentDisplayValue, currentValueSource) => {
+  originalValueSource, currentValue, currentDisplayValue, currentValueSource, isGettingInserted) => {
   let pendingChangeMessages = [];
-  if (originalValueSource !== currentValueSource) {
-    pendingChangeMessages.push(`source change from ${originalValueSource} to ${currentValueSource}`);
-  }
-  if (originalValue !== currentValue) {
-    pendingChangeMessages.push(`value change from ${originalDisplayValue} to ${currentDisplayValue}`);
+  if (isGettingInserted) {
+    pendingChangeMessages.push(`value initialization to ${currentValueSource}`);
+  } else {
+    if (originalValueSource !== currentValueSource) {
+      pendingChangeMessages.push(`source change from ${originalValueSource} to ${currentValueSource}`);
+    }
+    if (originalValue !== currentValue) {
+      pendingChangeMessages.push(`value change from ${originalDisplayValue} to ${currentDisplayValue}`);
+    }
   }
   return pendingChangeMessages;
 }
@@ -748,7 +754,7 @@ const refreshValueToUse = (templateLibraries, selections, selectionRelationships
 //   return variablesUndefined;
 // };
 
-const initializeMetadata = (metadata) => {
+const initializeMetadata = (metadata, leaveSelectionIdsToBeInserted) => {
   // columnSelections should be like
   // {
   //   wHHJKRr2MhLdc4GkT: // productSelectionId
@@ -821,6 +827,15 @@ const initializeMetadata = (metadata) => {
   //   ]
   // }
   metadata.selectOptions = {};
+
+  // selectionIdsToBeInserted should be like
+  //   [
+  //     'wHHJKRr2MhLdc4GkT', // id of selection being inserted
+  //     '23kmEd92MhLdc4ww6', // id of selection being inserted
+  //   ]
+  if (!leaveSelectionIdsToBeInserted) {
+    metadata.selectionIdsToBeInserted = [];
+  }
 };
 
 const getInitializedMetadata = () => {
@@ -830,7 +845,7 @@ const getInitializedMetadata = () => {
 };
 
 const initializeSelectionVariables = (templateLibraries, selections, selectionRelationships, metadata) => {
-  initializeMetadata(metadata);
+  // initializeMetadata(metadata);
 
   // start with the topmost selection, which should be the company selection
   const companyTemplate = TemplateLibrariesHelper.getTemplateByType(templateLibraries, Constants.templateTypes.company);
@@ -897,7 +912,8 @@ const getPendingChangeMessages = (templateLibraries, selections, selectionRelati
 
 const storeSelectionValueAndUpdatePendingChanges = (templateLibraries, selections,
     selectionRelationships, metadata, selection, selectionValue, oldValue, variableCollectorSelection,
-    variableCollectorSelectionVariableSet, originalValueSource, selectionValueSource, selectionJsonVariableName) => {
+    variableCollectorSelectionVariableSet, originalValueSource, selectionValueSource,
+    selectionJsonVariableName) => {
   const originalValue = oldValue;
   const originalDisplayValue = getDisplayValue(templateLibraries, selections, selection);
   if (selectionValue !== undefined
@@ -915,9 +931,10 @@ const storeSelectionValueAndUpdatePendingChanges = (templateLibraries, selection
     }
   }
 
+  const isGettingInserted = _.contains(metadata.selectionIdsToBeInserted, selection._id);
   const currentDisplayValue = getDisplayValue(templateLibraries, selections, selection);
   let displayMessages = getPendingChangeMessagesByOriginalAndCurrentInfo(originalValue, originalDisplayValue,
-    originalValueSource, selection.value, currentDisplayValue, selectionValueSource);
+    originalValueSource, selection.value, currentDisplayValue, selectionValueSource, isGettingInserted);
   if (displayMessages.length > 0) {
     if (!metadata.pendingSelectionChanges[selection._id]) {
       metadata.pendingSelectionChanges[selection._id] = {
@@ -932,7 +949,7 @@ const storeSelectionValueAndUpdatePendingChanges = (templateLibraries, selection
         metadata.pendingSelectionChanges[selection._id].originalValue,
         metadata.pendingSelectionChanges[selection._id].originalDisplayValue,
         metadata.pendingSelectionChanges[selection._id].originalValueSource,
-        selection.value, currentDisplayValue, selectionValueSource);
+        selection.value, currentDisplayValue, selectionValueSource, isGettingInserted);
       metadata.pendingSelectionChanges[selection._id].displayMessages = displayMessages;
     }
   }
@@ -982,7 +999,226 @@ const setSelectionValue = (templateLibraries, selections, selectionRelationships
   }
 }
 
+// See also jobs method version of addSelectionForTemplate
+const addSelectionForTemplate = (templateLibrary, selections, selectionRelationships,
+    metadata, jobId, template, selectionValue, parentSelectionId, childOrder) => {
+  // check(templateLibrary, Match.Any);// Schema.TemplateLibrary);
+  // check(selections, Match.Any);// Match.OneOf([Schema.Selection], null));
+  // check(selectionRelationships, Match.Any);// Match.OneOf([Schema.SelectionRelationship], null));
+  // check(jobId, Match.Any);// String);
+  // check(template, Match.Any);// Schema.ItemTemplate);
+  // check(selectionValue, Match.Any);// Match.OneOf(String, null));
+  // check(parentSelectionId, Match.Any);// Schema.Selection);
+  // check(childOrder, Match.Any);// Match.OneOf(Number, null));
+
+  let selection = {
+    isOverridingDefault: false,
+    jobId: jobId,
+    templateLibraryId: templateLibrary._id,
+    templateId: template.id,
+    value: selectionValue || ''
+  };
+
+  const selectionId = Random.id(); // this is temporary, can be changed when actually inserted into Selections collection
+  selection._id = selectionId;
+  selections.push(selection);
+  metadata.selectionIdsToBeInserted.push(selection._id);
+
+  if (parentSelectionId) {
+    let selectionRelationship = {
+      parentSelectionId: parentSelectionId,
+      childSelectionId: selectionId,
+      order: childOrder
+    }
+    selectionRelationship._id = Random.id();
+    selectionRelationships.push(selectionRelationship);
+  }
+
+  // ToDo: add selection settings?
+
+  return selection;
+};
+
+const addOrUpdateSelectionSettings = (templateLibrary, selection, selectionSettingsToAddOrUpdate) => {
+  let newSelectionSettings = selection.selectionSettings || [];
+  if (selectionSettingsToAddOrUpdate) {
+    _.each(selectionSettingsToAddOrUpdate, (selectionSettingToAddOrUpdate) => {
+      let existingSelectionSetting = _.find(newSelectionSettings, (selectionSetting) => {
+        return selectionSetting.key === selectionSettingToAddOrUpdate.key;
+      });
+
+      if (existingSelectionSetting) {
+        existingSelectionSetting.value = selectionSettingToAddOrUpdate.value;
+      } else {
+        newSelectionSettings.push(selectionSettingToAddOrUpdate);
+      }
+    });
+  }
+  selection.selectionSettings = newSelectionSettings;
+}
+
+const addSelectionsForChildTemplateRelationship = (templateLibrary, selections,
+    selectionRelationships, metadata, jobId, selection, template,
+    selectionAddingMode, templateRelationship, templateToStopAt) => {
+  const childTemplate = TemplateLibrariesHelper.getTemplateById(templateLibrary, templateRelationship.childTemplateId);
+  if (!childTemplate) {
+    return;
+  }
+  const isABaseTemplate = ItemTemplatesHelper.isABaseTemplate(childTemplate);
+  const isASubTemplate = ItemTemplatesHelper.isASubTemplate(childTemplate);
+
+  if (selectionAddingMode === Constants.selectionAddingModes.handleAnything
+      ||
+      (!isABaseTemplate && selectionAddingMode === Constants.selectionAddingModes.ignoreBaseTemplates)
+      ||
+      (isASubTemplate && selectionAddingMode === Constants.selectionAddingModes.onlySubTemplates)
+      ||
+      (!isASubTemplate && selectionAddingMode === Constants.selectionAddingModes.ignoreSubTemplates)) {
+    const isVariableOverride = childTemplate.templateSettings
+        && _.find(childTemplate.templateSettings, (templateSetting) => {
+          return templateSetting.key === Constants.templateSettingKeys.isVariableOverride && templateSetting.value === true.toString();
+        });
+    if (childTemplate.templateType !== Constants.templateTypes.productSelection) {
+      if (templateToStopAt && childTemplate.templateType === templateToStopAt.templateType) {
+        //Do nothing except establish relationship because child represents the master selection that has already been created.
+        //Moved to addSelectionsForTemplateChildren
+        //createSelectionRelationship({
+        //    parentSelection: selection,
+        //    childSelection: masterSelection,
+        //    order: 0 //template.order(),
+        //});
+      } else if (isVariableOverride) {
+        //Don't add a selection if this is a variable override (Because the selection for the template containing the variable is added separately)
+        //But add the appropriate override selection setting to that selection
+        let variableToOverride = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.variableToOverride);
+        let propertyToOverride = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.propertyToOverride);
+        let overrideValue = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.overrideValue);
+        let selectionToOverride = SelectionsHelper.getSelectionToOverride(templateLibrary, selection, variableToOverride, [], selections, selectionRelationships);
+        if (selectionToOverride) {
+          addOrUpdateSelectionSettings(templateLibrary, selectionToOverride, [ { key: propertyToOverride, value: overrideValue } ]);
+        }
+      } else if (isASubTemplate) {
+        //Don't do anything. Sub templates are now handled in ProductSelection case.
+      } else if (isABaseTemplate) {
+        //If template IsABaseTemplate then don't add selection for this template now, just add selections for all of
+        //its child sub templates (and they will add this template's other children).
+        addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata, jobId, selection, childTemplate, Constants.selectionAddingModes.onlySubTemplates, templateToStopAt);
+      } else {
+        // SelectionsHelper.getSelectionValue(templateLibraries[0], selections, selectionRelationships, metadata, selection) => {
+        const defaultValue = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.defaultValue);
+
+        //Not a base template or a sub template, so no matter the adding mode should go back to handling everything
+        addSelectionsForTemplateAndChildren(templateLibrary, selections, selectionRelationships, metadata, jobId, childTemplate, defaultValue, selection, 0, Constants.selectionAddingModes.handleAnything, templateToStopAt);
+      }
+    }
+  }
+};
+
+const addSelectionsForTemplateChildren = (templateLibrary, selections, selectionRelationships, metadata, jobId, selection, template,
+    selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt) => {
+  if (selection && template)
+  {
+    //If a child template exists with the same type as templateToStopAt then just return.
+    if (templateToStopAt &&
+      _.find(TemplateLibrariesHelper.templateChildren(templateLibrary, template), (templateChild) => {return templateChild.templateType == templateToStopAt.templateType;})){
+      return;
+    }
+
+    //Add selections for template children that are not SubItems (sub templates) first so that everything that might be overridden by sub template exists.
+    _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(templateLibrary, template.id))
+      .filter((templateRelationship) => {return templateRelationship.relationToItem != Constants.relationToItem.subItem;})
+      .each((templateRelationship, index, list) => {
+        addSelectionsForChildTemplateRelationship(templateLibrary, selections, selectionRelationships, metadata, jobId, selection, template, selectionAddingMode, templateRelationship);
+      });
+
+    //Now it's safe to add selections for template children that are SubItems.
+    _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(templateLibrary, template.id))
+      .filter((templateRelationship) => {return templateRelationship.relationToItem == Constants.relationToItem.subItem;})
+      .each((templateRelationship, index, list) => {
+        addSelectionsForChildTemplateRelationship(templateLibrary, selections, selectionRelationships, metadata, jobId, selection, template, selectionAddingMode, templateRelationship);
+      });
+
+    //Handle case where this is a sub template but also a parent of a sub template. So need to add the template children of the base template
+    if (selectionAddingMode == Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates) {
+      let isABaseTemplate = template.templateSettings
+        && _.find(template.templateSettings, (templateSetting) => {
+          return templateSetting.key === "IsABaseTemplate" && templateSetting.value === true.toString();
+        });
+
+      //To get here must be a sub template or base template, so go ahead and add selections for children
+      addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata, jobId, selection, template, Constants.selectionAddingModes.ignoreSubTemplates);
+
+      //If this template is not a base template then still need to add selections for children of parent template(s)
+      if (!isABaseTemplate)
+      {
+        _.each(TemplateLibrariesHelper.parentTemplates(templateLibrary, template), (parentTemplate) => {
+          addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata, jobId, selection, parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates);
+        });
+      }
+    }
+  }
+};
+
+const addSelectionsForTemplateAndChildren = (templateLibrary, selections, selectionRelationships, metadata,
+      jobId, template, selectionValue, parentSelection, childOrder,
+      selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt) => {
+  let selection = addSelectionForTemplate(templateLibrary, selections, selectionRelationships, metadata, jobId, template, selectionValue, parentSelection._id, childOrder);
+  addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata, jobId, selection, template, selectionAddingMode, templateToStopAt);
+
+  return selection;
+};
+
+const addSelectionChildrenOfProduct = (templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection,
+    productTemplate) => {
+  //Add the template children of the base template before the sub template children because they override some of these
+  const parentTemplate =  TemplateLibrariesHelper.parentTemplate(templateLibrary, productTemplate);
+  const isABaseTemplate = ItemTemplatesHelper.isABaseTemplate(parentTemplate);
+  const isASubTemplate = ItemTemplatesHelper.isASubTemplate(parentTemplate);
+  if (!isABaseTemplate && !isASubTemplate) {
+    return;
+  }
+
+  addSelectionChildrenOfProduct(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection, parentTemplate);
+
+  addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection,
+      parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates);
+
+  //Add selection and template children for productTemplate (sub template)
+  const subTemplateSelectionTemplate =  TemplateLibrariesHelper.getTemplateById(templateLibrary, subTemplateSelection.templateId);
+  addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection,
+      subTemplateSelectionTemplate, Constants.selectionAddingModes.ignoreSubTemplates);
+};
+
+const addProductSelectionAndChildren = (templateLibraries, selections, selectionRelationships, metadata,
+    jobId, parentSelection, productSelectionTemplate, productTemplate, childOrder) => {
+  check(templateLibraries, [Schema.TemplateLibrary]);
+  check(selections, [Schema.Selection]);
+  check(selectionRelationships, [Schema.SelectionRelationship]);
+  check(metadata, Match.Any);
+  check(jobId, String);
+  check(parentSelection, Schema.Selection);
+  check(productSelectionTemplate, Schema.ItemTemplate);
+  check(productTemplate, Schema.ItemTemplate);
+  check(childOrder, Match.Any);// Match.OneOf(Number, null));
+
+  const templateLibrary = templateLibraries && templateLibraries[0];
+
+  //Add selection for productSelectionTemplate
+  var productSelection = addSelectionsForTemplateAndChildren(templateLibrary, selections, selectionRelationships, metadata, jobId,
+      productSelectionTemplate, null, parentSelection, childOrder, Constants.selectionAddingModes.ignoreBaseTemplates);
+
+  //Add selection for productTemplate (sub template) (will add template children for sub template after adding template children of base template)
+  var subTemplateSelection = addSelectionForTemplate(templateLibrary, selections, selectionRelationships, metadata, jobId,
+      productTemplate, productTemplate.id, productSelection._id, 0);
+
+  addSelectionChildrenOfProduct(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection, productTemplate);
+
+  return productSelection;
+};
+
 SelectionsHelper = {
+  addProductSelectionAndChildren,
+  addSelectionForTemplate,
   applyFunctionOverChildrenOfParent: applyFunctionOverChildrenOfParent,
   getChildSelections: getChildSelections,
   getChildSelectionsWithTemplateId: getChildSelectionsWithTemplateId,
@@ -998,6 +1234,7 @@ SelectionsHelper = {
   getSelectionsBySelectionParentAndTemplate: getSelectionsBySelectionParentAndTemplate,
   getSelectionValue: getSelectionValue,
   getVariableCollectorSelection: getVariableCollectorSelection,
+  initializeMetadata,
   initializeSelectionVariables: initializeSelectionVariables,
   setSelectionValue: setSelectionValue,
   sumSelections: sumSelections,
