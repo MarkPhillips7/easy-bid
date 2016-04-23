@@ -55,6 +55,10 @@ Schema.SelectionRelationship = new SimpleSchema({
     type: String,
     optional: true
   },
+  jobId: {
+    type: String,
+    optional: true
+  },
   parentSelectionId: {
     type: String
   },
@@ -236,6 +240,9 @@ function populateTemplateIds(templateLibrary, templateIds, template, onlyIfBaseO
 function getSelectionsBySelectionParentAndTemplate(templateLibrary, selections,
   selectionRelationships, selectionParent, template) {
   var templateIds = [];
+  if (typeof selectionParent === 'string') {
+    selectionParent = _.find(selections, (selection) => selection._id === selectionParent);
+  }
   populateTemplateIds(templateLibrary, templateIds, template, false);
 
   return getSelectionsBySelectionParentAndTemplateIds(templateLibrary, selections,
@@ -480,7 +487,8 @@ const sumSelections = (templateLibraries, selections, selectionRelationships,
     return 0;
   }
 
-  const add = (previousValue, selection) => {
+  const add = (previousValue, selectionId) => {
+    const selection = _.find(selections, (_selection) => _selection._id === selectionId);
     const {formulaValue, allVariableValuesFound} = calculateFormulaValue(
         templateLibraries, selections, selectionRelationships,
         metadata, selection, valueFormula, selectionReferencingVariable)
@@ -492,27 +500,27 @@ const sumSelections = (templateLibraries, selections, selectionRelationships,
 
 // This currently does not go through all descendents... only looks at descendents if templeType matches
 // Intended to add all children of a particular type but needed to get descendents of children for area selections
-const addDescendentSelectionsByTemplateType = (templateLibraries, selections, selectionRelationships, metadata, descendentSelections, selectionParent, templateType) => {
+const addDescendentSelectionsByTemplateType = (templateLibraries, selections, selectionRelationships, metadata, descendentSelectionIds, selectionParent, templateType) => {
   if (selectionParent) {
     const childSelections = getChildSelections(selectionParent, selections, selectionRelationships);
     _.each(childSelections, (childSelection) => {
       const childSelectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, childSelection.templateId);
       if (childSelectionTemplate && childSelectionTemplate.templateType === templateType) {
-        descendentSelections.push(childSelection);
+        descendentSelectionIds.push(childSelection._id);
       } else {
         //Now add descendents of this child (but only for children with the requested templateType)
-        addDescendentSelectionsByTemplateType(templateLibraries, selections, selectionRelationships, metadata, descendentSelections, childSelection, templateType);
+        addDescendentSelectionsByTemplateType(templateLibraries, selections, selectionRelationships, metadata, descendentSelectionIds, childSelection, templateType);
       }
     });
   }
 };
 
 // This currently does not go through all descendents... only looks at descendents if templeType matches
-const getDescendentSelectionsByTemplateType = (templateLibraries, selections, selectionRelationships, metadata, selectionParent, templateType) => {
+const getDescendentSelectionIdsByTemplateType = (templateLibraries, selections, selectionRelationships, metadata, selectionParent, templateType) => {
   if (selectionParent) {
-    let descendentSelections = [];
-    addDescendentSelectionsByTemplateType(templateLibraries, selections, selectionRelationships, metadata, descendentSelections, selectionParent, templateType);
-    return descendentSelections;
+    let descendentSelectionIds = [];
+    addDescendentSelectionsByTemplateType(templateLibraries, selections, selectionRelationships, metadata, descendentSelectionIds, selectionParent, templateType);
+    return descendentSelectionIds;
   }
 
   return null;
@@ -524,7 +532,7 @@ const applyFunctionOverChildrenOfParent = (templateLibraries, selections, select
   const applicableTemplateType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
     selectionTemplate, 'ApplicableTemplateType');
   const parentSelection = SelectionsHelper.getParentSelections(selection, selections, selectionRelationships)[0];
-  const descendentSelections = getDescendentSelectionsByTemplateType(
+  const descendentSelectionIds = getDescendentSelectionIdsByTemplateType(
     templateLibraries, selections, selectionRelationships, metadata, parentSelection, applicableTemplateType);
   const functionName = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
     selectionTemplate, 'Function');
@@ -533,7 +541,7 @@ const applyFunctionOverChildrenOfParent = (templateLibraries, selections, select
 
   if (functionName.toUpperCase() === 'SUM') {
     returnValue = sumSelections(templateLibraries, selections, selectionRelationships,
-      metadata, descendentSelections, valueFormula, selection);
+      metadata, descendentSelectionIds, valueFormula, selection);
   }
   return returnValue;
 };
@@ -556,7 +564,7 @@ const getPendingChangeMessagesByOriginalAndCurrentInfo = (originalValue, origina
   originalValueSource, currentValue, currentDisplayValue, currentValueSource, isGettingInserted) => {
   let pendingChangeMessages = [];
   if (isGettingInserted) {
-    pendingChangeMessages.push(`value initialization to ${currentValueSource}`);
+    pendingChangeMessages.push(`value initialization to ${currentDisplayValue}`);
   } else {
     if (originalValueSource !== currentValueSource) {
       pendingChangeMessages.push(`source change from ${originalValueSource} to ${currentValueSource}`);
@@ -755,14 +763,14 @@ const refreshValueToUse = (templateLibraries, selections, selectionRelationships
 // };
 
 const initializeMetadata = (metadata, leaveSelectionIdsToBeInserted) => {
-  // columnSelections should be like
+  // columnSelectionIds should be like
   // {
   //   wHHJKRr2MhLdc4GkT: // productSelectionId
   //   [
   //     'jbexwHHJKRr2MhLdc', ... // id of column selection
   //   ]
   // }
-  metadata.columnSelections = {};
+  metadata.columnSelectionIds = {};
 
   // selectionIdsReferencingVariables should be like
   // {
@@ -1022,10 +1030,13 @@ const addSelectionForTemplate = (templateLibrary, selections, selectionRelations
   const selectionId = Random.id(); // this is temporary, can be changed when actually inserted into Selections collection
   selection._id = selectionId;
   selections.push(selection);
-  metadata.selectionIdsToBeInserted.push(selection._id);
+  if (metadata.selectionIdsToBeInserted) {
+    metadata.selectionIdsToBeInserted.push(selection._id);
+  }
 
   if (parentSelectionId) {
     let selectionRelationship = {
+      jobId: jobId,
       parentSelectionId: parentSelectionId,
       childSelectionId: selectionId,
       order: childOrder

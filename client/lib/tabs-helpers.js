@@ -1,20 +1,20 @@
 var nextId = 1;//Used for creating unique ID values for HTML objects
 
-const getSelectionsBySelectionParentAndTemplate = (templateLibraries, allSelections, selectionRelationships, template, productSelection) => {
+const getSelectionsBySelectionParentAndTemplate = (templateLibraries, allSelections, selectionRelationships, template, productSelectionId) => {
   let selections = [];
   _.each(templateLibraries, (templateLibrary) => {
     selections = selections.concat(SelectionsHelper.getSelectionsBySelectionParentAndTemplate(
-      templateLibrary, allSelections, selectionRelationships, productSelection, template));
+      templateLibrary, allSelections, selectionRelationships, productSelectionId, template));
   });
   return selections;
 };
 
-InputSelectionItem = function (templateLibraries, allSelections, selectionRelationships, template, productSelection, metadata) {
+InputSelectionItem = function (templateLibraries, allSelections, selectionRelationships, template, productSelectionId, metadata) {
   var inputSelectionItem = this;
   inputSelectionItem.id = nextId++;
   inputSelectionItem.template = template;
   inputSelectionItem.getSelection = function () {
-    var selections = getSelectionsBySelectionParentAndTemplate(templateLibraries, allSelections, selectionRelationships, template, productSelection);
+    var selections = getSelectionsBySelectionParentAndTemplate(templateLibraries, allSelections, selectionRelationships, template, productSelectionId);
     if (selections && selections.length > 0) {
       return selections[0];
     }
@@ -27,6 +27,7 @@ InputSelectionItem = function (templateLibraries, allSelections, selectionRelati
     }
     const jsonVariableName = ItemTemplatesHelper.getJsonVariableName(template);
     if (jsonVariableName) {
+      const productSelection = _.find(allSelections, (_selection) => _selection._id === productSelectionId);
       return SelectionsHelper.getJsonVariableValue(templateLibraries, allSelections, selectionRelationships, metadata,
         productSelection, jsonVariableName);
     }

@@ -39,6 +39,7 @@ const addSelectionForTemplate = (templateLibrary, jobId, template,
 
   if (parentSelectionId) {
     let selectionRelationship = {
+      jobId: jobId,
       parentSelectionId: parentSelectionId,
       childSelectionId: selectionId,
       order: childOrder
@@ -149,12 +150,7 @@ Meteor.methods({
         _id: { $in: templateLibraryIds }
       }).fetch();
       const selections = Selections.find({ 'jobId' : jobId }).fetch();
-      const selectionIds = _.map(selections, (selection) => selection._id);
-      const selectionRelationships = SelectionRelationships.find({
-        $or:[
-          {"childSelectionId": { $in: selectionIds } },
-          {"parentSelectionId": { $in: selectionIds } }
-        ]}).fetch();
+      const selectionRelationships = SelectionRelationships.find({ 'jobId' : jobId }).fetch();
 
       let selectionsWithUpdates = selections;
       let selectionRelationshipsWithUpdates = selectionRelationships;
@@ -207,23 +203,26 @@ Meteor.methods({
             console.log(`inconsistent data pending change: ${displayMessage}`);
           });
         });
-        // throw new Meteor.Error('inconsistent-data-request', 'Sorry, the requested changes would cause inconsistent data.');
+        throw new Meteor.Error('inconsistent-data-request', 'Sorry, the requested changes would cause inconsistent data.');
       }
 
       _.each(selectionUpdates, (selectionUpdate) => {
         Selections.update({_id: selectionUpdate._id}, selectionUpdate.mods);
       });
-      let selectionIdXrefs = {};
+      // turns out that selectionIdXrefs is not needed because meteor uses _id if specified.
+      // let selectionIdXrefs = {};
       _.each(selectionInserts, (selectionToInsert) => {
-        const selectionId = Selections.insert(selectionToInsert);
-        selectionIdXrefs[selectionToInsert._id] = selectionId;
+        Selections.insert(selectionToInsert);
+        // const selectionId = Selections.insert(selectionToInsert);
+        // selectionIdXrefs[selectionToInsert._id] = selectionId;
       });
       _.each(selectionRelationshipInserts, (selectionRelationshipToInsert) => {
-        const selectionRelationshipToInsertReally = {
-          parentSelectionId: selectionIdXrefs[selectionRelationshipToInsert.parentSelectionId] || selectionRelationshipToInsert.parentSelectionId,
-          childSelectionId: selectionIdXrefs[selectionRelationshipToInsert.childSelectionId] || selectionRelationshipToInsert.childSelectionId,
-        }
-        SelectionRelationships.insert(selectionRelationshipToInsertReally);
+        SelectionRelationships.insert(selectionRelationshipToInsert);
+        // const selectionRelationshipToInsertReally = {
+        //   parentSelectionId: selectionIdXrefs[selectionRelationshipToInsert.parentSelectionId] || selectionRelationshipToInsert.parentSelectionId,
+        //   childSelectionId: selectionIdXrefs[selectionRelationshipToInsert.childSelectionId] || selectionRelationshipToInsert.childSelectionId,
+        // }
+        // SelectionRelationships.insert(selectionRelationshipToInsertReally);
       });
     }
 

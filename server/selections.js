@@ -19,12 +19,7 @@ Meteor.publish("selectionData", function (jobId, options) {
   }
 
   const selections = Selections.find({ 'jobId' : jobId }, options);
-  const selectionIds = _.map(selections.fetch(), (selection) => selection._id);
-  const selectionRelationships = SelectionRelationships.find({
-    $or:[
-      {"childSelectionId": { $in: selectionIds } },
-      {"parentSelectionId": { $in: selectionIds } }
-    ]});
+  const selectionRelationships = SelectionRelationships.find({ 'jobId' : jobId });
 
   return [
     selections,

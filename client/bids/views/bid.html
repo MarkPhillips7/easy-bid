@@ -206,7 +206,7 @@
                ng-model="bid.productTypeaheadText"
                typeahead="option.name for option in bid.productOptions | filter:$viewValue"
                typeahead-editable="false"
-               typeahead-on-select="bid.addProductSelectionOptionBasic($item, $model, $label)"
+               typeahead-on-select="bid.addProductSelectionOptionFromInput($item)"
                class="form-control"
                placeholder="Enter product to add or click one below"/>
       </div>
@@ -278,31 +278,31 @@
     </div>
   </div>
   <ul class="list-group">
-    <li dir-paginate="productSelection in bid.productSelections | itemsPerPage: bid.perPage track by $index"
-        data-ng-show="bid.inSelectedArea(productSelection)"
-        total-items="bid.productSelections.length"
+    <li dir-paginate="productSelectionId in bid.productSelectionIds | itemsPerPage: bid.perPage track by $index"
+        data-ng-show="bid.inSelectedArea(productSelectionId)"
+        total-items="bid.productSelectionIds.length"
         class="list-group-item eb-list-group-item">
       <div class="checkbox eb-list-group-item-left-checkbox">
        <label>
-         <input type="checkbox" ng-checked="bid.isItemSelected(productSelection._id)"
-                ng-click="bid.toggleItemSelection(productSelection._id)">
+         <input type="checkbox" ng-checked="bid.isItemSelected(productSelectionId)"
+                ng-click="bid.toggleItemSelection(productSelectionId)">
        </label>
      </div>
-      <a href="" ng-click="bid.editProductSelection(productSelection, $event)" class="eb-list-group-item-main-a">
-        <img class="eb-list-group-item-main-a-image" data-eb-img-product="{{bid.getProductImage(productSelection)}}"/>
+      <a href="" ng-click="bid.editProductSelection(productSelectionId, $event)" class="eb-list-group-item-main-a">
+        <img class="eb-list-group-item-main-a-image" data-eb-img-product="{{bid.getProductImage(productSelectionId)}}"/>
         <div class="eb-list-group-item-main-a-quantity">
-          <span>{{bid.getQuantity(productSelection)}}</span>
+          <span>{{bid.getQuantity(productSelectionId)}}</span>
         </div>
         <div class="eb-list-group-item-main-a-price-total eb-price">
-          {{bid.getPriceTotal(productSelection)}}
+          {{bid.getPriceTotal(productSelectionId)}}
           <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>
         </div>
         <div class="eb-list-group-item-main-a-title-and-description">
-          <span class="eb-list-group-item-main-a-title">{{bid.getTitle(productSelection)}}</span>
+          <span class="eb-list-group-item-main-a-title">{{bid.getTitle(productSelectionId)}}</span>
           <br/>
-          {{bid.getMainSelectionContent(productSelection)}}
+          {{bid.getMainSelectionContent(productSelectionId)}}
           <div class="eb-price">
-            {{bid.getPriceEach(productSelection)}}
+            {{bid.getPriceEach(productSelectionId)}}
             <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>
           </div>
         </div>
@@ -311,9 +311,9 @@
   </ul>
   <div class="eb-price-subtotal">
     <span class="eb-post-list-label">Subtotal</span>
-    <span class="eb-price">{{bid.subtotalSelections(bid.productSelections, true)}}</span>
+    <span class="eb-price">{{bid.subtotalSelections(bid.productSelectionIds, true)}}</span>
   </div>
-  <span ng-show="!bid.productSelections.length">No matches found</span>
+  <span ng-show="!bid.productSelectionIds.length">No matches found</span>
   <dir-pagination-controls on-page-change="bid.pageChanged(newPageNumber)"></dir-pagination-controls>
   <div class="eb-area-hierarchy">
     <abn-tree tree-data="bid.fullHierarchyTreeData"

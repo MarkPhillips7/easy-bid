@@ -30,25 +30,28 @@ class bid {
     this.customerId = this.$stateParams.r;
     this.fullHierarchyTree = {};
     this.fullHierarchyTreeData = [];
+    this.ignoreUpdatesTemporarily = false;
     this.includeChildAreas = false;
     this.jobId = this.$stateParams.bidId;
     this.jobSelection = null;
     this.jobTemplate = null;
     // metadata used to keep track of ui state of various data
     this.metadata = SelectionsHelper.getInitializedMetadata();
-    this.originalSelections = null;
-    this.originalJob = null;
-    this.originalSelectionRelationships = null;
+    // this.originalSelections = null;
+    // this.originalJob = null;
+    // this.originalSelectionRelationships = null;
     this.productCategories = [];
     this.productOptions = [];
     this.productSelectionTemplate = null;
+    this.productSelectionIdToEdit = null;
+    this.deleteProductSelectionOnCancel = false;
     this.productTemplate = null;
     this.productToAdd = null;
     this.productTypeaheadText = '';
     this.selectedAreaBreadcrumbText = '[No Areas]';
     this.selectedProductSelectionId = '';
     this.subscriptionsReady = {};
-    this.productSelections = [];
+    this.productSelectionIds = [];
     this.productSelectionEditItems = [];
     this.productSelectionItems = [];
     this.tabs = [];
@@ -89,9 +92,14 @@ class bid {
 
   // update pretty much all state dependent on subscriptions
   _updateDependencies() {
+    if (this.ignoreUpdatesTemporarily) {
+      return;
+    }
+
     if (!this.getReactively('subscriptionsReady.templateLibraryData')) {
       return;
     }
+    SelectionsHelper.initializeMetadata(this.metadata);
     this.initializeTemplateVariables();
 
     if (!this.getReactively('subscriptionsReady.selectionData')
@@ -101,6 +109,7 @@ class bid {
       return;
     }
 
+    console.log('updating dependencies');
     this.initializeSelectionVariables();
   }
 
@@ -136,46 +145,49 @@ class bid {
     this.productOptions = TemplateLibrariesHelper.populateSelectOptions(this.templateLibraries, this.productTemplate, this.metadata);
   }
 
-  restoreOriginalData() {
-    if (!this.originalSelections
-      || !this.originalSelectionRelationships
-      || !this.originalJob) {
-      return;
-    }
-
-    this.selections = this.originalSelections;
-    this.selectionRelationships = this.originalSelectionRelationships;
-    this.job = this.originalJob;
-  }
+  // restoreOriginalData() {
+  //   if (!this.originalSelections
+  //     || !this.originalSelectionRelationships
+  //     || !this.originalJob) {
+  //     return;
+  //   }
+  //
+  //   this.selections = this.originalSelections;
+  //   this.selectionRelationships = this.originalSelectionRelationships;
+  //   this.job = this.originalJob;
+  // }
 
   cancel() {
-    this.restoreOriginalData();
+    // this.restoreOriginalData();
+    this.ignoreUpdatesTemporarily = false;
     // this.startJobAndSelectionSubscriptions();
     // this._updateDependencies();
   }
 
-  save() {
-    Meteor.call('saveSelectionChanges', this.job,
-      _.filter(this.selections, (selection) => this.metadata.pendingSelectionChanges[selection._id]
-          && this.metadata.pendingSelectionChanges[selection._id].displayMessages
-          && this.metadata.pendingSelectionChanges[selection._id].displayMessages.length > 0
+  save(job, selections, selectionRelationships, metadata) {
+    Meteor.call('saveSelectionChanges', job,
+      _.filter(selections, (selection) => metadata.pendingSelectionChanges[selection._id]
+          && metadata.pendingSelectionChanges[selection._id].displayMessages
+          && metadata.pendingSelectionChanges[selection._id].displayMessages.length > 0
         ),
-      this.selectionRelationships,
-      function(err, result) {
+      selectionRelationships,
+      (err, result) => {
       if (err) {
         console.log('failed to save selection changes', err);
+        this.ignoreUpdatesTemporarily = false;
       } else {
         console.log('success saving selection changes', result);
+        this.ignoreUpdatesTemporarily = false;
       }
       // this.startJobAndSelectionSubscriptions();
     });
   }
 
-  confirmSaveChanges(saveWithoutPrompting = false) {
+  confirmSaveChanges(job, selections, selectionRelationships, metadata, saveWithoutPrompting = false) {
     // this.stopJobAndSelectionSubscriptions();
     const pendingSelectionChangeMessages = SelectionsHelper.getPendingChangeMessages(this.templateLibraries,
-      this.selections, this.selectionRelationships, this.metadata);
-    const pendingJobChangeMessages = JobsHelper.getPendingChangeMessages(this.job);
+      selections, selectionRelationships, metadata);
+    const pendingJobChangeMessages = JobsHelper.getPendingChangeMessages(job);
     const pendingChangeMessages = [...pendingJobChangeMessages, ...pendingSelectionChangeMessages];
     if (pendingChangeMessages && pendingChangeMessages.length > 0) {
       const cancelSave = (err) => {
@@ -186,11 +198,11 @@ class bid {
       }
 
       const confirmSave = () => {
-        this.save();
+        this.save(job, selections, selectionRelationships, metadata);
       }
 
       if (saveWithoutPrompting) {
-        this.save();
+        this.save(job, selections, selectionRelationships, metadata);
       } else {
         this.bootstrapDialog.confirmationListDialog("Pending changes need to be saved",
             `Are you sure you want to apply the following changes?`, pendingChangeMessages)
@@ -199,64 +211,69 @@ class bid {
     }
   }
 
-  getJobSubtotal = () => {
+  getJobSubtotal = (metadata, selections, selectionRelationships) => {
     const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName('jobSubtotal');
     const variableCollectorSelection = SelectionsHelper.getVariableCollectorSelection(
-      this.templateLibraries, this.selections, this.selectionRelationships, this.jobSelection);
+      this.templateLibraries, selections, selectionRelationships, this.jobSelection);
     if (!variableCollectorSelection) {
       return null;
     }
 
-    return this.metadata.variables[variableCollectorSelection._id] &&
-        this.metadata.variables[variableCollectorSelection._id][jsonVariableName];
+    return metadata.variables[variableCollectorSelection._id] &&
+        metadata.variables[variableCollectorSelection._id][jsonVariableName];
         //parseFloat(this.metadata.variables[variableCollectorSelection._id][jsonVariableName]);
   };
 
-  initializeJobVariables() {
-    this.job.estimateTotal = this.getJobSubtotal();
+  initializeJobVariables(job, metadata, selections, selectionRelationships) {
+    job.estimateTotal = this.getJobSubtotal(metadata, selections, selectionRelationships);
   }
 
   initializeSelectionVariables() {
     this.jobSelection = SelectionsHelper.getSelectionByTemplate(this.selections, this.jobTemplate);
-    this.productSelections = _.filter(this.selections, (selection) => {
-        return (selection.templateId === this.productSelectionTemplate.id);
-    });
-    SelectionsHelper.initializeMetadata(this.metadata);
-    _.each(this.productSelections, this.setProductSelectionSelections.bind(this));
+    this.productSelectionIds = _.chain(this.selections)
+      .filter((selection) => selection.templateId === this.productSelectionTemplate.id)
+      .map((selection) => selection._id)
+      .value();
+    _.each(this.productSelectionIds, (productSelectionId) => this.setProductSelectionSelections(productSelectionId));
     SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata);
-    this.initializeJobVariables();
-    this.confirmSaveChanges();
+    this.initializeJobVariables(this.job, this.metadata, this.selections, this.selectionRelationships);
+    this.confirmSaveChanges(this.job, this.selections, this.selectionRelationships, this.metadata, false);
 
-    //Initialize first selection as selected
-    if (this.productSelections.length > 0) {
-      this.selectedProductSelectionId = this.productSelections[0]._id;
+    //Initialize first selection as selected if none currently selected
+    if (this.productSelectionIds.length > 0 && !this.selectedProductSelectionId) {
+      this.selectedProductSelectionId = this.productSelectionIds[0]._id;
+    }
+    if (this.productSelectionIdToEdit) {
+      this.editProductSelection(this.productSelectionIdToEdit, null, this.deleteProductSelectionOnCancel);
+      this.productSelectionIdToEdit = null;
+      this.deleteProductSelectionOnCancel = false;
     }
 
     this.setAreaTreeData();
     this.setFullHierarchyTreeData();
   }
 
-  getSelectionsBySelectionParentAndTemplate(productSelection, columnTemplate) {
+  getSelectionsBySelectionParentAndTemplate(productSelectionId, columnTemplate) {
     let selections = [];
     _.each(this.templateLibraries, (templateLibrary) => {
       selections = selections.concat(SelectionsHelper.getSelectionsBySelectionParentAndTemplate(
-        templateLibrary, this.selections, this.selectionRelationships, productSelection, columnTemplate));
+        templateLibrary, this.selections, this.selectionRelationships, productSelectionId, columnTemplate));
     });
     return selections;
   }
 
-  setProductSelectionSelections(productSelection) {
-    let columnSelections = [];
-    this.metadata.columnSelections[productSelection._id] = columnSelections;
+  setProductSelectionSelections(productSelectionId) {
+    let columnSelectionIds = [];
+    this.metadata.columnSelectionIds[productSelectionId] = columnSelectionIds;
 
     const setColumnSelection = (columnTemplate) => {
-      var selections = this.getSelectionsBySelectionParentAndTemplate(productSelection, columnTemplate);
+      var selections = this.getSelectionsBySelectionParentAndTemplate(productSelectionId, columnTemplate);
       let selection;
 
       //If there is no selection then just create a blank one
       if (selections && selections.length === 0) {
         selection = SelectionsHelper.addSelectionForTemplate(this.templateLibraries[0], this.selections, this.selectionRelationships,
-            this.jobId, columnTemplate, '', productSelection._id, 0);
+            this.metadata, this.jobId, columnTemplate, '', productSelectionId, 0);
       }
       // Otherwise there must just be one selection or something went wrong
       else if (selections && selections.length !== 1) {
@@ -267,7 +284,7 @@ class bid {
       }
 
       if (selection) {
-        columnSelections.push(selection);
+        columnSelectionIds.push(selection._id);
       }
     }
 
@@ -283,7 +300,7 @@ class bid {
     let shownCount = 0;
     const self = this;
     _.each(itemIdsSelected, (itemIdSelected) => {
-      shownCount += _.some(self.productSelections, (productSelection) => productSelection._id === itemIdSelected) ? 1 : 0;
+      shownCount += _.some(self.productSelectionIds, (productSelectionId) => productSelectionId === itemIdSelected) ? 1 : 0;
     });
 
     return itemIdsSelected.length - shownCount;
@@ -438,11 +455,12 @@ class bid {
     this.includeChildAreas = !this.includeChildAreas;
   }
 
-  inSelectedArea(selection) {
-    if (selection._id === this.areaSelectedId) {
+  inSelectedArea(selectionId) {
+    if (selectionId === this.areaSelectedId) {
       return true;
     }
 
+    const selection = _.find(this.selections, (_selection) => _selection._id === selectionId);
     if (!this.getReactively('includeChildAreas')) {
       const selectionTemplate = TemplateLibrariesHelper.getTemplateById(this.templateLibraries, selection.templateId);
       if (selectionTemplate.templateType === Constants.templateTypes.area) {
@@ -451,7 +469,7 @@ class bid {
     }
 
     const parentSelection = SelectionsHelper.getParentSelections(selection, this.selections, this.selectionRelationships)[0];
-    return parentSelection && this.inSelectedArea(parentSelection);
+    return parentSelection && this.inSelectedArea(parentSelection._id);
   }
 
   addItemToTreeData(areaTreeDataArray, areaSelection) {
@@ -480,7 +498,7 @@ class bid {
   }
 
   _selectionRelationshipsCollection() {
-    const selectionRelationships = SelectionRelationships.find({});
+    const selectionRelationships = SelectionRelationships.find({jobId: this.$stateParams.bidId});
     return selectionRelationships;
   }
 
@@ -662,15 +680,15 @@ class bid {
     });
 
     modalInstance.result.then((selectedItem) => {
-      this.save();
+      this.save(this.job, this.selections, this.selectionRelationships, this.metadata);
     }, () => {
       console.log('Modal dismissed at: ' + new Date());
       this.cancel();
     });
   }
 
-  addProductSelectionOptionBasic($item, $model, $label) {
-    if ($item && $item.id) {
+  addProductSelectionOptionFromInput(option) {
+    if (option && option.id) {
       this.addProductSelectionOption(option);
       this.productTypeaheadText = '';
     }
@@ -697,14 +715,23 @@ class bid {
 
   addProductSelection() {
     // this.stopJobAndSelectionSubscriptions();
+    this.ignoreUpdatesTemporarily = true;
     const parentSelectionId = this.areaSelectedId;
     const parentSelection =  _.find(this.selections, (selection) => selection._id === parentSelectionId);
-    SelectionsHelper.addProductSelectionAndChildren(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata,
+    const pendingJob = _.clone(this.job);
+    const pendingMetadata = _.clone(this.metadata);
+    const pendingSelections = _.map(this.selections, _.clone);
+    const pendingSelectionRelationships = _.map(this.selectionRelationships, _.clone);
+    const newProductSelection = SelectionsHelper.addProductSelectionAndChildren(
+      this.templateLibraries, pendingSelections, pendingSelectionRelationships, pendingMetadata,
       this.jobId, parentSelection, this.productSelectionTemplate, this.productToAdd, 0);
-    SelectionsHelper.initializeMetadata(this.metadata, true);
-    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata);
-    this.initializeJobVariables();
-    this.confirmSaveChanges(true);
+    SelectionsHelper.initializeMetadata(pendingMetadata, true);
+    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, pendingSelections, pendingSelectionRelationships, pendingMetadata);
+    this.initializeJobVariables(pendingJob, pendingMetadata, pendingSelections, pendingSelectionRelationships);
+    this.selectedProductSelectionId = newProductSelection._id;
+    this.productSelectionIdToEdit = newProductSelection._id;
+    this.deleteProductSelectionOnCancel = true;
+    this.confirmSaveChanges(pendingJob, pendingSelections, pendingSelectionRelationships, pendingMetadata, true);
     // Meteor.call('addProductSelectionAndChildren', this.templateLibraries, this.selections, this.selectionRelationships, this.metadata,
     //     this.jobId, parentSelection, this.productSelectionTemplate, this.productToAdd, 0,
     //     (err, result) => {
@@ -719,16 +746,20 @@ class bid {
     // });
   }
 
-  setOriginalSelectionData() {
-    this.originalJob = _.clone(this.job);
-    this.originalSelections = _.map(this.selections, _.clone);
-    this.originalSelectionRelationships = _.map(this.selectionRelationships, _.clone);
-  };
+  // setOriginalSelectionData() {
+  //   this.originalJob = _.clone(this.job);
+  //   this.originalSelections = _.map(this.selections, _.clone);
+  //   this.originalSelectionRelationships = _.map(this.selectionRelationships, _.clone);
+  // };
 
-  editProductSelection(data, event, deleteIfCanceled) {
+  editProductSelection(productSelectionId, event, deleteIfCanceled) {
+  // editProductSelection(data, event, deleteIfCanceled, job, selections, selectionRelationships) {
     // this.stopJobAndSelectionSubscriptions();
-    this.setOriginalSelectionData();
-    this.selectedProductSelectionId = data._id;
+    // job = job || this.job;
+    // selections = selections || this.selections;
+    // selectionRelationships = selectionRelationships || this.selectionRelationships;
+    // this.setOriginalSelectionData();
+    this.selectedProductSelectionId = productSelectionId;
     this.setTabs();
     const modalInstance = this.$modal.open({
       templateUrl: 'client/product-selections/views/product-selection-edit.html',
@@ -742,12 +773,13 @@ class bid {
     });
 
     modalInstance.result.then((selectedItem) => {
-      this.job.estimateTotal = this.getJobSubtotal();
-      this.save();
+      this.job.estimateTotal = this.getJobSubtotal(this.metadata, this.selections, this.selectionRelationships);
+      this.save(this.job, this.selections, this.selectionRelationships, this.metadata);
+      // this.save(job, selections, selectionRelationships);
     }, () => {
       console.log('Modal dismissed at: ' + new Date());
       if (deleteIfCanceled) {
-        this.deleteProductSelection(this.selectedProductSelection);
+        this.deleteProductSelection(this.selectedProductSelectionId);
       }
       this.cancel();
     });
@@ -763,85 +795,87 @@ class bid {
 
   getSelectedProductDisplaySummary() {
     const selectedProductSelection = _.find(this.selections, (selection) => selection._id === this.selectedProductSelectionId);
-    const titleText = this.getTitle(selectedProductSelection);
-    const priceEachText = this.getPriceEach(selectedProductSelection);
-    const priceTotalText = this.getPriceTotal(selectedProductSelection);
-    const quantityText = this.getQuantity(selectedProductSelection);
+    const selectedProductSelectionId = selectedProductSelection && selectedProductSelection._id;
+    const titleText = this.getTitle(selectedProductSelectionId);
+    const priceEachText = this.getPriceEach(selectedProductSelectionId);
+    const priceTotalText = this.getPriceTotal(selectedProductSelectionId);
+    const quantityText = this.getQuantity(selectedProductSelectionId);
     return `${titleText} x ${quantityText} at ${priceEachText} each = ${priceTotalText}`;
   }
 
-  getTitle(productSelection) {
-    if (!productSelection) {
+  getTitle(productSelectionId) {
+    if (!productSelectionId) {
       return '';
     }
-    const columnSelections = this.metadata.columnSelections[productSelection._id];
+    const columnSelectionIds = this.metadata.columnSelectionIds[productSelectionId];
 
-    if (columnSelections && columnSelections.length > 2) {
-      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[0]);
+    if (columnSelectionIds && columnSelectionIds.length > 2) {
+      const columnSelection = _.find(this.selections, (selection) => selection._id === columnSelectionIds[0]);
+      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelection);
     }
     return '';
   }
 
-  getMainSelectionContent(productSelection) {
-    if (!productSelection) {
+  getMainSelectionContent(productSelectionId) {
+    if (!productSelectionId) {
       return '';
     }
-    const columnSelections = this.metadata.columnSelections[productSelection._id];
+    const columnSelectionIds = this.metadata.columnSelectionIds[productSelectionId];
 
-    if (columnSelections && columnSelections.length > 7) {
-      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[5])
-        + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[6])
-        + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[7]);
+    if (columnSelectionIds && columnSelectionIds.length > 7) {
+      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, _.find(this.selections, (selection) => selection._id === columnSelectionIds[5]))
+        + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, _.find(this.selections, (selection) => selection._id === columnSelectionIds[6]))
+        + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, _.find(this.selections, (selection) => selection._id === columnSelectionIds[7]));
     }
     return '';
   }
 
-  getPriceTotal(productSelection) {
-    if (!productSelection) {
+  getPriceTotal(productSelectionId) {
+    if (!productSelectionId) {
       return '';
     }
-    const columnSelections = this.metadata.columnSelections[productSelection._id];
+    const columnSelectionIds = this.metadata.columnSelectionIds[productSelectionId];
 
-    if (columnSelections && columnSelections.length > 2) {
-      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[2]);
+    if (columnSelectionIds && columnSelectionIds.length > 2) {
+      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, _.find(this.selections, (selection) => selection._id === columnSelectionIds[2]));
     }
     return '';
   }
 
-  getPriceEach(productSelection) {
-    if (!productSelection) {
+  getPriceEach(productSelectionId) {
+    if (!productSelectionId) {
       return '';
     }
-    const columnSelections = this.metadata.columnSelections[productSelection._id];
+    const columnSelectionIds = this.metadata.columnSelectionIds[productSelectionId];
 
-    if (columnSelections && columnSelections.length > 2) {
-      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelections[1]);
+    if (columnSelectionIds && columnSelectionIds.length > 2) {
+      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, _.find(this.selections, (selection) => selection._id === columnSelectionIds[1]));
     }
     return '';
   }
 
-  getQuantity(productSelection) {
-    if (!productSelection) {
+  getQuantity(productSelectionId) {
+    if (!productSelectionId) {
       return '';
     }
-    const columnSelections = this.metadata.columnSelections[productSelection._id];
+    const columnSelectionIds = this.metadata.columnSelectionIds[productSelectionId];
 
-    if (columnSelections && columnSelections[4]) {
-      return columnSelections[4].value;
+    if (columnSelectionIds && columnSelectionIds.length > 4) {
+      return _.find(this.selections, (selection) => selection._id === columnSelectionIds[4]).value;
     }
     return '';
   }
 
-  getProductImage(productSelection) {
-    if (!productSelection) {
+  getProductImage(productSelectionId) {
+    if (!productSelectionId) {
       return '';
     }
-    const columnSelections = this.metadata.columnSelections[productSelection._id];
+    const columnSelectionIds = this.metadata.columnSelectionIds[productSelectionId];
 
-    if (columnSelections && columnSelections[0]) {
-      const imageFileSetting = TemplateLibrariesHelper.getTemplateSettingByKeyAndIndex(
-        this.templateLibraries, columnSelections[0].templateId, Constants.templateSettingKeys.imageSource, 0
-      );
+    if (columnSelectionIds && columnSelectionIds.length > 0) {
+      const columnSelection = _.find(this.selections, (selection) => selection._id === columnSelectionIds[0]);
+      const imageFileSetting = columnSelection && TemplateLibrariesHelper.getTemplateSettingByKeyAndIndex(
+        this.templateLibraries, columnSelection.templateId, Constants.templateSettingKeys.imageSource, 0);
       return imageFileSetting ? imageFileSetting.value : '';
     }
     return '';

@@ -35,6 +35,7 @@ function addSelectionForTemplate(templateLibrary, jobId, template, selectionValu
 
   if (parentSelection) {
     let selectionRelationship = {
+      jobId: jobId,
       parentSelectionId: parentSelection._id,
       childSelectionId: selectionId,
       order: childOrder
