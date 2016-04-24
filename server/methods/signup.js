@@ -1,4 +1,4 @@
-var Future = Npm.require('fibers/future');
+import Future from 'fibers/future';
 
 Meteor.methods({
   createTrialClient: function (client) {

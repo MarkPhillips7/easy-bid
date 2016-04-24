@@ -1,7 +1,10 @@
+import Fiber from 'fibers';
+import Future from 'fibers/future';
+import _Stripe from 'stripe';
+
 var secret = Meteor.settings.private.stripe.secretKey;
-var Stripe = Meteor.npmRequire('stripe')(secret);
-var Future = Npm.require('fibers/future');
-var Fiber  = Npm.require('fibers');
+var Stripe = _Stripe(secret);
+
 
 Meteor.methods({
   stripeCreateCustomer: function (card, email) {

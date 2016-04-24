@@ -1,3 +1,5 @@
+import {diff} from 'rus-diff';
+
 // currently not being used but seemed like it might be useful
 // const addOrUpdateSelectionSettings = (templateLibrary, selection, selectionSettingsToAddOrUpdate) => {
 //   let newSelectionSettings = selection.selectionSettings || [];
@@ -141,7 +143,6 @@ Meteor.methods({
 
     const job = Jobs.findOne({_id: jobId});
 
-    const diff = Meteor.npmRequire('rus-diff').diff;
     if (selectionsToSave.length > 0) {
       // In order to validate the changes must load template libraries and all selections and verify all selection values are allowed
       const jobsTemplateLibraries = JobsTemplateLibraries.find({ 'jobId' : jobId });

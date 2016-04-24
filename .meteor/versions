@@ -71,8 +71,6 @@ markphillips7:unit-of-measure@0.0.1
 mdg:validation-error@0.2.0
 meteor@1.1.14
 meteor-base@1.0.4
-meteorhacks:async@1.0.0
-meteorhacks:npm@1.5.0
 meteortoys:toykit@2.2.1
 minifier-css@1.1.11
 minifier-js@1.1.11
@@ -87,7 +85,6 @@ mongo-id@1.0.4
 msavin:mongol@1.6.2
 nmccready:angular-simple-logger@0.0.4
 npm-bcrypt@0.8.5
-npm-container@1.2.0
 npm-mongo@1.4.43
 observe-sequence@1.0.11
 ordered-dict@1.0.7

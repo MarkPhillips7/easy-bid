@@ -92,9 +92,10 @@ class bid {
 
   // update pretty much all state dependent on subscriptions
   _updateDependencies() {
-    if (this.ignoreUpdatesTemporarily) {
-      return;
-    }
+    console.log('maybe updating dependencies');
+    // if (this.ignoreUpdatesTemporarily) {
+    //   return;
+    // }
 
     if (!this.getReactively('subscriptionsReady.templateLibraryData')) {
       return;

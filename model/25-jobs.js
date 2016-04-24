@@ -142,7 +142,6 @@ const getPendingChangeMessages = (candidateJob) => {
     return [`Estimate Total change from ${displayJobEstimateTotal} to ${displayCandidateJobEstimateTotal}`];
   }
   return [];
-  // const diff = Meteor.npmRequire('rus-diff').diff;
   // const mods = diff(job, candidateJob);
   // return mods && [_.values(mods.$set)];
 }
