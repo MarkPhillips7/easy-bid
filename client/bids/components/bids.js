@@ -1,7 +1,7 @@
-let {
-  Component, View, SetModule, Inject, MeteorReactive, LocalInjectables
-} = angular2now;
-
+import {
+  Component, View, SetModule, Inject, MeteorReactive, LocalInjectables, init
+} from 'angular2-now';
+init();
 SetModule('app');
 
 @Component({

@@ -1227,10 +1227,46 @@ const addProductSelectionAndChildren = (templateLibraries, selections, selection
   return productSelection;
 };
 
+// Actually deletes selection, parent selection relationships (but not parent selection), child selection relationships,
+// and all descendent selections (children, grandchildren, etc.)
+const deleteSelectionAndRelated = (templateLibraries, selections, selectionRelationships, selectionToDelete) => {
+  check(templateLibraries, [Schema.TemplateLibrary]);
+  check(selections, [Schema.Selection]);
+  check(selectionRelationships, [Schema.SelectionRelationship]);
+  check(selectionToDelete, Schema.Selection);
+  const addSelectionAndRelationshipIdsOfDescendents = (selectionId, selectionIds, selectionRelationshipIds) => {
+    selectionIds.push(selectionId);
+    const childRelationships = _.filter(selectionRelationships,
+      (relationship) => relationship.parentSelectionId === selectionId);
+    _.each(childRelationships, (relationship) => {
+      selectionRelationshipIdsToDelete.push(relationship._id);
+      addSelectionAndRelationshipIdsOfDescendents(
+        relationship.childSelectionId, selectionIds, selectionRelationshipIds);
+    });
+  };
+  let selectionIdsToDelete = [];
+  let selectionRelationshipIdsToDelete = [];
+
+  // First get the parent relationships to delete
+  const parentRelationshipIds = _.chain(selectionRelationships)
+      .filter((relationship) => relationship.childSelectionId === selectionToDelete._id)
+      .map((relationship) => relationship._id)
+      .value();
+  selectionRelationshipIdsToDelete.push(parentRelationshipIds);
+
+  addSelectionAndRelationshipIdsOfDescendents(
+    selectionToDelete._id,
+    selectionIdsToDelete,
+    selectionRelationshipIdsToDelete);
+  selections = _.filter(selections, (selection) => !_.contains(selectionIdsToDelete, selection._id));
+  selectionRelationships = _.filter(selectionRelationships, (selectionRelationship) => !_.contains(selectionRelationshipIdsToDelete, selectionRelationship._id));
+};
+
 SelectionsHelper = {
   addProductSelectionAndChildren,
   addSelectionForTemplate,
   applyFunctionOverChildrenOfParent: applyFunctionOverChildrenOfParent,
+  deleteSelectionAndRelated,
   getChildSelections: getChildSelections,
   getChildSelectionsWithTemplateId: getChildSelectionsWithTemplateId,
   getChildSelectionsWithTemplateIds: getChildSelectionsWithTemplateIds,

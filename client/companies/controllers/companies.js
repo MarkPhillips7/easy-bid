@@ -1,7 +1,7 @@
-let {
-  Component, View, SetModule, Inject, MeteorReactive, LocalInjectables
-} = angular2now;
-
+import {
+  Component, View, SetModule, Inject, MeteorReactive, LocalInjectables, init
+} from 'angular2-now';
+init();
 SetModule('app');
 
 @Component({
@@ -28,7 +28,7 @@ class companies {
       areAnyItemsSelected: this._areAnyItemsSelected,
       currentUserId: this._currentUserId,
       isLoggedIn: this._isLoggedIn,
-      notShownSelectedCount: this._notShownSelectedCount,      
+      notShownSelectedCount: this._notShownSelectedCount,
       companies: this._companiesCollection,
       companiesCount: this._companiesCount
     });

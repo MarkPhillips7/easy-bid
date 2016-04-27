@@ -1,7 +1,7 @@
-let {
-  Component, View, SetModule, Inject, MeteorReactive, LocalInjectables
-} = angular2now;
-
+import {
+  Component, View, SetModule, Inject, MeteorReactive, LocalInjectables, init
+} from 'angular2-now';
+init();
 SetModule('app');
 
 @Component({
@@ -93,9 +93,9 @@ class bid {
   // update pretty much all state dependent on subscriptions
   _updateDependencies() {
     console.log('maybe updating dependencies');
-    // if (this.ignoreUpdatesTemporarily) {
-    //   return;
-    // }
+    if (this.ignoreUpdatesTemporarily) {
+      return;
+    }
 
     if (!this.getReactively('subscriptionsReady.templateLibraryData')) {
       return;
@@ -166,6 +166,7 @@ class bid {
   }
 
   save(job, selections, selectionRelationships, metadata) {
+    this.ignoreUpdatesTemporarily = false;
     Meteor.call('saveSelectionChanges', job,
       _.filter(selections, (selection) => metadata.pendingSelectionChanges[selection._id]
           && metadata.pendingSelectionChanges[selection._id].displayMessages
@@ -175,10 +176,8 @@ class bid {
       (err, result) => {
       if (err) {
         console.log('failed to save selection changes', err);
-        this.ignoreUpdatesTemporarily = false;
       } else {
         console.log('success saving selection changes', result);
-        this.ignoreUpdatesTemporarily = false;
       }
       // this.startJobAndSelectionSubscriptions();
     });
@@ -733,18 +732,20 @@ class bid {
     this.productSelectionIdToEdit = newProductSelection._id;
     this.deleteProductSelectionOnCancel = true;
     this.confirmSaveChanges(pendingJob, pendingSelections, pendingSelectionRelationships, pendingMetadata, true);
-    // Meteor.call('addProductSelectionAndChildren', this.templateLibraries, this.selections, this.selectionRelationships, this.metadata,
-    //     this.jobId, parentSelection, this.productSelectionTemplate, this.productToAdd, 0,
-    //     (err, result) => {
-    //   if (err) {
-    //     console.log('failed to addSelectionForTemplate get in addProductSelection', err);
-    //   } else {
-    //     const newProductSelection = result;
-    //     this.selectedProductSelectionId = newProductSelection._id;
-    //     this.productToAdd = null;
-    //     this.editProductSelection(newProductSelection, null, true);
-    //   }
-    // });
+  }
+
+  deleteProductSelection(productSelectionId) {
+    this.ignoreUpdatesTemporarily = true;
+    const selectionToDelete =  _.find(this.selections, (selection) => selection._id === productSelectionId);
+    const pendingJob = _.clone(this.job);
+    const pendingMetadata = _.clone(this.metadata);
+    const pendingSelections = _.map(this.selections, _.clone);
+    const pendingSelectionRelationships = _.map(this.selectionRelationships, _.clone);
+    SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingSelections, pendingSelectionRelationships, selectionToDelete);
+    SelectionsHelper.initializeMetadata(pendingMetadata, true);
+    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, pendingSelections, pendingSelectionRelationships, pendingMetadata);
+    this.initializeJobVariables(pendingJob, pendingMetadata, pendingSelections, pendingSelectionRelationships);
+    this.confirmSaveChanges(pendingJob, pendingSelections, pendingSelectionRelationships, pendingMetadata, true);
   }
 
   // setOriginalSelectionData() {

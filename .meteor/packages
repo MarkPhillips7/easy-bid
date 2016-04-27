@@ -42,7 +42,6 @@ spacebars
 angularutils:pagination
 urigo:angular-blaze-template
 angularui:angular-ui-bootstrap
-pbastowski:angular2-now
 jasonaibrahim:angular-moment
 
 
@@ -53,5 +52,4 @@ standard-minifier-css
 standard-minifier-js
 dotansimha:accounts-ui-angular-moded
 angular
-pbastowski:angular-babel@=1.0.9
 modules
