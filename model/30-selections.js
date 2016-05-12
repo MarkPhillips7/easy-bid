@@ -584,10 +584,11 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
   let selectionValue;
   let selectionValueSource = selection.valueSource;
   const variableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selection);
+  // variableCollectorSelection may not exist because it was deleted. Just return undefined in that case.
+  if (!variableCollectorSelection) {
+    return undefined;
+  }
   let variableCollectorSelectionVariableSet = false;
-  // let expr;
-  // let variableValues = {};
-  // let allVariableValuesFound = true;
   let valueFormula;
   let variableToDisplay;
   let defaultValue;
@@ -662,46 +663,6 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
   storeSelectionValueAndUpdatePendingChanges(templateLibraries, selections, selectionRelationships,
     metadata, selection, selectionValue, selection.value, variableCollectorSelection,
     variableCollectorSelectionVariableSet, originalValueSource, selectionValueSource, selectionJsonVariableName);
-  // //Store selectionValue in selection's value
-  // const originalValue = selection.value;
-  // const originalDisplayValue = getDisplayValue(templateLibraries, selections, selection);
-  // if (selectionValue !== undefined
-  //     && selectionValue !== null &&
-  //     (variableCollectorSelectionVariableSet || selection.value !== selectionValue.toString())) {
-  //   if (selection.value !== selectionValue.toString()) {
-  //     selection.value = selectionValue.toString();
-  //     // afterSettingValue(selection);
-  //   }
-  //
-  //   // Make sure formulas that reference this selection's variable get updated
-  //   if (selectionJsonVariableName && variableCollectorSelection) {
-  //     refreshSelectionsReferencingVariable(templateLibraries, selections, selectionRelationships,
-  //       metadata, variableCollectorSelection, selectionJsonVariableName);
-  //   }
-  // }
-  //
-  // const currentDisplayValue = getDisplayValue(templateLibraries, selections, selection);
-  // let displayMessages = getPendingChangeMessagesByOriginalAndCurrentInfo(originalValue, originalDisplayValue,
-  //   originalValueSource, selection.value, currentDisplayValue, selectionValueSource);
-  // if (displayMessages.length > 0) {
-  //   if (!metadata.pendingSelectionChanges[selection._id]) {
-  //     metadata.pendingSelectionChanges[selection._id] = {
-  //       originalValue,
-  //       originalDisplayValue,
-  //       originalValueSource,
-  //       displayMessages
-  //     };
-  //   } else {
-  //     // Get displayMessages using the truly original values (current original ones represent altered values).
-  //     displayMessages = getPendingChangeMessagesByOriginalAndCurrentInfo(
-  //       metadata.pendingSelectionChanges[selection._id].originalValue,
-  //       metadata.pendingSelectionChanges[selection._id].originalDisplayValue,
-  //       metadata.pendingSelectionChanges[selection._id].originalValueSource,
-  //       selection.value, currentDisplayValue, selectionValueSource);
-  //     metadata.pendingSelectionChanges[selection._id].displayMessages = displayMessages;
-  //   }
-  // }
-
   return selectionValue;
 };
 
@@ -1224,27 +1185,55 @@ const addProductSelectionAndChildren = (templateLibraries, selections, selection
 
   addSelectionChildrenOfProduct(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection, productTemplate);
 
+  initializeSelectionVariables(templateLibraries, selections, selectionRelationships, metadata);
+  // ToDo: Make this (call to initializeSelectionVariables) faster by doing something like the commented (only update the necessary selections)
+  // createSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, productSelection);
+  // initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, productSelection);
+  // //If any dependent variables are undefined, then something must be wrong.
+  // if (metadata.variablesUndefined.length > 0) {
+  //     throw new Error('Variables not defined:' + variablesUndefined.join(","));
+  // }
+  // // Make sure formulas that reference new productSelection variables get updated.  NOT SURE HOW TO DO THIS!!!!!!
+  // refreshValueToUse(templateLibraries, selections, selectionRelationships, metadata, parentSelection);
+  // refreshValueToUse(templateLibraries, selections, selectionRelationships, metadata, productSelection);
+  // _.each(selectionRefreshesNeeded, (selectionInfo) => {
+  //   const {variableCollectorSelection, selectionJsonVariableName} = selectionInfo;
+  //   if (selectionJsonVariableName && variableCollectorSelection) {
+  //     refreshSelectionsReferencingVariable(templateLibraries, pendingChanges.selections,
+  //       pendingChanges.selectionRelationships, pendingChanges.metadata,
+  //       variableCollectorSelection, selectionJsonVariableName);
+  //   }
+  // });
+
   return productSelection;
 };
 
 // Actually deletes selection, parent selection relationships (but not parent selection), child selection relationships,
 // and all descendent selections (children, grandchildren, etc.)
-const deleteSelectionAndRelated = (templateLibraries, selections, selectionRelationships, selectionToDelete) => {
+// const deleteSelectionAndRelated = (templateLibraries, selections, selectionRelationships, selectionToDelete) => {
+const deleteSelectionAndRelated = (templateLibraries, pendingChanges, selectionToDelete) => {
   check(templateLibraries, [Schema.TemplateLibrary]);
-  check(selections, [Schema.Selection]);
-  check(selectionRelationships, [Schema.SelectionRelationship]);
+  check(pendingChanges, {
+    selections: [Schema.Selection],
+    selectionRelationships: [Schema.SelectionRelationship],
+    metadata: Match.Any,
+    job: Match.Any,
+  });
+  // check(selections, [Schema.Selection]);
+  // check(selectionRelationships, [Schema.SelectionRelationship]);
   check(selectionToDelete, Schema.Selection);
-  const addSelectionAndRelationshipIdsOfDescendents = (selectionId, selectionIds, selectionRelationshipIds) => {
-    selectionIds.push(selectionId);
+  const {selections, selectionRelationships} = pendingChanges;
+  const addSelectionAndRelationshipIdsOfDescendents = (selectionToDelete, selectionsToDelete, selectionRelationshipIds) => {
+    selectionsToDelete.push(selectionToDelete);
     const childRelationships = _.filter(selectionRelationships,
-      (relationship) => relationship.parentSelectionId === selectionId);
+      (relationship) => relationship.parentSelectionId === selectionToDelete._id);
     _.each(childRelationships, (relationship) => {
       selectionRelationshipIdsToDelete.push(relationship._id);
-      addSelectionAndRelationshipIdsOfDescendents(
-        relationship.childSelectionId, selectionIds, selectionRelationshipIds);
+      const childSelection = _.find(selections, (selection) => selection._id === relationship.childSelectionId);
+      addSelectionAndRelationshipIdsOfDescendents(childSelection, selectionsToDelete, selectionRelationshipIds);
     });
   };
-  let selectionIdsToDelete = [];
+  let selectionsToDelete = [];
   let selectionRelationshipIdsToDelete = [];
 
   // First get the parent relationships to delete
@@ -1255,11 +1244,38 @@ const deleteSelectionAndRelated = (templateLibraries, selections, selectionRelat
   selectionRelationshipIdsToDelete.push(parentRelationshipIds);
 
   addSelectionAndRelationshipIdsOfDescendents(
-    selectionToDelete._id,
-    selectionIdsToDelete,
+    selectionToDelete,
+    selectionsToDelete,
     selectionRelationshipIdsToDelete);
-  selections = _.filter(selections, (selection) => !_.contains(selectionIdsToDelete, selection._id));
-  selectionRelationships = _.filter(selectionRelationships, (selectionRelationship) => !_.contains(selectionRelationshipIdsToDelete, selectionRelationship._id));
+
+  selectionRefreshesNeeded = [];
+  _.each(selectionsToDelete, (selectionToDelete) => {
+    const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selectionToDelete.templateId);
+    const variableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selectionToDelete);
+    let selectionJsonVariableName;
+    if (selectionTemplate) {
+      selectionJsonVariableName = ItemTemplatesHelper.getJsonVariableName(selectionTemplate);
+      selectionRefreshesNeeded.push({variableCollectorSelection, selectionJsonVariableName});
+    }
+  })
+  pendingChanges.selections = _.filter(selections, (selection) =>
+    !_.any(selectionsToDelete, (selectionToDelete) => selectionToDelete._id === selection._id));
+  pendingChanges.selectionRelationships = _.filter(selectionRelationships, (selectionRelationship) => !_.contains(selectionRelationshipIdsToDelete, selectionRelationship._id));
+
+  // Make sure formulas that reference deleted selection variables get updated
+  _.each(selectionRefreshesNeeded, (selectionInfo) => {
+    const {variableCollectorSelection, selectionJsonVariableName} = selectionInfo;
+    if (selectionJsonVariableName && variableCollectorSelection) {
+      refreshSelectionsReferencingVariable(templateLibraries, pendingChanges.selections,
+        pendingChanges.selectionRelationships, pendingChanges.metadata,
+        variableCollectorSelection, selectionJsonVariableName);
+    }
+  });
+
+  // Remove deleted selections from metadata
+  const selectionIdsToDelete = _.map(selectionsToDelete, (selectionToDelete) => selectionToDelete._id);
+  pendingChanges.metadata.selectionIdsReferencingVariables =
+    _.omit(pendingChanges.metadata.selectionIdsReferencingVariables, (value, key) => _.contains(selectionIdsToDelete, key));
 };
 
 SelectionsHelper = {

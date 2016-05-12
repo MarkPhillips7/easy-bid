@@ -128,10 +128,13 @@ Meteor.methods({
       });
     }
   },
-  saveSelectionChanges: function (jobToSave, selectionsToSave, selectionRelationshipsToSave) {
+  saveSelectionChanges: function (jobToSave, selectionsToSave, selectionIdsToDelete,
+      selectionRelationshipsToSave, selectionRelationshipIdsToDelete) {
     check(jobToSave, Schema.Job);
     check(selectionsToSave, [Schema.Selection]);
+    check(selectionIdsToDelete, [String]);
     check(selectionRelationshipsToSave, [Schema.SelectionRelationship]);
+    check(selectionRelationshipIdsToDelete, [String]);
 
     const jobId = jobToSave._id;
     if (_.any(selectionsToSave, (selection) => selection.jobId !== jobId)) {
@@ -142,19 +145,26 @@ Meteor.methods({
     }
 
     const job = Jobs.findOne({_id: jobId});
+    // In order to validate the changes must load template libraries and all selections and verify all selection values are allowed
+    const jobsTemplateLibraries = JobsTemplateLibraries.find({ 'jobId' : jobId });
+    const templateLibraryIds = _.map(jobsTemplateLibraries.fetch(), (jobTemplateLibrary) => jobTemplateLibrary.templateLibraryId);
+    const templateLibraries = TemplateLibraries.find({
+      _id: { $in: templateLibraryIds }
+    }).fetch();
+    const selections = Selections.find({ 'jobId' : jobId }).fetch();
+    const selectionRelationships = SelectionRelationships.find({ 'jobId' : jobId }).fetch();
 
+    let selectionsWithUpdates = selections;
+    let selectionRelationshipsWithUpdates = selectionRelationships;
+
+    if (selectionIdsToDelete && selectionIdsToDelete.length > 0) {
+      selectionsWithUpdates = _.filter(selections, (selection) => !_.contains(selectionIdsToDelete, selection._id));
+    }
+    if (selectionRelationshipIdsToDelete && selectionRelationshipIdsToDelete.length > 0) {
+      selectionRelationshipsWithUpdates = _.filter(selectionRelationships,
+        (relationship) => !_.contains(selectionRelationshipIdsToDelete, relationship._id));
+    }
     if (selectionsToSave.length > 0) {
-      // In order to validate the changes must load template libraries and all selections and verify all selection values are allowed
-      const jobsTemplateLibraries = JobsTemplateLibraries.find({ 'jobId' : jobId });
-      const templateLibraryIds = _.map(jobsTemplateLibraries.fetch(), (jobTemplateLibrary) => jobTemplateLibrary.templateLibraryId);
-      const templateLibraries = TemplateLibraries.find({
-        _id: { $in: templateLibraryIds }
-      }).fetch();
-      const selections = Selections.find({ 'jobId' : jobId }).fetch();
-      const selectionRelationships = SelectionRelationships.find({ 'jobId' : jobId }).fetch();
-
-      let selectionsWithUpdates = selections;
-      let selectionRelationshipsWithUpdates = selectionRelationships;
       let selectionUpdates = [];
       let selectionInserts = [];
       let selectionRelationshipInserts = [];
@@ -226,7 +236,12 @@ Meteor.methods({
         // SelectionRelationships.insert(selectionRelationshipToInsertReally);
       });
     }
-
+    if (selectionIdsToDelete && selectionIdsToDelete.length > 0) {
+      Selections.remove({_id: {$in: selectionIdsToDelete}});
+    }
+    if (selectionRelationshipIdsToDelete && selectionRelationshipIdsToDelete.length > 0) {
+      SelectionRelationships.remove({_id: {$in: selectionRelationshipIdsToDelete}});
+    }
     const jobMods = diff(job, jobToSave);
     if (jobMods) {
       Jobs.update({_id: jobToSave._id}, jobMods);

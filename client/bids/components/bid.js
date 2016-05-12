@@ -167,12 +167,14 @@ class bid {
 
   save(job, selections, selectionRelationships, metadata) {
     this.ignoreUpdatesTemporarily = false;
+    const selectionsToInsertOrUpdate = _.filter(selections, (selection) => metadata.pendingSelectionChanges[selection._id]
+        && metadata.pendingSelectionChanges[selection._id].displayMessages
+        && metadata.pendingSelectionChanges[selection._id].displayMessages.length > 0);
     Meteor.call('saveSelectionChanges', job,
-      _.filter(selections, (selection) => metadata.pendingSelectionChanges[selection._id]
-          && metadata.pendingSelectionChanges[selection._id].displayMessages
-          && metadata.pendingSelectionChanges[selection._id].displayMessages.length > 0
-        ),
+      selectionsToInsertOrUpdate,
+      _.difference(_.map(this.selections, (selection) => selection._id), _.map(selections, (selection) => selection._id)),
       selectionRelationships,
+      _.difference(_.map(this.selectionRelationships, (relationship) => relationship._id), _.map(selectionRelationships, (relationship) => relationship._id)),
       (err, result) => {
       if (err) {
         console.log('failed to save selection changes', err);
@@ -461,6 +463,10 @@ class bid {
     }
 
     const selection = _.find(this.selections, (_selection) => _selection._id === selectionId);
+    if (!selection) {
+      return false;
+    }
+
     if (!this.getReactively('includeChildAreas')) {
       const selectionTemplate = TemplateLibrariesHelper.getTemplateById(this.templateLibraries, selection.templateId);
       if (selectionTemplate.templateType === Constants.templateTypes.area) {
@@ -718,34 +724,41 @@ class bid {
     this.ignoreUpdatesTemporarily = true;
     const parentSelectionId = this.areaSelectedId;
     const parentSelection =  _.find(this.selections, (selection) => selection._id === parentSelectionId);
-    const pendingJob = _.clone(this.job);
-    const pendingMetadata = _.clone(this.metadata);
-    const pendingSelections = _.map(this.selections, _.clone);
-    const pendingSelectionRelationships = _.map(this.selectionRelationships, _.clone);
+    const pendingChanges = {
+      job: _.clone(this.job),
+      metadata: _.clone(this.metadata),
+      selections: _.map(this.selections, _.clone),
+      selectionRelationships: _.map(this.selectionRelationships, _.clone),
+    }
+    const {job, metadata, selections, selectionRelationships} = pendingChanges;
     const newProductSelection = SelectionsHelper.addProductSelectionAndChildren(
-      this.templateLibraries, pendingSelections, pendingSelectionRelationships, pendingMetadata,
+      this.templateLibraries, selections, selectionRelationships, metadata,
       this.jobId, parentSelection, this.productSelectionTemplate, this.productToAdd, 0);
-    SelectionsHelper.initializeMetadata(pendingMetadata, true);
-    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, pendingSelections, pendingSelectionRelationships, pendingMetadata);
-    this.initializeJobVariables(pendingJob, pendingMetadata, pendingSelections, pendingSelectionRelationships);
+    // SelectionsHelper.initializeMetadata(metadata, true);
+    // SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata);
+    this.initializeJobVariables(job, metadata, selections, selectionRelationships);
     this.selectedProductSelectionId = newProductSelection._id;
     this.productSelectionIdToEdit = newProductSelection._id;
     this.deleteProductSelectionOnCancel = true;
-    this.confirmSaveChanges(pendingJob, pendingSelections, pendingSelectionRelationships, pendingMetadata, true);
+    this.confirmSaveChanges(job, selections, selectionRelationships, metadata, true);
   }
 
   deleteProductSelection(productSelectionId) {
     this.ignoreUpdatesTemporarily = true;
     const selectionToDelete =  _.find(this.selections, (selection) => selection._id === productSelectionId);
-    const pendingJob = _.clone(this.job);
-    const pendingMetadata = _.clone(this.metadata);
-    const pendingSelections = _.map(this.selections, _.clone);
-    const pendingSelectionRelationships = _.map(this.selectionRelationships, _.clone);
-    SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingSelections, pendingSelectionRelationships, selectionToDelete);
-    SelectionsHelper.initializeMetadata(pendingMetadata, true);
-    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, pendingSelections, pendingSelectionRelationships, pendingMetadata);
-    this.initializeJobVariables(pendingJob, pendingMetadata, pendingSelections, pendingSelectionRelationships);
-    this.confirmSaveChanges(pendingJob, pendingSelections, pendingSelectionRelationships, pendingMetadata, true);
+    const pendingChanges = {
+      job: _.clone(this.job),
+      metadata: _.clone(this.metadata),
+      selections: _.map(this.selections, _.clone),
+      selectionRelationships: _.map(this.selectionRelationships, _.clone),
+    }
+    SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, selectionToDelete);
+    const {job, metadata, selections, selectionRelationships} = pendingChanges;
+    this.productSelectionIds = _.without(this.productSelectionIds, productSelectionId);
+    // SelectionsHelper.initializeMetadata(metadata, true);
+    // SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata);
+    this.initializeJobVariables(job, metadata, selections, selectionRelationships);
+    this.confirmSaveChanges(job, selections, selectionRelationships, metadata, true);
   }
 
   // setOriginalSelectionData() {
