@@ -8,6 +8,7 @@ angular.module('app', [
   'common.bootstrap', // bootstrap dialog wrapper functions
   'formly',
   'formlyBootstrap',
+  'toastr',
   'uiGmapgoogle-maps',
   'ui.bootstrap',      // ui-bootstrap (ex: carousel, pagination, dialog)
   'ui.router'

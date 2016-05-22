@@ -337,12 +337,13 @@ angular.module('app')
     // Description:
     //  input, select, or whatever element appropriate for editing selection value from inside tab page
     // Usage:
-    //  <data-eb-tab-selector data-bid="vm" data-input-selection-item="item"/>
+    //  <data-eb-tab-selector data-bid="vm" data-pending-changes="pendingChanges" data-input-selection-item="item"/>
     var directive = {
       link: link,
       restrict: 'E',
       scope: {
         thebid: "=",
+        pendingChanges: "=",
         inputSelectionItem: "=",
       },
       template: '<div ng-include="contentUrl"></div>',
@@ -357,19 +358,19 @@ angular.module('app')
       var valueFormula;
 
       scope.getSelectOptions = () => {
-        if (scope.thebid && scope.thebid.metadata && scope.thebid.metadata.selectOptions
+        if (scope.pendingChanges && scope.pendingChanges.metadata && scope.pendingChanges.metadata.selectOptions
             && scope.inputSelectionItem && scope.inputSelectionItem.template
-            && scope.thebid.metadata.selectOptions[scope.inputSelectionItem.template.id]) {
-          return scope.thebid.metadata.selectOptions[scope.inputSelectionItem.template.id];
+            && scope.pendingChanges.metadata.selectOptions[scope.inputSelectionItem.template.id]) {
+          return scope.pendingChanges.metadata.selectOptions[scope.inputSelectionItem.template.id];
         }
         return [];
       };
 
       //default content is a span
       scope.contentUrl = 'client/layout/views/tab-selector-span.html';
-      if (scope.inputSelectionItem && scope.inputSelectionItem.template && scope.thebid) {
+      if (scope.inputSelectionItem && scope.inputSelectionItem.template && scope.thebid && scope.pendingChanges) {
         template = scope.inputSelectionItem.template;
-        selectOptions = TemplateLibrariesHelper.populateSelectOptions(scope.thebid.templateLibraries, template, scope.thebid.metadata);
+        selectOptions = TemplateLibrariesHelper.populateSelectOptions(scope.thebid.templateLibraries, template, scope.pendingChanges.metadata);
         selection = scope.inputSelectionItem.getSelection();
         // if (selection && selectOptions) {
         //   for (var i = 0; i < selectOptions.length; i++) {
@@ -394,8 +395,8 @@ angular.module('app')
 
         scope.$watch('inputSelectionItem.getSelection().value', function (newValue, oldValue) {
           if (scope.inputSelectionItem && selection) {
-            SelectionsHelper.setSelectionValue(scope.thebid.templateLibraries, scope.thebid.selections,
-              scope.thebid.selectionRelationships, scope.thebid.metadata, selection, newValue, oldValue,
+            SelectionsHelper.setSelectionValue(scope.thebid.templateLibraries, scope.pendingChanges.selections,
+              scope.pendingChanges.selectionRelationships, scope.pendingChanges.metadata, selection, newValue, oldValue,
               selection.valueSource, Constants.valueSources.userEntry);
           }
         }, true);

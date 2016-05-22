@@ -1161,19 +1161,23 @@ const addSelectionChildrenOfProduct = (templateLibrary, selections, selectionRel
       subTemplateSelectionTemplate, Constants.selectionAddingModes.ignoreSubTemplates);
 };
 
-const addProductSelectionAndChildren = (templateLibraries, selections, selectionRelationships, metadata,
-    jobId, parentSelection, productSelectionTemplate, productTemplate, childOrder) => {
+const addProductSelectionAndChildren = (templateLibraries, pendingChanges, parentSelection,
+  productSelectionTemplate, productTemplate, childOrder) => {
   check(templateLibraries, [Schema.TemplateLibrary]);
-  check(selections, [Schema.Selection]);
-  check(selectionRelationships, [Schema.SelectionRelationship]);
-  check(metadata, Match.Any);
-  check(jobId, String);
+  check(pendingChanges, {
+    selections: [Schema.Selection],
+    selectionRelationships: [Schema.SelectionRelationship],
+    metadata: Match.Any,
+    job: Schema.Job,
+  });
   check(parentSelection, Schema.Selection);
   check(productSelectionTemplate, Schema.ItemTemplate);
   check(productTemplate, Schema.ItemTemplate);
   check(childOrder, Match.Any);// Match.OneOf(Number, null));
 
   const templateLibrary = templateLibraries && templateLibraries[0];
+  const {selections, selectionRelationships, metadata, job} = pendingChanges;
+  const jobId = job._id;
 
   //Add selection for productSelectionTemplate
   var productSelection = addSelectionsForTemplateAndChildren(templateLibrary, selections, selectionRelationships, metadata, jobId,

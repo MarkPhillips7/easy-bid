@@ -289,18 +289,18 @@
        </label>
      </div>
       <a href="" ng-click="bid.editProductSelection(productSelectionId, $event)" class="eb-list-group-item-main-a">
-        <img class="eb-list-group-item-main-a-image" data-eb-img-product="{{bid.getProductImage(productSelectionId)}}"/>
+        <img class="eb-list-group-item-main-a-image" data-eb-img-product="{{bid.getProductImage(productSelectionId, bid)}}"/>
         <div class="eb-list-group-item-main-a-quantity">
-          <span>{{bid.getQuantity(productSelectionId)}}</span>
+          <span>{{bid.getQuantity(productSelectionId, bid)}}</span>
         </div>
         <div class="eb-list-group-item-main-a-price-total eb-price">
-          {{bid.getPriceTotal(productSelectionId)}}
+          {{bid.getPriceTotal(productSelectionId, bid)}}
           <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>
         </div>
         <div class="eb-list-group-item-main-a-title-and-description">
-          <span class="eb-list-group-item-main-a-title">{{bid.getTitle(productSelectionId)}}</span>
+          <span class="eb-list-group-item-main-a-title">{{bid.getTitle(productSelectionId, bid)}}</span>
           <br/>
-          {{bid.getMainSelectionContent(productSelectionId)}}
+          {{bid.getMainSelectionContent(productSelectionId, bid)}}
           <div class="eb-price">
             {{bid.getPriceEach(productSelectionId)}}
             <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>

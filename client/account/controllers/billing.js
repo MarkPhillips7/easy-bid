@@ -1,5 +1,5 @@
-angular.module("app").controller("billing", ['$scope', '$meteor', '$rootScope', '$state',
-  function ($scope, $meteor, $rootScope, $state) {
+angular.module("app").controller("billing", ['$scope', '$meteor', '$rootScope', '$state', 'bootstrap.dialog', 'toastr',
+  function ($scope, $meteor, $rootScope, $state, bootstrapDialog, toastr) {
     var vm = this;
     vm.cancelSubscription=cancelSubscription;
     vm.completionPercent = 0;
@@ -38,48 +38,53 @@ angular.module("app").controller("billing", ['$scope', '$meteor', '$rootScope', 
     }
 
     function cancelSubscription() {
-      var confirmCancel = confirm("Are you sure you want to cancel? This means your subscription will no longer be active and your account will be disabled on the cancellation date. If you'd like, you can resubscribe later.");
-      if (confirmCancel){
+      const confirmCancel = () => {
         Meteor.call('stripeCancelSubscription', function(error, response){
           if (error){
-            Bert.alert(error.reason, "danger");
+            toastr.error(error.reason, "Error");
           } else {
             if (response.error){
-              Bert.alert(response.error.message, "danger");
+              toastr.error(response.error.message, "Error");
             } else {
               Session.set('currentUserPlan_' + Meteor.userId(), null);
-              Bert.alert("Subscription successfully canceled!", "success");
+              toastr.success("Subscription successfully canceled!");
             }
           }
         });
-      }
+      };
+
+      bootstrapDialog.confirmationDialog("Subscription Cancellation",
+        "Are you sure you want to cancel? This means your subscription will no longer be active and your account will be disabled on the cancellation date. If you'd like, you can resubscribe later.")
+        .then(confirmCancel);
     }
 
     function switchPlan (plan) {
       vm.switchingPlan=true;
-      var confirmPlanChange = confirm("Are you sure you want to change your plan?");
-      if (confirmPlanChange){
+      const confirmPlanChange = () => {
         $meteor.call('stripeUpdateSubscription', plan.name).then(
             function (data) {
               vm.switchingPlan= false;
               if (data && data.error){
-                Bert.alert(data.error.message, "danger");
+                toastr.error(data.error.message, "Error");
               } else {
                 Session.set('currentUserPlan_' + Meteor.userId(), null);
-                Bert.alert("Subscription successfully updated!", "success");
+                toastr.success("Subscription successfully updated!");
                 checkUserPlan();
               }
             },
             function (err) {
               console.log('failed', err);
               vm.switchingPlan = false;
-              Bert.alert(err.reason, "danger");
+              toastr.error(err.reason, "Error");
               //alert(err.reason);
             }
         );
-      } else {
+      };
+      const cancelPlanChange = () => {
         vm.switchingPlan= false;
         //downgradeUpgradeButton.button('reset');
-      }
+      };
+      bootstrapDialog.confirmationDialog("Plan Change", "Are you sure you want to change your plan?")
+        .then(confirmPlanChange, cancelPlanChange);
     }
   }]);

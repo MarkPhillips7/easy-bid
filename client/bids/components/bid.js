@@ -10,11 +10,11 @@ SetModule('app');
 @View({
   templateUrl: () => 'client/bids/views/bid.html'
 })
-@Inject('$modal', '$state', '$stateParams', '$timeout', 'bootstrap.dialog')
+@Inject('$modal', '$state', '$stateParams', '$timeout', 'bootstrap.dialog', 'toastr')
 @MeteorReactive
 @LocalInjectables
 class bid {
-  constructor($modal, $state, $stateParams, $timeout, bootstrapDialog) {
+  constructor($modal, $state, $stateParams, $timeout, bootstrapDialog, toastr) {
     this.itemIdsSelected = [];
     this.perPage = 50;
     this.page = 1;
@@ -55,6 +55,7 @@ class bid {
     this.productSelectionEditItems = [];
     this.productSelectionItems = [];
     this.tabs = [];
+    this.toastr = toastr;
 
     this.helpers({
       areAnyItemsSelected: this._areAnyItemsSelected,
@@ -236,7 +237,7 @@ class bid {
       .filter((selection) => selection.templateId === this.productSelectionTemplate.id)
       .map((selection) => selection._id)
       .value();
-    _.each(this.productSelectionIds, (productSelectionId) => this.setProductSelectionSelections(productSelectionId));
+    _.each(this.productSelectionIds, (productSelectionId) => this.setProductSelectionSelections(productSelectionId, this));
     SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata);
     this.initializeJobVariables(this.job, this.metadata, this.selections, this.selectionRelationships);
     this.confirmSaveChanges(this.job, this.selections, this.selectionRelationships, this.metadata, false);
@@ -255,34 +256,35 @@ class bid {
     this.setFullHierarchyTreeData();
   }
 
-  getSelectionsBySelectionParentAndTemplate(productSelectionId, columnTemplate) {
-    let selections = [];
+  getSelectionsBySelectionParentAndTemplate(productSelectionId, columnTemplate, {selections, selectionRelationships}) {
+    let _selections = [];
     _.each(this.templateLibraries, (templateLibrary) => {
-      selections = selections.concat(SelectionsHelper.getSelectionsBySelectionParentAndTemplate(
-        templateLibrary, this.selections, this.selectionRelationships, productSelectionId, columnTemplate));
+      _selections = _selections.concat(SelectionsHelper.getSelectionsBySelectionParentAndTemplate(
+        templateLibrary, selections, selectionRelationships, productSelectionId, columnTemplate));
     });
-    return selections;
+    return _selections;
   }
 
-  setProductSelectionSelections(productSelectionId) {
+  setProductSelectionSelections(productSelectionId, {selections, selectionRelationships, metadata}) {
     let columnSelectionIds = [];
-    this.metadata.columnSelectionIds[productSelectionId] = columnSelectionIds;
+    metadata.columnSelectionIds[productSelectionId] = columnSelectionIds;
 
     const setColumnSelection = (columnTemplate) => {
-      var selections = this.getSelectionsBySelectionParentAndTemplate(productSelectionId, columnTemplate);
+      var productSelections = this.getSelectionsBySelectionParentAndTemplate(productSelectionId, columnTemplate,
+        {selections, selectionRelationships});
       let selection;
 
       //If there is no selection then just create a blank one
-      if (selections && selections.length === 0) {
-        selection = SelectionsHelper.addSelectionForTemplate(this.templateLibraries[0], this.selections, this.selectionRelationships,
-            this.metadata, this.jobId, columnTemplate, '', productSelectionId, 0);
+      if (productSelections && productSelections.length === 0) {
+        selection = SelectionsHelper.addSelectionForTemplate(this.templateLibraries[0], selections, selectionRelationships,
+            metadata, this.jobId, columnTemplate, '', productSelectionId, 0);
       }
       // Otherwise there must just be one selection or something went wrong
-      else if (selections && selections.length !== 1) {
+      else if (productSelections && productSelections.length !== 1) {
         // throw new Error('Error: There must be exactly one selection for the given productSelection and columnTemplate');
       }
       else {
-        selection = selections[0];
+        selection = productSelections[0];
       }
 
       if (selection) {
@@ -719,39 +721,78 @@ class bid {
   //     onReady: () => {this.subscriptionsReady.selectionData = true;}});
   // }
 
+  getPendingChanges() {
+    return {
+      job: _.clone(this.job),
+      metadata: _.clone(this.metadata),
+      selections: _.map(this.selections, _.clone),
+      selectionRelationships: _.map(this.selectionRelationships, _.clone),
+    };
+  }
+
   addProductSelection() {
     // this.stopJobAndSelectionSubscriptions();
     this.ignoreUpdatesTemporarily = true;
     const parentSelectionId = this.areaSelectedId;
     const parentSelection =  _.find(this.selections, (selection) => selection._id === parentSelectionId);
-    const pendingChanges = {
-      job: _.clone(this.job),
-      metadata: _.clone(this.metadata),
-      selections: _.map(this.selections, _.clone),
-      selectionRelationships: _.map(this.selectionRelationships, _.clone),
-    }
-    const {job, metadata, selections, selectionRelationships} = pendingChanges;
+    const pendingChanges = this.getPendingChanges();
     const newProductSelection = SelectionsHelper.addProductSelectionAndChildren(
-      this.templateLibraries, selections, selectionRelationships, metadata,
-      this.jobId, parentSelection, this.productSelectionTemplate, this.productToAdd, 0);
+      this.templateLibraries, pendingChanges, parentSelection,
+      this.productSelectionTemplate, this.productToAdd, 0);
+    const {job, metadata, selections, selectionRelationships} = pendingChanges;
+
+    const productSelectionIds = _.chain(selections)
+      .filter((selection) => selection.templateId === this.productSelectionTemplate.id)
+      .map((selection) => selection._id)
+      .value();
+    _.each(productSelectionIds, (productSelectionId) => this.setProductSelectionSelections(productSelectionId, pendingChanges));
+    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata);
+
     // SelectionsHelper.initializeMetadata(metadata, true);
     // SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata);
     this.initializeJobVariables(job, metadata, selections, selectionRelationships);
     this.selectedProductSelectionId = newProductSelection._id;
-    this.productSelectionIdToEdit = newProductSelection._id;
-    this.deleteProductSelectionOnCancel = true;
-    this.confirmSaveChanges(job, selections, selectionRelationships, metadata, true);
+    // this.productSelectionIdToEdit = newProductSelection._id;
+    // Not saving before editing anymore
+    // this.deleteProductSelectionOnCancel = true;
+    // this.confirmSaveChanges(job, selections, selectionRelationships, metadata, true);
+    this.editProductSelection(newProductSelection._id, null, false, pendingChanges);
+  }
+
+  deleteSelected() {
+    const cancelSave = (err) => {
+      if (err) {
+        console.log(err);
+      }
+    }
+
+    const confirmSave = () => {
+      this.ignoreUpdatesTemporarily = true;
+      const pendingChanges = this.getPendingChanges();
+      _.each(this.itemIdsSelected, (productSelectionId) => {
+        const selectionToDelete =  _.find(this.selections, (selection) => selection._id === productSelectionId);
+        SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, selectionToDelete);
+        this.productSelectionIds = _.without(this.productSelectionIds, productSelectionId);
+      });
+      const {job, metadata, selections, selectionRelationships} = pendingChanges;
+      this.initializeJobVariables(job, metadata, selections, selectionRelationships);
+      this.confirmSaveChanges(job, selections, selectionRelationships, metadata, true);
+      this.itemIdsSelected = [];
+    }
+
+    const deletionCount = this.itemIdsSelected.length;
+    if (deletionCount) {
+      const deletionText = deletionCount === 1 ? `the selected product` : `the ${deletionCount} selected products`;
+      this.bootstrapDialog.confirmationDialog("Delete selected products",
+        `Are you sure you want to delete ${deletionText}?`)
+      .then(confirmSave, cancelSave);
+    }
   }
 
   deleteProductSelection(productSelectionId) {
     this.ignoreUpdatesTemporarily = true;
     const selectionToDelete =  _.find(this.selections, (selection) => selection._id === productSelectionId);
-    const pendingChanges = {
-      job: _.clone(this.job),
-      metadata: _.clone(this.metadata),
-      selections: _.map(this.selections, _.clone),
-      selectionRelationships: _.map(this.selectionRelationships, _.clone),
-    }
+    const pendingChanges = this.getPendingChanges();
     SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, selectionToDelete);
     const {job, metadata, selections, selectionRelationships} = pendingChanges;
     this.productSelectionIds = _.without(this.productSelectionIds, productSelectionId);
@@ -767,15 +808,33 @@ class bid {
   //   this.originalSelectionRelationships = _.map(this.selectionRelationships, _.clone);
   // };
 
-  editProductSelection(productSelectionId, event, deleteIfCanceled) {
+  editSelected() {
+    const editCount = this.itemIdsSelected.length;
+    if (editCount === 0) {
+      this.toastr.info("Please check a product selection first");
+      return;
+    }
+    if (editCount > 1) {
+      this.toastr.warning("Sorry, cannot edit multiple records");
+      return;
+    }
+    this.ignoreUpdatesTemporarily = true;
+    const pendingChanges = this.getPendingChanges();
+    this.editProductSelection(this.itemIdsSelected[0], null, false, pendingChanges);
+  }
+
+  editProductSelection(productSelectionId, event, deleteIfCanceled, pendingChanges) {
   // editProductSelection(data, event, deleteIfCanceled, job, selections, selectionRelationships) {
     // this.stopJobAndSelectionSubscriptions();
     // job = job || this.job;
     // selections = selections || this.selections;
     // selectionRelationships = selectionRelationships || this.selectionRelationships;
     // this.setOriginalSelectionData();
+    if (!pendingChanges) {
+      pendingChanges = this.getPendingChanges();
+    }
     this.selectedProductSelectionId = productSelectionId;
-    this.setTabs();
+    this.setTabs(pendingChanges);
     const modalInstance = this.$modal.open({
       templateUrl: 'client/product-selections/views/product-selection-edit.html',
       controller: 'productSelection',
@@ -784,19 +843,23 @@ class bid {
         'bid': () => {
           return this;
         },
+        'pendingChanges': () => {
+          return pendingChanges;
+        },
       }
     });
 
     modalInstance.result.then((selectedItem) => {
-      this.job.estimateTotal = this.getJobSubtotal(this.metadata, this.selections, this.selectionRelationships);
-      this.save(this.job, this.selections, this.selectionRelationships, this.metadata);
+      const {job, metadata, selections, selectionRelationships} = pendingChanges;
+      job.estimateTotal = this.getJobSubtotal(metadata, selections, selectionRelationships);
+      this.save(job, selections, selectionRelationships, metadata);
       // this.save(job, selections, selectionRelationships);
     }, () => {
       console.log('Modal dismissed at: ' + new Date());
       if (deleteIfCanceled) {
         this.deleteProductSelection(this.selectedProductSelectionId);
       }
-      this.cancel();
+      // this.cancel();
     });
   }
 
@@ -808,87 +871,97 @@ class bid {
     return ``;
   }
 
-  getSelectedProductDisplaySummary() {
-    const selectedProductSelection = _.find(this.selections, (selection) => selection._id === this.selectedProductSelectionId);
+  getSelectedProductDisplaySummary(pendingChanges = {}) {
+    const {selections} = pendingChanges;
+    if (!selections) {
+      return '';
+    }
+    const selectedProductSelection = _.find(selections, (selection) => selection._id === this.selectedProductSelectionId);
     const selectedProductSelectionId = selectedProductSelection && selectedProductSelection._id;
-    const titleText = this.getTitle(selectedProductSelectionId);
-    const priceEachText = this.getPriceEach(selectedProductSelectionId);
-    const priceTotalText = this.getPriceTotal(selectedProductSelectionId);
-    const quantityText = this.getQuantity(selectedProductSelectionId);
+    const titleText = this.getTitle(selectedProductSelectionId, pendingChanges);
+    const priceEachText = this.getPriceEach(selectedProductSelectionId, pendingChanges);
+    const priceTotalText = this.getPriceTotal(selectedProductSelectionId, pendingChanges);
+    const quantityText = this.getQuantity(selectedProductSelectionId, pendingChanges);
     return `${titleText} x ${quantityText} at ${priceEachText} each = ${priceTotalText}`;
   }
 
-  getTitle(productSelectionId) {
-    if (!productSelectionId) {
+  getTitle(productSelectionId, pendingChanges = {}) {
+    const {metadata, selections} = pendingChanges;
+    if (!productSelectionId || !metadata || !selections) {
       return '';
     }
-    const columnSelectionIds = this.metadata.columnSelectionIds[productSelectionId];
+    const columnSelectionIds = metadata.columnSelectionIds[productSelectionId];
 
     if (columnSelectionIds && columnSelectionIds.length > 2) {
-      const columnSelection = _.find(this.selections, (selection) => selection._id === columnSelectionIds[0]);
-      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, columnSelection);
+      const columnSelection = _.find(selections, (selection) => selection._id === columnSelectionIds[0]);
+      return SelectionsHelper.getDisplayValue(this.templateLibraries, selections, columnSelection);
     }
     return '';
   }
 
-  getMainSelectionContent(productSelectionId) {
-    if (!productSelectionId) {
+  getMainSelectionContent(productSelectionId, pendingChanges = {}) {
+    const {metadata, selections} = pendingChanges;
+    if (!productSelectionId || !metadata || !selections) {
       return '';
     }
-    const columnSelectionIds = this.metadata.columnSelectionIds[productSelectionId];
+    const columnSelectionIds = metadata.columnSelectionIds[productSelectionId];
 
     if (columnSelectionIds && columnSelectionIds.length > 7) {
-      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, _.find(this.selections, (selection) => selection._id === columnSelectionIds[5]))
-        + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, _.find(this.selections, (selection) => selection._id === columnSelectionIds[6]))
-        + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, _.find(this.selections, (selection) => selection._id === columnSelectionIds[7]));
+      return SelectionsHelper.getDisplayValue(this.templateLibraries, selections, _.find(selections, (selection) => selection._id === columnSelectionIds[5]))
+        + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, selections, _.find(selections, (selection) => selection._id === columnSelectionIds[6]))
+        + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, selections, _.find(selections, (selection) => selection._id === columnSelectionIds[7]));
     }
     return '';
   }
 
-  getPriceTotal(productSelectionId) {
-    if (!productSelectionId) {
+  getPriceTotal(productSelectionId, pendingChanges = {}) {
+    const {metadata, selections} = pendingChanges;
+    if (!productSelectionId || !metadata || !selections) {
       return '';
     }
-    const columnSelectionIds = this.metadata.columnSelectionIds[productSelectionId];
+    const columnSelectionIds = metadata.columnSelectionIds[productSelectionId];
 
     if (columnSelectionIds && columnSelectionIds.length > 2) {
-      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, _.find(this.selections, (selection) => selection._id === columnSelectionIds[2]));
+      return SelectionsHelper.getDisplayValue(this.templateLibraries, selections, _.find(selections, (selection) => selection._id === columnSelectionIds[2]));
     }
     return '';
   }
 
-  getPriceEach(productSelectionId) {
-    if (!productSelectionId) {
+  getPriceEach(productSelectionId, pendingChanges = {}) {
+    const {metadata, selections} = pendingChanges;
+    if (!productSelectionId || !metadata || !selections) {
       return '';
     }
-    const columnSelectionIds = this.metadata.columnSelectionIds[productSelectionId];
+    const columnSelectionIds = metadata.columnSelectionIds[productSelectionId];
 
     if (columnSelectionIds && columnSelectionIds.length > 2) {
-      return SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, _.find(this.selections, (selection) => selection._id === columnSelectionIds[1]));
+      return SelectionsHelper.getDisplayValue(this.templateLibraries, selections, _.find(selections, (selection) => selection._id === columnSelectionIds[1]));
     }
     return '';
   }
 
-  getQuantity(productSelectionId) {
-    if (!productSelectionId) {
+  getQuantity(productSelectionId, pendingChanges = {}) {
+    const {metadata, selections} = pendingChanges;
+    if (!productSelectionId || !metadata || !selections) {
       return '';
     }
-    const columnSelectionIds = this.metadata.columnSelectionIds[productSelectionId];
+    const columnSelectionIds = metadata.columnSelectionIds[productSelectionId];
 
     if (columnSelectionIds && columnSelectionIds.length > 4) {
-      return _.find(this.selections, (selection) => selection._id === columnSelectionIds[4]).value;
+      return _.find(selections, (selection) => selection._id === columnSelectionIds[4]).value;
     }
     return '';
   }
 
-  getProductImage(productSelectionId) {
-    if (!productSelectionId) {
+  getProductImage(productSelectionId, pendingChanges = {}) {
+    const {metadata, selections} = pendingChanges;
+    if (!productSelectionId || !metadata || !selections) {
       return '';
     }
-    const columnSelectionIds = this.metadata.columnSelectionIds[productSelectionId];
+    const columnSelectionIds = metadata.columnSelectionIds[productSelectionId];
 
     if (columnSelectionIds && columnSelectionIds.length > 0) {
-      const columnSelection = _.find(this.selections, (selection) => selection._id === columnSelectionIds[0]);
+      const columnSelection = _.find(selections, (selection) => selection._id === columnSelectionIds[0]);
       const imageFileSetting = columnSelection && TemplateLibrariesHelper.getTemplateSettingByKeyAndIndex(
         this.templateLibraries, columnSelection.templateId, Constants.templateSettingKeys.imageSource, 0);
       return imageFileSetting ? imageFileSetting.value : '';
@@ -897,21 +970,22 @@ class bid {
   }
 
   // returns array of TabSection objects
-  getTabsFromTemplates(templatesForTabs) {
+  getTabsFromTemplates(templatesForTabs, pendingChanges) {
     var tabs = [];
+    const {metadata, selections, selectionRelationships} = pendingChanges;
     if (templatesForTabs) {
       _.each(templatesForTabs, (templateForTab) => {
         const templateSettingsForTabs = TemplateLibrariesHelper.getTemplateSettingsForTabs(templateForTab);
         _.each(templateSettingsForTabs, (templateSetting) => {
           const tabMatch = _.find(tabs, (tab) => tab.title === templateSetting.value);
-          const selectedProductSelection = _.find(this.selections, (selection) => selection._id === this.selectedProductSelectionId);
+          const selectedProductSelection = _.find(selections, (selection) => selection._id === this.selectedProductSelectionId);
           if (tabMatch) {
             tabMatch.inputSelectionItems.push(new InputSelectionItem(this.templateLibraries,
-              this.selections, this.selectionRelationships, templateForTab, selectedProductSelection, this.metadata));
+              selections, selectionRelationships, templateForTab, selectedProductSelection, metadata));
           }
           else {
             const newTab = new TabSection(templateSetting.value, this.templateLibraries,
-              this.selections, this.selectionRelationships, templateForTab, selectedProductSelection, this.metadata);
+              selections, selectionRelationships, templateForTab, selectedProductSelection, metadata);
               //Ultimately need a better way of ordering tabs, but for now just make Primary the first
             if (templateSetting.value === 'Primary') {
               tabs.unshift(newTab);
@@ -926,24 +1000,25 @@ class bid {
     return tabs;
   };
 
-  setTabs() {
+  setTabs(pendingChanges) {
     const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(this.templateLibraries);
-    this.tabs = this.getTabsFromTemplates(templatesForTabs);
+    this.tabs = this.getTabsFromTemplates(templatesForTabs, pendingChanges);
 
     //Initialize first tab as selected
     if (this.tabs && this.tabs.length > 0) {
         this.tabs[0].active = true;
     }
-    this.setProductSelectionEditItems(templatesForTabs);
+    this.setProductSelectionEditItems(templatesForTabs, pendingChanges);
   }
 
-  setProductSelectionEditItems(templatesForTabs) {
+  setProductSelectionEditItems(templatesForTabs, pendingChanges) {
+    const {metadata, selections, selectionRelationships} = pendingChanges;
     this.productSelectionEditItems = [];
-    const selectedProductSelection = _.find(this.selections, (selection) => selection._id === this.selectedProductSelectionId);
+    const selectedProductSelection = _.find(selections, (selection) => selection._id === this.selectedProductSelectionId);
 
     _.each(templatesForTabs, (templateForTab) => {
       this.productSelectionEditItems.push(new InputSelectionItem(this.templateLibraries,
-        this.selections, this.selectionRelationships, templateForTab, selectedProductSelection, this.metadata));
+        selections, selectionRelationships, templateForTab, selectedProductSelection, metadata));
     });
   }
 

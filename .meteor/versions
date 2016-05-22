@@ -118,6 +118,7 @@ ui@1.0.11
 underscore@1.0.8
 urigo:angular-blaze-template@0.3.0
 url@1.0.9
+vishalm:angular-toastr@1.5.0
 vivekkatta:meteor-angular-formly@1.0.1
 webapp@1.2.8
 webapp-hashing@1.0.9
