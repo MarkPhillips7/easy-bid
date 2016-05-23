@@ -35,10 +35,10 @@ InputSelectionItem = function (templateLibraries, allSelections, selectionRelati
   }
 };
 
-TabSection = function (title, templateLibraries, selections, selectionRelationships, template, productSelection, metadata) {
+TabSection = function (title, templateLibraries, selections, selectionRelationships, template, productSelectionId, metadata) {
   var tab = this;
   tab.title = title;
   tab.active = false;
   tab.disabled = false;
-  tab.inputSelectionItems = [new InputSelectionItem(templateLibraries, selections, selectionRelationships, template, productSelection, metadata)];
+  tab.inputSelectionItems = [new InputSelectionItem(templateLibraries, selections, selectionRelationships, template, productSelectionId, metadata)];
 };
