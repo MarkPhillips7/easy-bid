@@ -370,7 +370,8 @@ angular.module('app')
       scope.contentUrl = 'client/layout/views/tab-selector-span.html';
       if (scope.inputSelectionItem && scope.inputSelectionItem.template && scope.thebid && scope.pendingChanges) {
         template = scope.inputSelectionItem.template;
-        selectOptions = TemplateLibrariesHelper.populateSelectOptions(scope.thebid.templateLibraries, template, scope.pendingChanges.metadata);
+        selectOptions = TemplateLibrariesHelper.populateSelectOptions(scope.thebid.templateLibraries, template,
+          scope.pendingChanges.metadata, false, scope.thebid.lookupData);
         selection = scope.inputSelectionItem.getSelection();
         // if (selection && selectOptions) {
         //   for (var i = 0; i < selectOptions.length; i++) {

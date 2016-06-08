@@ -4,4 +4,5 @@ Meteor.startup(function () {
   Initialization.initializeTemplates(companyInfo, userInfo);
   Initialization.initializeJobs(companyInfo, userInfo);
   Initialization.initializeSelections(companyInfo,userInfo);
+  Initialization.initializeSheetMaterial(companyInfo);
 });

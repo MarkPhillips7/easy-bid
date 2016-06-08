@@ -35,6 +35,7 @@ class bid {
     this.jobId = this.$stateParams.bidId;
     this.jobSelection = null;
     this.jobTemplate = null;
+    this.lookupData = null;
     // metadata used to keep track of ui state of various data
     this.metadata = SelectionsHelper.getInitializedMetadata();
     // this.originalSelections = null;
@@ -111,6 +112,14 @@ class bid {
       return;
     }
 
+    Meteor.call('loadLookupData', this.templateLibraries, (err, result) => {
+      if (err) {
+        console.log('failed to loadLookupData', err);
+      } else {
+        // console.log('success getting companyIdsRelatedToUser', result);
+        this.lookupData = result;
+      }
+    });
     console.log('updating dependencies');
     this.initializeSelectionVariables();
   }
@@ -144,7 +153,8 @@ class bid {
         ticked: false
       }
     ];
-    this.productOptions = TemplateLibrariesHelper.populateSelectOptions(this.templateLibraries, this.productTemplate, this.metadata);
+    this.productOptions = TemplateLibrariesHelper.populateSelectOptions(this.templateLibraries, this.productTemplate,
+      this.metadata, false, this.lookupData);
   }
 
   // restoreOriginalData() {

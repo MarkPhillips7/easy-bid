@@ -49,6 +49,7 @@ Constants.selectionTypes = {
 
 Constants.templateSettingKeys = {
   belongsTo:"BelongsTo",
+  customOptions:"CustomOptions",
   defaultValue:"DefaultValue",
   denominatorUnit:"DenominatorUnit",
   displayCaption:"DisplayCaption",
@@ -61,6 +62,7 @@ Constants.templateSettingKeys = {
   isVariableCollector:"IsVariableCollector",
   isVariableOverride:"IsVariableOverride",
   levelsDeepCanOverride:"LevelsDeepCanOverride",
+  lookupKey:"LookupKey",
   numeratorUnit:"NumeratorUnit",
   overrideValue:"OverrideValue",
   propertyToOverride:"PropertyToOverride",

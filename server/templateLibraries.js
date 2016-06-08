@@ -73,12 +73,12 @@ Meteor.publish("templateLibraryData", function (jobId, options) {
 
   const jobsTemplateLibraries = JobsTemplateLibraries.find({ 'jobId' : jobId }, options);
   const templateLibraryIds = _.map(jobsTemplateLibraries.fetch(), (jobTemplateLibrary) => jobTemplateLibrary.templateLibraryId);
-  const templeLibraries = TemplateLibraries.find({
+  const templateLibraries = TemplateLibraries.find({
     _id: { $in: templateLibraryIds }
   });
 
   return [
     jobsTemplateLibraries,
-    templeLibraries
+    templateLibraries,
   ];
 });

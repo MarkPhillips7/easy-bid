@@ -347,6 +347,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       templateType: Constants.templateTypes.lookupData,
       templateSettings: [{
         id: Random.id(), key: "VariableName", value: "sheetMaterialData"
+      }, {
+        id: Random.id(), key: "LookupKey", value: "sheetMaterialData"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateSheetMaterialData);

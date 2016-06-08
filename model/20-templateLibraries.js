@@ -1280,37 +1280,85 @@ const getTemplateLibraryWithTemplate = (templateLibraries, templateId) => {
   return _.find(templateLibraries, (templateLibrary) => _.some(templateLibrary.templates, (template) => template.id === templateId));
 };
 
-            // const populateCustomOptions = (templateLibrary, template, metadata, electOptions) => {
-            //     var customOptions = getTemplateSettingValueForTemplate(template, 'CustomOptions');
-            //     var sheetMaterialData;
-            //     var skusAdded = [];
-            //
-            //     if (customOptions) {
-            //         if (customOptions === 'GetCoreSheetMaterialOptions') {
-            //             sheetMaterialData = getLookupDataFromTemplateName(template, 'SheetMaterialData');
-            //
-            //             if (sheetMaterialData) {
-            //                 sheetMaterialData.forEach(function (sheetMaterial) {
-            //                     if (sheetMaterial.coreMaterial && sheetMaterial.coreMaterial.sku) {
-            //                         if ($.inArray(sheetMaterial.coreMaterial.sku, skusAdded) == -1) {
-            //                             selectOptions.push({
-            //                                 id: sheetMaterial.coreMaterial.sku,
-            //                                 name: sheetMaterial.coreMaterial.name,
-            //                                 description: sheetMaterial.coreMaterial.description
-            //                             });
-            //                             skusAdded.push(sheetMaterial.coreMaterial.sku);
-            //                         }
-            //                     }
-            //                 });
-            //             }
-            //         } else {
-            //             throw new Error('Unexpected CustomOptions: ' + customOptions);
-            //         }
-            //     }
-            // }
+//Traverse potentially all templates related to this one until one found with matching name
+const getTemplateFromTemplateName = (templateLibrary, template, templateName, visitedTemplates) => {
+  var templateRelationship;
+  var returnTemplate;
+
+  if (!template) {
+    return null;
+  }
+
+  //Don't do anything if template has already been visited
+  if (_.contains(visitedTemplates, template)) {
+    return null;
+  }
+
+  if (template.name === templateName) {
+    return template;
+  }
+
+  //Necessary to avoid infinite recursive loop
+  visitedTemplates.push(template);
+
+  //Check children (But don't bother with Children of sub-Templates)
+  if (!ItemTemplatesHelper.isASubTemplate(template)) {
+    const templateChildren = TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template);
+    _.find(templateChildren, (childTemplate) => {
+      return getTemplateFromTemplateName(templateLibrary, childTemplate, templateName, visitedTemplates);
+    });
+  }
+
+  //Now check parent(s)
+  const templateParents = TemplateLibrariesHelper.parentTemplates(templateLibrary, template);
+  _.find(templateParents, (parentTemplate) => {
+    return getTemplateFromTemplateName(templateLibrary, parentTemplate, templateName, visitedTemplates);
+  });
+
+  return null;
+};
+
+// const getLookupDataFromTemplateName = (templateLibrary, template, templateName) => {
+//   var visitedTemplates = [];
+//   var lookupDataTemplate = getTemplateFromTemplateName(templateLibrary, template, templateName, visitedTemplates);
+//   if (lookupDataTemplate) {
+//     return lookupDataTemplate.data;
+//   }
+//
+//   return null;
+// };
+
+const populateCustomOptions = (templateLibrary, template, metadata, selectOptions, lookupData) => {
+  const customOptions = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.customOptions);
+  let sheetMaterialData;
+  let skusAdded = [];
+
+  if (customOptions) {
+    if (customOptions === 'GetCoreSheetMaterialOptions') {
+      sheetMaterialData = lookupData && lookupData['sheetMaterialData'];// getLookupDataFromTemplateName(templateLibrary, template, 'Sheet Material Data');
+
+      if (sheetMaterialData) {
+        sheetMaterialData.forEach(function (sheetMaterial) {
+          if (sheetMaterial.coreMaterial && sheetMaterial.coreMaterial.sku) {
+            if (!_.contains(skusAdded, sheetMaterial.coreMaterial.sku)) {
+              selectOptions.push({
+                id: sheetMaterial.coreMaterial.sku,
+                name: sheetMaterial.coreMaterial.name,
+                description: sheetMaterial.coreMaterial.description
+              });
+              skusAdded.push(sheetMaterial.coreMaterial.sku);
+            }
+          }
+        });
+      }
+    } else {
+      throw new Error('Unexpected CustomOptions: ' + customOptions);
+    }
+  }
+}
 
 // populates select options if necessary. Returns select options
-const populateSelectOptions = (templateLibraries, template, metadata, forceRefresh) => {
+const populateSelectOptions = (templateLibraries, template, metadata, forceRefresh, lookupData) => {
   if (!templateLibraries) {
     throw 'templateLibraries must be set in populateSelectOptions';
   }
@@ -1332,14 +1380,14 @@ const populateSelectOptions = (templateLibraries, template, metadata, forceRefre
   if (ItemTemplatesHelper.isASubTemplate(template)) {
     const parentTemplate = TemplateLibrariesHelper.parentTemplate(templateLibrary, template);
     if (parentTemplate) {
-      selectOptions = populateSelectOptions(templateLibraries, parentTemplate, metadata, forceRefresh);
+      selectOptions = populateSelectOptions(templateLibraries, parentTemplate, metadata, forceRefresh, lookupData);
     }
   }
   else if (ItemTemplatesHelper.isABaseTemplate(template)) {
     addSelectOptions(templateLibrary, selectOptions, template);
   }
   else {
-    // populateCustomOptions(templateLibrary, template, selectOptions);
+    populateCustomOptions(templateLibrary, template, metadata, selectOptions, lookupData);
   }
 
   metadata.selectOptions[template.id] = selectOptions;
