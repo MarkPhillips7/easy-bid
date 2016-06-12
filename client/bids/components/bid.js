@@ -118,10 +118,10 @@ class bid {
       } else {
         // console.log('success getting companyIdsRelatedToUser', result);
         this.lookupData = result;
+        console.log('updating dependencies');
+        this.initializeSelectionVariables();
       }
     });
-    console.log('updating dependencies');
-    this.initializeSelectionVariables();
   }
 
   getTemplatesByTemplateSetting(templateSettingKey, templateSettingValue) {
@@ -186,6 +186,7 @@ class bid {
       _.difference(_.map(this.selections, (selection) => selection._id), _.map(selections, (selection) => selection._id)),
       selectionRelationships,
       _.difference(_.map(this.selectionRelationships, (relationship) => relationship._id), _.map(selectionRelationships, (relationship) => relationship._id)),
+      this.lookupData,
       (err, result) => {
       if (err) {
         console.log('failed to save selection changes', err);
@@ -248,7 +249,7 @@ class bid {
       .map((selection) => selection._id)
       .value();
     _.each(this.productSelectionIds, (productSelectionId) => this.setProductSelectionSelections(productSelectionId, this));
-    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata);
+    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata, this.lookupData);
     this.initializeJobVariables(this.job, this.metadata, this.selections, this.selectionRelationships);
     this.confirmSaveChanges(this.job, this.selections, this.selectionRelationships, this.metadata, false);
 
@@ -747,7 +748,7 @@ class bid {
     const parentSelection =  _.find(this.selections, (selection) => selection._id === parentSelectionId);
     const pendingChanges = this.getPendingChanges();
     const newProductSelection = SelectionsHelper.addProductSelectionAndChildren(
-      this.templateLibraries, pendingChanges, parentSelection,
+      this.templateLibraries, pendingChanges, this.lookupData, parentSelection,
       this.productSelectionTemplate, this.productToAdd, 0);
     const {job, metadata, selections, selectionRelationships} = pendingChanges;
 
@@ -756,7 +757,7 @@ class bid {
       .map((selection) => selection._id)
       .value();
     _.each(productSelectionIds, (productSelectionId) => this.setProductSelectionSelections(productSelectionId, pendingChanges));
-    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata);
+    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata, this.lookupData);
 
     // SelectionsHelper.initializeMetadata(metadata, true);
     // SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata);
@@ -781,7 +782,7 @@ class bid {
       const pendingChanges = this.getPendingChanges();
       _.each(this.itemIdsSelected, (productSelectionId) => {
         const selectionToDelete =  _.find(this.selections, (selection) => selection._id === productSelectionId);
-        SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, selectionToDelete);
+        SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, this.lookupData, selectionToDelete);
         this.productSelectionIds = _.without(this.productSelectionIds, productSelectionId);
       });
       const {job, metadata, selections, selectionRelationships} = pendingChanges;
@@ -803,7 +804,7 @@ class bid {
     this.ignoreUpdatesTemporarily = true;
     const selectionToDelete =  _.find(this.selections, (selection) => selection._id === productSelectionId);
     const pendingChanges = this.getPendingChanges();
-    SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, selectionToDelete);
+    SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, this.lookupData, selectionToDelete);
     const {job, metadata, selections, selectionRelationships} = pendingChanges;
     this.productSelectionIds = _.without(this.productSelectionIds, productSelectionId);
     // SelectionsHelper.initializeMetadata(metadata, true);

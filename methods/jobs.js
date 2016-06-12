@@ -129,12 +129,13 @@ Meteor.methods({
     }
   },
   saveSelectionChanges: function (jobToSave, selectionsToSave, selectionIdsToDelete,
-      selectionRelationshipsToSave, selectionRelationshipIdsToDelete) {
+      selectionRelationshipsToSave, selectionRelationshipIdsToDelete, lookupData) {
     check(jobToSave, Schema.Job);
     check(selectionsToSave, [Schema.Selection]);
     check(selectionIdsToDelete, [String]);
     check(selectionRelationshipsToSave, [Schema.SelectionRelationship]);
     check(selectionRelationshipIdsToDelete, [String]);
+    check(lookupData, Match.Any);
 
     const jobId = jobToSave._id;
     if (_.any(selectionsToSave, (selection) => selection.jobId !== jobId)) {
@@ -202,7 +203,7 @@ Meteor.methods({
       });
       let metadata = {};
       SelectionsHelper.initializeMetadata(metadata, true);
-      SelectionsHelper.initializeSelectionVariables(templateLibraries, selectionsWithUpdates, selectionRelationshipsWithUpdates, metadata);
+      SelectionsHelper.initializeSelectionVariables(templateLibraries, selectionsWithUpdates, selectionRelationshipsWithUpdates, metadata, lookupData);
 
       // The existence of pending changes with display messages means the changes are invalid
       const truePendingChanges = _.filter(metadata.pendingSelectionChanges, (pendingChange) => {

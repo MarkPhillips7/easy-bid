@@ -90,7 +90,7 @@ Initialization.initializeSheetMaterial = function (companyInfo) {
     cherryPlywood._id = SheetMaterials.insert(cherryPlywood);
   }
 
-  let whiteMelaminePlywood = SheetMaterials.findOne({"name": "White Melamine", "templateLibraryId": templateLibrary._id});
+  let whiteMelaminePlywood = SheetMaterials.findOne({"name": "White Melamine Plywood", "templateLibraryId": templateLibrary._id});
   if (!whiteMelaminePlywood && templateLibrary) {
     console.log(`adding whiteMelaminePlywood for company ${company._id} with templateLibrary ${templateLibrary._id}`);
 

@@ -24,7 +24,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     description: "Company that provides service",
     templateType: Constants.templateTypes.company,
     templateSettings: [{
-      id: Random.id(), key: "IsVariableCollector", value: "true"
+      id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
     }]
   };
   templateLibrary.templates.push(templateCompany);
@@ -35,7 +35,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     description: "Customer requesting a bid",
     templateType: Constants.templateTypes.customer,
     templateSettings: [{
-      id: Random.id(), key: "IsVariableCollector", value: "true"
+      id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
     }]
   };
   templateLibrary.templates.push(templateCustomer);
@@ -51,7 +51,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     description: "The job or project being bid",
     templateType: Constants.templateTypes.job,
     templateSettings: [{
-      id: Random.id(), key: "IsVariableCollector", value: "true"
+      id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
     }]
   };
   templateLibrary.templates.push(templateJob);
@@ -67,19 +67,19 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     description: "Job Subtotal",
     templateType: Constants.templateTypes.function,
     templateSettings: [{
-      id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+      id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
     }, {
-      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
+      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.notApplicable
     }, {
-      id: Random.id(), key: "DisplayCaption", value: "Job Subtotal"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Job Subtotal"
     }, {
-      id: Random.id(), key: "VariableName", value: "jobSubtotal"
+      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "jobSubtotal"
     }, {
-      id: Random.id(), key: "Function", value: "SUM"
+      id: Random.id(), key: Constants.templateSettingKeys.function, value: "SUM"
     }, {
-      id: Random.id(), key: "ApplicableTemplateType", value: "Area"
+      id: Random.id(), key: Constants.templateSettingKeys.applicableTemplateType, value: "Area"
     }, {
-      id: Random.id(), key: "ValueFormula", value: "areaSubtotal"
+      id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "areaSubtotal"
     }]
   };
   templateLibrary.templates.push(templateJobSubtotal);
@@ -95,9 +95,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     description: "Area",
     templateType: Constants.templateTypes.area,
     templateSettings: [{
-      id: Random.id(), key: "IsVariableCollector", value: "true"
+      id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
     }, {
-      id: Random.id(), key: "VariableName", value: "area"
+      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "area"
     }]
   };
   templateLibrary.templates.push(templateArea);
@@ -119,19 +119,19 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     description: "Area Subtotal",
     templateType: Constants.templateTypes.function,
     templateSettings: [{
-      id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+      id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
     }, {
-      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
+      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.notApplicable
     }, {
-      id: Random.id(), key: "DisplayCaption", value: "Area Subtotal"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Area Subtotal"
     }, {
-      id: Random.id(), key: "VariableName", value: "areaSubtotal"
+      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "areaSubtotal"
     }, {
-      id: Random.id(), key: "Function", value: "SUM"
+      id: Random.id(), key: Constants.templateSettingKeys.function, value: "SUM"
     }, {
-      id: Random.id(), key: "ApplicableTemplateType", value: "ProductSelection"
+      id: Random.id(), key: Constants.templateSettingKeys.applicableTemplateType, value: "ProductSelection"
     }, {
-      id: Random.id(), key: "ValueFormula", value: "priceTotal"
+      id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "priceTotal"
     }]
   };
   templateLibrary.templates.push(templateAreaSubtotal);
@@ -147,9 +147,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     description: "Product Selection",
     templateType: Constants.templateTypes.productSelection,
     templateSettings: [{
-      id: Random.id(), key: "DisplayCategory", value: "PrimaryTableRow"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableRow"
     }, {
-      id: Random.id(), key: "IsVariableCollector", value: "true"
+      id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
     }]
   };
   templateLibrary.templates.push(templateProductSelection);
@@ -165,17 +165,17 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     description: "Product",
     templateType: Constants.templateTypes.baseProduct,
     templateSettings: [{
-      id: Random.id(), key: "IsABaseTemplate", value: "true"
+      id: Random.id(), key: Constants.templateSettingKeys.isABaseTemplate, value: "true"
     }, {
-      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.select
+      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.select
     }, {
-      id: Random.id(), key: "DisplayCategory", value: "Primary"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
     }, {
-      id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
     }, {
-      id: Random.id(), key: "DisplayOrder", value: "2"
+      id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "2"
     }, {
-      id: Random.id(), key: "VariableName", value: "product"
+      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "product"
     }]
   };
   templateLibrary.templates.push(templateProduct);
@@ -191,21 +191,21 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     description: "Price Each",
     templateType: Constants.templateTypes.calculation,
     templateSettings: [{
-      id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+      id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
     }, {
-      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
+      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
     }, {
-      id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
     }, {
-      id: Random.id(), key: "DisplayCaption", value: "Each"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Each"
     }, {
-      id: Random.id(), key: "DisplayOrder", value: "99"
+      id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "99"
     }, {
-      id: Random.id(), key: "VariableName", value: "priceEach"
+      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "priceEach"
     }, {
-      id: Random.id(), key: "ValueFormula", value: "111111.11" //Ridiculous value that better be overridden
+      id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "111111.11" //Ridiculous value that better be overridden
     }, {
-      id: Random.id(), key: "ColumnWidth", value: "80"
+      id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
     }]
   };
   templateLibrary.templates.push(templatePriceEach);
@@ -221,21 +221,21 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     description: "Price Total",
     templateType: Constants.templateTypes.calculation,
     templateSettings: [{
-      id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+      id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
     }, {
-      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
+      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
     }, {
-      id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
     }, {
-      id: Random.id(), key: "DisplayCaption", value: "Total"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Total"
     }, {
-      id: Random.id(), key: "DisplayOrder", value: "100"
+      id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "100"
     }, {
-      id: Random.id(), key: "VariableName", value: "priceTotal"
+      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "priceTotal"
     }, {
-      id: Random.id(), key: "ValueFormula", value: "(priceEach * quantity)"
+      id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "(priceEach * quantity)"
     }, {
-      id: Random.id(), key: "ColumnWidth", value: "80"
+      id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
     }]
   };
   templateLibrary.templates.push(templatePriceTotal);
@@ -251,17 +251,17 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     description: "Area Column",
     templateType: Constants.templateTypes.variableDisplay,
     templateSettings: [{
-      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.notApplicable
+      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.notApplicable
     }, {
-      id: Random.id(), key: "DisplayCategory", value: "Primary"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
     }, {
-      id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
     }, {
-      id: Random.id(), key: "DisplayCaption", value: "Area"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Area"
     }, {
-      id: Random.id(), key: "DisplayOrder", value: "1"
+      id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
     }, {
-      id: Random.id(), key: "VariableToDisplay", value: "area"
+      id: Random.id(), key: Constants.templateSettingKeys.variableToDisplay, value: "area"
     }]
   };
   templateLibrary.templates.push(templateAreaColumn);
@@ -277,21 +277,21 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     description: "Quantity",
     templateType: Constants.templateTypes.input,
     templateSettings: [{
-      id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
+      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
     }, {
-      id: Random.id(), key: "DisplayCategory", value: "Primary"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
     }, {
-      id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
     }, {
-      id: Random.id(), key: "DisplayCaption", value: "Quantity"
+      id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Quantity"
     }, {
-      id: Random.id(), key: "DisplayOrder", value: "33"
+      id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "33"
     }, {
-      id: Random.id(), key: "VariableName", value: "quantity"
+      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "quantity"
     }, {
-      id: Random.id(), key: "DefaultValue", value: "1"
+      id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "1"
     }, {
-      id: Random.id(), key: "ColumnWidth", value: "70"
+      id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "70"
     }]
   };
   templateLibrary.templates.push(templateQuantity);
@@ -346,9 +346,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Sheet material lookup data for quick access",
       templateType: Constants.templateTypes.lookupData,
       templateSettings: [{
-        id: Random.id(), key: "VariableName", value: "sheetMaterialData"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "sheetMaterialData"
       }, {
-        id: Random.id(), key: "LookupKey", value: "sheetMaterialData"
+        id: Random.id(), key: Constants.templateSettingKeys.lookupKey, value: "sheetMaterialData"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateSheetMaterialData);
@@ -388,11 +388,11 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Cabinet",
       templateType: Constants.templateTypes.product,
       templateSettings: [{
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.selectOption
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.selectOption
       }, {
-        id: Random.id(), key: "IsASubTemplate", value: "true"
+        id: Random.id(), key: Constants.templateSettingKeys.isASubTemplate, value: "true"
       }, {
-        id: Random.id(), key: "ImageSource", value: "Cabinet.png"
+        id: Random.id(), key: Constants.templateSettingKeys.imageSource, value: "Cabinet.png"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateCabinet);
@@ -402,21 +402,203 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       childTemplateId: templateCabinet.id
     });
 
+    var templateDoorStyle = {
+      id: Random.id(),
+      name: "Door Style",
+      description: "Door Style",
+      templateType: Constants.templateTypes.definition,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Options"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "10"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "doorStyle"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "PLAM - 0.5mm PVC"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "5"
+      }]
+    };
+    cabinetryTemplateLibrary.templates.push(templateDoorStyle);
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateCompany.id,
+      childTemplateId: templateDoorStyle.id
+    });
+
+    var templateQualityLevel = {
+      id: Random.id(),
+      name: "Quality Level",
+      description: "Quality Level",
+      templateType: Constants.templateTypes.specificationGroup,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.specificationGroupType, value: Constants.specificationGroupTypes.required
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.select
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Specifications"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "qualityLevel"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "Economy"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "5"
+      }]
+    };
+    cabinetryTemplateLibrary.templates.push(templateQualityLevel);
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateCompany.id,
+      childTemplateId: templateQualityLevel.id
+    });
+
+    var templateEconomy = {
+      id: Random.id(),
+      name: "Economy",
+      description: "Less expensive options favored",
+      templateType: Constants.templateTypes.condition,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.conditionType, value: "switch"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.switchVariable, value: "qualityLevel"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.switchValue, value: "Economy"
+      }]
+    };
+    cabinetryTemplateLibrary.templates.push(templateEconomy);
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateQualityLevel.id,
+      childTemplateId: templateEconomy.id,
+    });
+
+    var templateEconomyDoorStyle = {
+      id: Random.id(),
+      name: "Economy Door Style",
+      description: "Economy Door Style",
+      templateType: Constants.templateTypes.override,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "doorStyle"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "Wood Veneer"
+      }]
+    };
+    cabinetryTemplateLibrary.templates.push(templateEconomyDoorStyle);
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateEconomy.id,
+      childTemplateId: templateEconomyDoorStyle.id
+    });
+
+    var templateEconomyInteriorMaterial = {
+      id: Random.id(),
+      name: "Interior Material Override",
+      description: "Interior (case) material",
+      templateType: Constants.templateTypes.override,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "caseMaterialInteriorSku"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "WHTMELAMINE"
+      }]
+    };
+    cabinetryTemplateLibrary.templates.push(templateEconomyInteriorMaterial);
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateEconomy.id,
+      childTemplateId: templateEconomyInteriorMaterial.id
+    });
+
+    var templateImperial = {
+      id: Random.id(),
+      name: "Imperial",
+      description: "Highest quality",
+      templateType: Constants.templateTypes.condition,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.conditionType, value: "switch"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.switchVariable, value: "qualityLevel"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.switchValue, value: "Imperial"
+      }]
+    };
+    cabinetryTemplateLibrary.templates.push(templateImperial);
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateQualityLevel.id,
+      childTemplateId: templateImperial.id,
+    });
+
+    var templateImperialDoorStyle = {
+      id: Random.id(),
+      name: "Imperial Door Style",
+      description: "Imperial Door Style",
+      templateType: Constants.templateTypes.override,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "doorStyle"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "PLAM - 0.5mm PVC"
+      }]
+    };
+    cabinetryTemplateLibrary.templates.push(templateImperialDoorStyle);
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateImperial.id,
+      childTemplateId: templateImperialDoorStyle.id
+    });
+
+    var templateImperialInteriorMaterial = {
+      id: Random.id(),
+      name: "Interior Material Override",
+      description: "Interior (case) material",
+      templateType: Constants.templateTypes.override,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "caseMaterialInteriorSku"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "CHERRY"
+      }]
+    };
+    cabinetryTemplateLibrary.templates.push(templateImperialInteriorMaterial);
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateImperial.id,
+      childTemplateId: templateImperialInteriorMaterial.id
+    });
+
     var templateLaborCostMultiplier = {
       id: Random.id(),
       name: "Labor Cost Multiplier",
       description: "Labor cost multiplier",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Labor"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Labor"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "1"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
       }, {
-        id: Random.id(), key: "VariableName", value: "laborCostMultiplier"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborCostMultiplier"
       }, {
-        id: Random.id(), key: "DefaultValue", value: "1"
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "1"
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "5"
       }]
@@ -434,19 +616,19 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Sawing hourly rate",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
       }, {
-        id: Random.id(), key: "DenominatorUnit", value: UnitOfMeasure.units.hours
+        id: Random.id(), key: Constants.templateSettingKeys.denominatorUnit, value: UnitOfMeasure.units.hours
       }, {
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Labor"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Labor"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "1"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
       }, {
-        id: Random.id(), key: "VariableName", value: "laborSawingRate"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingRate"
       }, {
-        id: Random.id(), key: "DefaultValue", value: "60"
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "60"
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "0"
       }]
@@ -464,15 +646,15 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Sawing cost",
       templateType: Constants.templateTypes.calculation,
       templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Labor"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Labor"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "1"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
       }, {
-        id: Random.id(), key: "VariableName", value: "laborSawingCost"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingCost"
       }, {
-        id: Random.id(), key: "ValueFormula", value: "laborCostMultiplier * laborSawingTime * laborSawingRate"
+        id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "laborCostMultiplier * laborSawingTime * laborSawingRate"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateLaborSawingCost);
@@ -488,17 +670,17 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Sawing time per part",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.minutes
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.minutes
       }, {
-        id: Random.id(), key: "DenominatorUnit", value: UnitOfMeasure.units.partCount
+        id: Random.id(), key: Constants.templateSettingKeys.denominatorUnit, value: UnitOfMeasure.units.partCount
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Labor"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Labor"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "1"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
       }, {
-        id: Random.id(), key: "VariableName", value: "laborSawingTimePerPart"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingTimePerPart"
       }, {
-        id: Random.id(), key: "DefaultValue", value: "0.5"
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "0.5"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateLaborSawingTimePerPart);
@@ -514,15 +696,15 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Sawing time",
       templateType: Constants.templateTypes.calculation,
       templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.hours
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.hours
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Calculations"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Calculations"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "1"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
       }, {
-        id: Random.id(), key: "VariableName", value: "laborSawingTime"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingTime"
       }, {
-        id: Random.id(), key: "ValueFormula", value: "numCaseParts * laborSawingTimePerPart / 60"
+        id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "numCaseParts * laborSawingTimePerPart / 60"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateLaborSawingTime);
@@ -538,9 +720,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "One door base cabinet",
       templateType: Constants.templateTypes.product,
       templateSettings: [{
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.selectOption
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.selectOption
       }, {
-        id: Random.id(), key: "IsASubTemplate", value: "true"
+        id: Random.id(), key: Constants.templateSettingKeys.isASubTemplate, value: "true"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateOneDoorBaseCabinet);
@@ -557,13 +739,13 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Quantity",
       templateType: Constants.templateTypes.override,
       templateSettings: [{
-        id: Random.id(), key: "IsVariableOverride", value: "true"
+        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
       }, {
-        id: Random.id(), key: "VariableToOverride", value: "quantity"
+        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "quantity"
       }, {
-        id: Random.id(), key: "PropertyToOverride", value: "DefaultValue"
+        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
       }, {
-        id: Random.id(), key: "OverrideValue", value: "2"//Overrides DefaultValue of Cabinet because templateOneDoorBaseCabinet IsASubTemplate and this DefaultValue gets applied after Cabinet's
+        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "2"//Overrides DefaultValue of Cabinet because templateOneDoorBaseCabinet IsASubTemplate and this DefaultValue gets applied after Cabinet's
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateOneDoorBaseQuantityOverride);
@@ -579,11 +761,11 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Lazy Susan cabinet",
       templateType: Constants.templateTypes.product,
       templateSettings: [{
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.selectOption
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.selectOption
       }, {
-        id: Random.id(), key: "IsASubTemplate", value: "true"
+        id: Random.id(), key: Constants.templateSettingKeys.isASubTemplate, value: "true"
       }, {
-        id: Random.id(), key: "ImageSource", value: "LazySusan.png"
+        id: Random.id(), key: Constants.templateSettingKeys.imageSource, value: "LazySusan.png"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateLazySusanCabinet);
@@ -600,13 +782,13 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Number of adjustable shelves",
       templateType: Constants.templateTypes.override,
       templateSettings: [{
-        id: Random.id(), key: "IsVariableOverride", value: "true"
+        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
       }, {
-        id: Random.id(), key: "VariableToOverride", value: "numAdjustableShelves"
+        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "numAdjustableShelves"
       }, {
-        id: Random.id(), key: "PropertyToOverride", value: "DefaultValue"
+        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
       }, {
-        id: Random.id(), key: "OverrideValue", value: "0"//Overrides DefaultValue of Cabinet because templateLazySusanCabinet IsASubTemplate and this DefaultValue gets applied after Cabinet's
+        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "0"//Overrides DefaultValue of Cabinet because templateLazySusanCabinet IsASubTemplate and this DefaultValue gets applied after Cabinet's
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateLazySusanNumAdjustableShelvesOverride);
@@ -622,13 +804,13 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Price each",
       templateType: Constants.templateTypes.override,
       templateSettings: [{
-        id: Random.id(), key: "IsVariableOverride", value: "true"
+        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
       }, {
-        id: Random.id(), key: "VariableToOverride", value: "priceEach"
+        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "priceEach"
       }, {
-        id: Random.id(), key: "PropertyToOverride", value: "ValueFormula"
+        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.valueFormula
       }, {
-        id: Random.id(), key: "OverrideValue", value: "laborSawingCost + casePartsCost"
+        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "laborSawingCost + casePartsCost"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templatePriceEachOverride);
@@ -644,23 +826,23 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Cabinet width",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.inches
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.inches
       }, {
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Primary"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
       }, {
-        id: Random.id(), key: "DisplayCaption", value: "Width"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Width"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "4"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "4"
       }, {
-        id: Random.id(), key: "VariableName", value: "width"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "width"
       }, {
-        id: Random.id(), key: "DefaultValue", value: "16"
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "16"
       }, {
-        id: Random.id(), key: "ColumnWidth", value: "80"
+        id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateCabinetWidth);
@@ -676,23 +858,23 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Cabinet height",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.inches
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.inches
       }, {
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Primary"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
       }, {
-        id: Random.id(), key: "DisplayCaption", value: "Height"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Height"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "5"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "5"
       }, {
-        id: Random.id(), key: "VariableName", value: "height"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "height"
       }, {
-        id: Random.id(), key: "DefaultValue", value: "24"
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "24"
       }, {
-        id: Random.id(), key: "ColumnHeight", value: "80"
+        id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateCabinetHeight);
@@ -708,23 +890,23 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Cabinet depth",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.inches
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.inches
       }, {
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Primary"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "PrimaryTableColumn"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
       }, {
-        id: Random.id(), key: "DisplayCaption", value: "Depth"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Depth"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "6"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "6"
       }, {
-        id: Random.id(), key: "VariableName", value: "depth"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "depth"
       }, {
-        id: Random.id(), key: "DefaultValue", value: "36.5"
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "36.5"
       }, {
-        id: Random.id(), key: "ColumnDepth", value: "80"
+        id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateCabinetDepth);
@@ -740,19 +922,19 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Number of adjustable shelves",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.partCount
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.partCount
       }, {
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.entry
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Options"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Options"
       }, {
-        id: Random.id(), key: "DisplayCaption", value: "Num adjustable shelves"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Num adjustable shelves"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "1"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
       }, {
-        id: Random.id(), key: "VariableName", value: "numAdjustableShelves"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "numAdjustableShelves"
       }, {
-        id: Random.id(), key: "DefaultValue", value: "2"
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "2"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateNumAdjustableShelves);
@@ -768,15 +950,15 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Number of case parts",
       templateType: Constants.templateTypes.calculation,
       templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.partCount
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.partCount
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Calculations"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Calculations"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "1"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
       }, {
-        id: Random.id(), key: "VariableName", value: "numCaseParts"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "numCaseParts"
       }, {
-        id: Random.id(), key: "ValueFormula", value: "numAdjustableShelves + 4"
+        id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "numAdjustableShelves + 4"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateNumCaseParts);
@@ -792,17 +974,17 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Interior (case) material",
       templateType: Constants.templateTypes.input,
       templateSettings: [{
-        id: Random.id(), key: "SelectionType", value: Constants.selectionTypes.select
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.select
       }, {
-        id: Random.id(), key: "CustomOptions", value: "GetCoreSheetMaterialOptions"
+        id: Random.id(), key: Constants.templateSettingKeys.customOptions, value: "GetCoreSheetMaterialOptions"
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Options"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Options"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "7"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "7"
       }, {
-        id: Random.id(), key: "VariableName", value: "caseMaterialInteriorSku"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "caseMaterialInteriorSku"
       }, {
-        id: Random.id(), key: "DefaultValue", value: "CHERRY"
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "CHERRY"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateInteriorMaterial);
@@ -842,31 +1024,29 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "3/4 inch sheet material cost per square feet",
       templateType: Constants.templateTypes.calculation,
       templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
       }, {
-        id: Random.id(), key: "DenominatorUnit", value: UnitOfMeasure.units.feet
+        id: Random.id(), key: Constants.templateSettingKeys.denominatorUnit, value: UnitOfMeasure.units.feet
       }, {
-        id: Random.id(), key: "DenominatorUnit", value: UnitOfMeasure.units.feet
+        id: Random.id(), key: Constants.templateSettingKeys.denominatorUnit, value: UnitOfMeasure.units.feet
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Parts"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Parts"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "1"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
       }, {
-        id: Random.id(), key: "VariableName", value: "threeFourthsSheetMaterialCostPerArea"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "threeFourthsSheetMaterialCostPerArea"
       }, {
-        id: Random.id(), key: "CustomLookup", value: "GetSheetMaterialCostPerArea"
+        id: Random.id(), key: Constants.templateSettingKeys.customLookup, value: "GetSheetMaterialCostPerArea"
       }, {
-        id: Random.id(), key: "CaseMaterialInteriorSku", value: "caseMaterialInteriorSku"
+        id: Random.id(), key: Constants.templateSettingKeys.caseMaterialInteriorSku, value: "caseMaterialInteriorSku"
       }, {
-        id: Random.id(), key: "CaseMaterialExposedSku", value: "caseMaterialInteriorSku"//Should use "caseMaterialExposedSku" once defined),
+        id: Random.id(), key: Constants.templateSettingKeys.caseMaterialExposedSku, value: "caseMaterialInteriorSku"//Should use "caseMaterialExposedSku" once defined),
       }, {
-        id: Random.id(), key: "CaseMaterialInteriorSku", value: "caseMaterialInteriorSku"
+        id: Random.id(), key: Constants.templateSettingKeys.nominalThickness, value: "0.75"
       }, {
-        id: Random.id(), key: "NominalThickness", value: "0.75"
-      }, {
-        id: Random.id(), key: "DefaultValue", value: "3.32"
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "3.32"
         //Could be something like this:
-        //new KeyValuePair<string, string>("DefaultValue", "getSheetMaterialCostPerArea(caseMaterialInteriorSku, 0.75)"),
+        //new KeyValuePair<string, string>(Constants.templateSettingKeys.defaultValue, "getSheetMaterialCostPerArea(caseMaterialInteriorSku, 0.75)"),
         //new KeyValuePair<string, string>("LookUpTableName", "SheetMaterial"),
         //new KeyValuePair<string, string>("PredicateColumn0", "Sku"),
         //new KeyValuePair<string, string>("PredicateComparisonOperator0", "=="),
@@ -887,18 +1067,18 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "3/4 inch sheet material case square footage",
       templateType: Constants.templateTypes.calculation,
       templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.feet
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.feet
       }, {
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.feet
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.feet
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Calculations"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Calculations"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "1"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
       }, {
-        id: Random.id(), key: "VariableName", value: "threeFourthsSheetMaterialCasePartsArea"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "threeFourthsSheetMaterialCasePartsArea"
       }, {
         id: Random.id(),
-        key: "ValueFormula",
+        key: Constants.templateSettingKeys.valueFormula,
         value: "(2 * height / 12 * depth / 12) + ((numAdjustableShelves + 1) * width / 12 * depth / 12) + (height / 12 * width / 12)"
       }]
     };
@@ -915,16 +1095,16 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Case parts cost",
       templateType: Constants.templateTypes.calculation,
       templateSettings: [{
-        id: Random.id(), key: "NumeratorUnit", value: UnitOfMeasure.units.dollars
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
       }, {
-        id: Random.id(), key: "DisplayCategory", value: "Calculations"
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Calculations"
       }, {
-        id: Random.id(), key: "DisplayOrder", value: "10"
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "10"
       }, {
-        id: Random.id(), key: "VariableName", value: "casePartsCost"
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "casePartsCost"
       }, {
         id: Random.id(),
-        key: "ValueFormula",
+        key: Constants.templateSettingKeys.valueFormula,
         value: "threeFourthsSheetMaterialCasePartsArea * threeFourthsSheetMaterialCostPerArea"
       }]
     };

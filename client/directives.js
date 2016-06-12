@@ -397,7 +397,7 @@ angular.module('app')
         scope.$watch('inputSelectionItem.getSelection().value', function (newValue, oldValue) {
           if (scope.inputSelectionItem && selection) {
             SelectionsHelper.setSelectionValue(scope.thebid.templateLibraries, scope.pendingChanges.selections,
-              scope.pendingChanges.selectionRelationships, scope.pendingChanges.metadata, selection, newValue, oldValue,
+              scope.pendingChanges.selectionRelationships, scope.pendingChanges.metadata, scope.thebid.lookupData, selection, newValue, oldValue,
               selection.valueSource, Constants.valueSources.userEntry);
           }
         }, true);

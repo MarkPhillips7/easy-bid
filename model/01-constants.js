@@ -47,8 +47,19 @@ Constants.selectionTypes = {
   floatRange: "FloatRange"
 };
 
+Constants.specificationGroupTypes = {
+  optional:"Optional",
+  required:"Required",
+};
+
 Constants.templateSettingKeys = {
+  applicableTemplateType:"ApplicableTemplateType",
   belongsTo:"BelongsTo",
+  caseMaterialInteriorSku:"CaseMaterialInteriorSku",
+  caseMaterialExposedSku:"CaseMaterialExposedSku",
+  columnWidth:"ColumnWidth",
+  conditionType:"ConditionType",
+  customLookup:"CustomLookup",
   customOptions:"CustomOptions",
   defaultValue:"DefaultValue",
   denominatorUnit:"DenominatorUnit",
@@ -63,13 +74,18 @@ Constants.templateSettingKeys = {
   isVariableOverride:"IsVariableOverride",
   levelsDeepCanOverride:"LevelsDeepCanOverride",
   lookupKey:"LookupKey",
+  nominalThickness:"NominalThickness",
   numeratorUnit:"NumeratorUnit",
   overrideValue:"OverrideValue",
   propertyToOverride:"PropertyToOverride",
   selectionType:"SelectionType",
+  specificationGroupType:"SpecificationGroupType",
+  switchValue:"SwitchValue",
+  switchVariable:"SwitchVariable",
   unitsText:"UnitsText",
   valueFormula:"ValueFormula",
   variableName:"VariableName",
+  variableToDisplay:"VariableToDisplay",
   variableToOverride:"VariableToOverride"
 };
 
@@ -78,7 +94,9 @@ Constants.templateTypes = {
   baseProduct: "BaseProduct",
   calculation: "Calculation",
   company: "Company",
+  condition: "Condition",
   customer: "Customer",
+  definition: "Definition",
   function: "Function",
   input: "Input",
   job: "Job",
@@ -89,7 +107,7 @@ Constants.templateTypes = {
   override: "Override",
   product: "Product",
   productSelection: "ProductSelection",
-  specification: "Specification",
+  specificationGroup: "SpecificationGroup",
   undefined: "Undefined",
   variableDisplay: "VariableDisplay"
 };

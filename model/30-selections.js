@@ -410,7 +410,7 @@ const getJsonVariableValue = (templateLibraries, selections, selectionRelationsh
 };
 
 const refreshSelectionsReferencingVariable =
-  (templateLibraries, selections, selectionRelationships, metadata, variableCollectorSelection, jsonVariableName) => {
+  (templateLibraries, selections, selectionRelationships, metadata, lookupData, variableCollectorSelection, jsonVariableName) => {
   // Make sure formulas that reference selection's variable get updated
   if (metadata.selectionIdsReferencingVariables[variableCollectorSelection._id]) {
     const selectionIdsReferencingVariable = _.find(metadata.selectionIdsReferencingVariables[variableCollectorSelection._id],
@@ -422,7 +422,7 @@ const refreshSelectionsReferencingVariable =
       _.each(selectionIdsReferencingVariable.selectionIds, (selectionId) => {
         const selectionReferencingVariable = _.find(selections, (_selection) => _selection._id === selectionId);
         if (selectionReferencingVariable) {
-          SelectionsHelper.getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, selectionReferencingVariable);
+          SelectionsHelper.getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, lookupData, selectionReferencingVariable);
         }
       });
     }
@@ -576,7 +576,64 @@ const getPendingChangeMessagesByOriginalAndCurrentInfo = (originalValue, origina
   return pendingChangeMessages;
 }
 
-const getSelectionValue = (templateLibraries, selections, selectionRelationships, metadata, selection) => {
+const getCustomValue = (templateLibraries, selections, selectionRelationships, metadata, lookupData,
+    customLookup, selection, selectionTemplate) => {
+  let caseMaterialInteriorSku;
+  let caseMaterialExposedSku;
+  let returnValue = undefined;
+  let jsonVariableName;
+  let jsonVariableValue;
+
+  if (customLookup === 'GetSheetMaterialCostPerArea') {
+    //CaseMaterialInteriorSku might be an actual SKU or a variable name containing a SKU
+    caseMaterialInteriorSku = getSettingValue(selection, selectionTemplate, 'CaseMaterialInteriorSku');
+    jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(caseMaterialInteriorSku);
+    jsonVariableValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
+      selection, jsonVariableName, selection);
+    if (jsonVariableValue !== undefined) {
+      caseMaterialInteriorSku = jsonVariableValue;
+    }
+
+    caseMaterialExposedSku = getSettingValue(selection, selectionTemplate, 'CaseMaterialExposedSku');
+    jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(caseMaterialExposedSku);
+    jsonVariableValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
+      selection, jsonVariableName, selection);
+    if (jsonVariableValue !== undefined) {
+      caseMaterialExposedSku = jsonVariableValue;
+    }
+
+    const nominalThickness = getSettingValue(selection, selectionTemplate, 'NominalThickness');
+
+    //Now need to look up the most appropriate sheet material offering
+    const sheetMaterialData = lookupData && lookupData['sheetMaterialData'];
+
+    //This should be something that can be set per job
+    const pricingDate = new Date();
+
+    // For now just get the first qualifying price
+    if (sheetMaterialData) {
+      _.each(sheetMaterialData, (sheetMaterial) => {
+        if (sheetMaterial.coreMaterial && sheetMaterial.coreMaterial.sku === caseMaterialExposedSku) {
+          _.each(sheetMaterial.sheetMaterialOfferings, (sheetMaterialOffering) => {
+            if (sheetMaterialOffering.nominalThickness == nominalThickness) {
+              sheetMaterialOffering.sheetMaterialPricings.forEach(function (sheetMaterialPricing) {
+                if (sheetMaterialPricing.effectiveDate <= pricingDate
+                    && sheetMaterialPricing.expirationDate >= pricingDate) {
+                  //Want to return price per square foot
+                  returnValue = sheetMaterialPricing.purchasePricePerSheet
+                  / (sheetMaterialOffering.length / 12 * sheetMaterialOffering.width / 12);
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+  }
+  return returnValue;
+}
+
+const getSelectionValue = (templateLibraries, selections, selectionRelationships, metadata, lookupData, selection) => {
   if (!selection) {
     throw new Error('selection required in getSelectionValue');
   }
@@ -593,6 +650,7 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
   let variableToDisplay;
   let defaultValue;
   let selectionJsonVariableName;
+  let customLookup;
 
   if (selectionTemplate) {
     selectionJsonVariableName = ItemTemplatesHelper.getJsonVariableName(selectionTemplate);
@@ -606,8 +664,9 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
       selectionValueSource = Constants.valueSources.calculatedValue;
     }
     //Check for a custom lookup
-    else if (selectionTemplate.customLookup) {
-      selectionValue = '2345'; //getCustomValue(selection); // ToDo: port this
+    else if (customLookup = getSettingValue(selection, selectionTemplate, Constants.templateSettingKeys.customLookup)) {
+      selectionValue = getCustomValue(templateLibraries, selections, selectionRelationships, metadata, lookupData,
+        customLookup, selection, selectionTemplate);
       selectionValueSource = Constants.valueSources.lookup;
     }
     //Check for valueFormula, which evaluates based on variables.
@@ -661,30 +720,30 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
   }
 
   storeSelectionValueAndUpdatePendingChanges(templateLibraries, selections, selectionRelationships,
-    metadata, selection, selectionValue, selection.value, variableCollectorSelection,
+    metadata, lookupData, selection, selectionValue, selection.value, variableCollectorSelection,
     variableCollectorSelectionVariableSet, originalValueSource, selectionValueSource, selectionJsonVariableName);
   return selectionValue;
 };
 
-const initializeValueToUse = (templateLibraries, selections, selectionRelationships, metadata, selection) => {
+const initializeValueToUse = (templateLibraries, selections, selectionRelationships, metadata, lookupData, selection) => {
   if (!selection) {
     return;
   }
 
   const childSelections = getChildSelections(selection, selections, selectionRelationships);
   _.each(childSelections, (childSelection) => {
-    initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, childSelection);
+    initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, childSelection);
   });
 
   //Calling getSelectionValue() causes checks for undefined variables.
-  getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, selection);
+  getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, lookupData, selection);
 };
 
-const refreshValueToUse = (templateLibraries, selections, selectionRelationships, metadata, selection) => {
+const refreshValueToUse = (templateLibraries, selections, selectionRelationships, metadata, lookupData, selection) => {
   if (selection) {
     const childSelections = getChildSelections(selection, selections, selectionRelationships);
     _.each(childSelections, (childSelection) => {
-      refreshValueToUse(templateLibraries, selections, selectionRelationships, metadata, childSelection);
+      refreshValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, childSelection);
     });
 
     // Make sure formulas that reference selection's variable get updated
@@ -692,7 +751,7 @@ const refreshValueToUse = (templateLibraries, selections, selectionRelationships
       _.each(metadata.selectionIdsReferencingVariables[selection._id].selectionIds, (selectionId) => {
         const selectionReferencingVariable = _.find(selections, (_selection) => _selection._id === selectionId);
         if (selectionReferencingVariable) {
-          getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, selectionReferencingVariable);
+          getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, lookupData, selectionReferencingVariable);
         }
       });
     }
@@ -813,7 +872,7 @@ const getInitializedMetadata = () => {
   return metadata;
 };
 
-const initializeSelectionVariables = (templateLibraries, selections, selectionRelationships, metadata) => {
+const initializeSelectionVariables = (templateLibraries, selections, selectionRelationships, metadata, lookupData) => {
   // initializeMetadata(metadata);
 
   // start with the topmost selection, which should be the company selection
@@ -829,7 +888,7 @@ const initializeSelectionVariables = (templateLibraries, selections, selectionRe
 
   createSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, companySelection);
 
-  initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, companySelection);
+  initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, companySelection);
 
   // metadata.variablesUndefined = getAllVariablesUndefined(companySelection);
 
@@ -838,7 +897,7 @@ const initializeSelectionVariables = (templateLibraries, selections, selectionRe
       throw new Error('Variables not defined:' + variablesUndefined.join(","));
   }
 
-  refreshValueToUse(templateLibraries, selections, selectionRelationships, metadata, companySelection);
+  refreshValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, companySelection);
 };
 
 const getDisplayDescription = (templateLibraries, selections, selectionRelationships, selection) => {
@@ -880,7 +939,7 @@ const getPendingChangeMessages = (templateLibraries, selections, selectionRelati
 }
 
 const storeSelectionValueAndUpdatePendingChanges = (templateLibraries, selections,
-    selectionRelationships, metadata, selection, selectionValue, oldValue, variableCollectorSelection,
+    selectionRelationships, metadata, lookupData, selection, selectionValue, oldValue, variableCollectorSelection,
     variableCollectorSelectionVariableSet, originalValueSource, selectionValueSource,
     selectionJsonVariableName) => {
   const originalValue = oldValue;
@@ -896,7 +955,7 @@ const storeSelectionValueAndUpdatePendingChanges = (templateLibraries, selection
     // Make sure formulas that reference this selection's variable get updated
     if (selectionJsonVariableName && variableCollectorSelection) {
       refreshSelectionsReferencingVariable(templateLibraries, selections, selectionRelationships,
-        metadata, variableCollectorSelection, selectionJsonVariableName);
+        metadata, lookupData, variableCollectorSelection, selectionJsonVariableName);
     }
   }
 
@@ -925,7 +984,7 @@ const storeSelectionValueAndUpdatePendingChanges = (templateLibraries, selection
 }
 
 const setSelectionValue = (templateLibraries, selections, selectionRelationships,
-    metadata, selection, selectionValue, oldValue, originalValueSource, selectionValueSource) => {
+    metadata, lookupData, selection, selectionValue, oldValue, originalValueSource, selectionValueSource) => {
   const templateLibrary = TemplateLibrariesHelper.getTemplateLibraryWithTemplate(templateLibraries, selection.templateId);
   const selectionTemplate = _.find(templateLibrary.templates, (template) => template.id === selection.templateId);
   let variableCollectorSelection;
@@ -963,7 +1022,7 @@ const setSelectionValue = (templateLibraries, selections, selectionRelationships
 
   if (oldValue !== selectionValue || variableCollectorSelectionVariableSet) {
     storeSelectionValueAndUpdatePendingChanges(templateLibraries, selections,
-      selectionRelationships, metadata, selection, selectionValue, oldValue, variableCollectorSelection,
+      selectionRelationships, metadata, lookupData, selection, selectionValue, oldValue, variableCollectorSelection,
       variableCollectorSelectionVariableSet, originalValueSource, selectionValueSource, jsonVariableName);
   }
 }
@@ -1161,7 +1220,7 @@ const addSelectionChildrenOfProduct = (templateLibrary, selections, selectionRel
       subTemplateSelectionTemplate, Constants.selectionAddingModes.ignoreSubTemplates);
 };
 
-const addProductSelectionAndChildren = (templateLibraries, pendingChanges, parentSelection,
+const addProductSelectionAndChildren = (templateLibraries, pendingChanges, lookupData, parentSelection,
   productSelectionTemplate, productTemplate, childOrder) => {
   check(templateLibraries, [Schema.TemplateLibrary]);
   check(pendingChanges, {
@@ -1189,10 +1248,10 @@ const addProductSelectionAndChildren = (templateLibraries, pendingChanges, paren
 
   addSelectionChildrenOfProduct(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection, productTemplate);
 
-  initializeSelectionVariables(templateLibraries, selections, selectionRelationships, metadata);
+  initializeSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, lookupData);
   // ToDo: Make this (call to initializeSelectionVariables) faster by doing something like the commented (only update the necessary selections)
   // createSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, productSelection);
-  // initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, productSelection);
+  // initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, productSelection);
   // //If any dependent variables are undefined, then something must be wrong.
   // if (metadata.variablesUndefined.length > 0) {
   //     throw new Error('Variables not defined:' + variablesUndefined.join(","));
@@ -1215,7 +1274,7 @@ const addProductSelectionAndChildren = (templateLibraries, pendingChanges, paren
 // Actually deletes selection, parent selection relationships (but not parent selection), child selection relationships,
 // and all descendent selections (children, grandchildren, etc.)
 // const deleteSelectionAndRelated = (templateLibraries, selections, selectionRelationships, selectionToDelete) => {
-const deleteSelectionAndRelated = (templateLibraries, pendingChanges, selectionToDelete) => {
+const deleteSelectionAndRelated = (templateLibraries, pendingChanges, lookupData, selectionToDelete) => {
   check(templateLibraries, [Schema.TemplateLibrary]);
   check(pendingChanges, {
     selections: [Schema.Selection],
@@ -1271,7 +1330,7 @@ const deleteSelectionAndRelated = (templateLibraries, pendingChanges, selectionT
     const {variableCollectorSelection, selectionJsonVariableName} = selectionInfo;
     if (selectionJsonVariableName && variableCollectorSelection) {
       refreshSelectionsReferencingVariable(templateLibraries, pendingChanges.selections,
-        pendingChanges.selectionRelationships, pendingChanges.metadata,
+        pendingChanges.selectionRelationships, pendingChanges.metadata, lookupData,
         variableCollectorSelection, selectionJsonVariableName);
     }
   });
