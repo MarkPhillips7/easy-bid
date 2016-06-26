@@ -288,7 +288,7 @@ class bid {
       //If there is no selection then just create a blank one
       if (productSelections && productSelections.length === 0) {
         selection = SelectionsHelper.addSelectionForTemplate(this.templateLibraries[0], selections, selectionRelationships,
-            metadata, this.jobId, columnTemplate, '', productSelectionId, 0);
+            metadata, this.jobId, columnTemplate, '', productSelectionId, 0, this.lookupData);
       }
       // Otherwise there must just be one selection or something went wrong
       else if (productSelections && productSelections.length !== 1) {
@@ -686,7 +686,7 @@ class bid {
 
   editBidDetails(event) {
     // this.stopJobAndSelectionSubscriptions();
-    this.setOriginalSelectionData();
+    // this.setOriginalSelectionData();
     const modalInstance = this.$modal.open({
       templateUrl: 'client/bids/views/bid-details-edit.html',
       controller: 'bidDetails',
@@ -768,6 +768,17 @@ class bid {
     // this.deleteProductSelectionOnCancel = true;
     // this.confirmSaveChanges(job, selections, selectionRelationships, metadata, true);
     this.editProductSelection(newProductSelection._id, null, false, pendingChanges);
+  }
+
+  // ToDo: Need to call this from somewhere
+  addSpecificationGroupSelection(specificationGroupTemplate, parentSelectionId, selectionValue) {
+    const parentSelection =  _.find(this.selections, (selection) => selection._id === parentSelectionId);
+    const pendingChanges = this.getPendingChanges();
+    const newSpecificationGroupSelection = SelectionsHelper.addSpecificationGroupSelectionAndChildren(
+      this.templateLibraries, pendingChanges, this.lookupData, parentSelection,
+      specificationGroupTemplate, selectionValue, 0);
+    const {job, metadata, selections, selectionRelationships} = pendingChanges;
+    this.save(job, selections, selectionRelationships, metadata);
   }
 
   deleteSelected() {

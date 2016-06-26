@@ -3,7 +3,7 @@
   <span class="input-group-addon" ng-bind-html="thebid.getUnitsText(inputSelectionItem.template)"
         data-ng-show="thebid.getUnitsText(inputSelectionItem.template) === '$'"></span>
   <input class="form-control" type="text" id="{{inputSelectionItem.id}}"
-         ng-model="inputSelectionItem.getSelection().value" />
+         ng-model="inputSelectionItem.value" />
   <span class="input-group-addon" ng-bind-html="thebid.getUnitsText(inputSelectionItem.template)"
         data-ng-show="thebid.getUnitsText(inputSelectionItem.template) !== '' && thebid.getUnitsText(inputSelectionItem.template) !== '$'"></span>
 </div>

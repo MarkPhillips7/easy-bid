@@ -13,6 +13,8 @@ InputSelectionItem = function (templateLibraries, allSelections, selectionRelati
   var inputSelectionItem = this;
   inputSelectionItem.id = nextId++;
   inputSelectionItem.template = template;
+  inputSelectionItem.parentSelectionId = productSelectionId;
+  inputSelectionItem.value = undefined;
   inputSelectionItem.getSelection = function () {
     var selections = getSelectionsBySelectionParentAndTemplate(templateLibraries, allSelections, selectionRelationships, template, productSelectionId);
     if (selections && selections.length > 0) {
@@ -20,7 +22,7 @@ InputSelectionItem = function (templateLibraries, allSelections, selectionRelati
     }
     return null;
   }
-  inputSelectionItem.getValue = function () {
+  inputSelectionItem.reallyGetValue = function () {
     var selection = inputSelectionItem.getSelection();
     if (selection) {
       return selection.value;
@@ -33,6 +35,11 @@ InputSelectionItem = function (templateLibraries, allSelections, selectionRelati
     }
     return null;
   }
+  inputSelectionItem.getValue = function () {
+    inputSelectionItem.value = inputSelectionItem.reallyGetValue();
+    return inputSelectionItem.value;
+  }
+  inputSelectionItem.getValue();
 };
 
 TabSection = function (title, templateLibraries, selections, selectionRelationships, template, productSelectionId, metadata) {

@@ -1,3 +1,7 @@
+Constants.conditionTypes = {
+  switch:"Switch",
+}
+
 Constants.dependency = {
   required:"Required",
   optionalAutomatic:"OptionalAutomatic",//Automatically selected
@@ -6,6 +10,11 @@ Constants.dependency = {
 };
 
 Constants.noEmailYet = "noemailyet";
+
+Constants.overrideTypes = {
+  fromSpecificationGroup:"FromSpecificationGroup",
+  userEntry:"UserEntry",
+};
 
 Constants.recordActions = {
   add:"Add",
@@ -22,7 +31,7 @@ Constants.relationToItem = {
   sibling:"Sibling",
   independent:"Independent",
   subItem:"SubItem"//when template represents a sub-template of a base template
-}
+};
 
 Constants.selectionAddingModes = {
   addBaseTemplateChildrenForSubTemplates: "AddBaseTemplateChildrenForSubTemplates",
@@ -31,6 +40,10 @@ Constants.selectionAddingModes = {
   ignoreSubTemplates:"IgnoreSubTemplates",
   onlySubTemplates:"OnlySubTemplates"
 }
+
+Constants.selectionSettingKeys = {
+  overrideTemplateId:"OverrideTemplateId",
+};
 
 Constants.selectionTypes = {
   // For read-only or calculated values
@@ -45,11 +58,6 @@ Constants.selectionTypes = {
   selectOption: "SelectOption",
   intRange: "IntRange",
   floatRange: "FloatRange"
-};
-
-Constants.specificationGroupTypes = {
-  optional:"Optional",
-  required:"Required",
 };
 
 Constants.templateSettingKeys = {
@@ -76,10 +84,10 @@ Constants.templateSettingKeys = {
   lookupKey:"LookupKey",
   nominalThickness:"NominalThickness",
   numeratorUnit:"NumeratorUnit",
+  overrideType:"OverrideType",
   overrideValue:"OverrideValue",
   propertyToOverride:"PropertyToOverride",
   selectionType:"SelectionType",
-  specificationGroupType:"SpecificationGroupType",
   switchValue:"SwitchValue",
   switchVariable:"SwitchVariable",
   unitsText:"UnitsText",

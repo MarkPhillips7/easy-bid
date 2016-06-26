@@ -16,7 +16,7 @@ Initialization.initializeSelections = function (companyInfo, userInfo) {
 }
 
 function addSelectionsForTemplateAndChildren(templateLibrary, jobId, template, selectionValue, parentSelection, childOrder,
-                                             selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt) {
+                                             selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt, lookupData) {
   let selection = addSelectionForTemplate(templateLibrary, jobId, template, selectionValue, parentSelection, childOrder);
   addSelectionsForTemplateChildren(templateLibrary, jobId, selection, template, selectionAddingMode, templateToStopAt);
 
@@ -103,7 +103,9 @@ function addOrUpdateSelectionSettings(templateLibrary, selection, selectionSetti
       });
 
       if (existingSelectionSetting) {
-        existingSelectionSetting.value = selectionSettingToAddOrUpdate.value;
+        if (selectionSettingsToAddOrUpdate.levelFromHere >= existingSelectionSetting.levelFromHere) {
+          existingSelectionSetting.value = selectionSettingToAddOrUpdate.value;
+        }
       } else {
         newSelectionSettings.push(selectionSettingToAddOrUpdate);
       }
@@ -116,6 +118,11 @@ function addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selec
   let childTemplate = TemplateLibrariesHelper.getTemplateById(templateLibrary, templateRelationship.childTemplateId);
   let isASubTemplate = ItemTemplatesHelper.isASubTemplate(childTemplate);
   let isABaseTemplate = ItemTemplatesHelper.isABaseTemplate(childTemplate);
+
+  // Ignore optional children
+  if (templateRelationship.dependency === Constants.dependency.optionalOverride) {
+    return;
+  }
 
   if (selectionAddingMode == Constants.selectionAddingModes.handleAnything
     ||
@@ -185,9 +192,9 @@ function addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selec
           let overrideValue = _.find(childTemplate.templateSettings, (templateSetting) => {
             return templateSetting.key == "OverrideValue";
           }).value;
-          let selectionToOverride = SelectionsHelper.getSelectionToOverride(templateLibrary, selection,variableToOverride, []);
+          const {selectionToOverride, levelFromHere} = SelectionsHelper.getSelectionToOverride(templateLibrary, selection, variableToOverride, [], null, null, 0);
           if (selectionToOverride) {
-            addOrUpdateSelectionSettings(templateLibrary, selectionToOverride, [ { key: propertyToOverride, value: overrideValue } ]);
+            addOrUpdateSelectionSettings(templateLibrary, selectionToOverride, [ { key: propertyToOverride, value: overrideValue, levelFromHere } ]);
           }
         }
         else if (isASubTemplate) {

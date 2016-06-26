@@ -346,6 +346,9 @@ TemplateTypeInfoList = [{
     }, {
       value: 'ValueFormula',
       name: 'Formula'
+    }, {
+      value: 'Value',
+      name: 'Value'
     }],
     canDelete: false,
     canEdit: true,
@@ -1351,6 +1354,20 @@ const populateCustomOptions = (templateLibrary, template, metadata, selectOption
           }
         });
       }
+    } else if (customOptions === 'GetSpecificationOptions') {
+      const templateChildren = TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template);
+      _.each(templateChildren, (childTemplate) => {
+        if (childTemplate.templateType === Constants.templateTypes.condition) {
+          const switchValue = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.switchValue);
+          if (switchValue) {
+            selectOptions.push({
+              id: switchValue,
+              name: switchValue,
+              description: switchValue
+            });
+          }
+        }
+      });
     } else {
       throw new Error('Unexpected CustomOptions: ' + customOptions);
     }

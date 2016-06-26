@@ -2,7 +2,7 @@
 <div class="col-sm-7 input-group">
   <span class="input-group-addon" ng-bind-html="thebid.getUnitsText(inputSelectionItem.template)"
         data-ng-show="thebid.getUnitsText(inputSelectionItem.template) === '$'"></span>
-  <select class="form-control" ng-model="inputSelectionItem.getSelection().value"
+  <select class="form-control" ng-model="inputSelectionItem.value"
           ng-options="option.id as option.name for option in getSelectOptions()"
           data-ng-disabled="inputSelectionItem.template.templateType === 'BaseProduct'"></select>
   <span class="input-group-addon" ng-bind-html="thebid.getUnitsText(inputSelectionItem.template)"

@@ -385,7 +385,7 @@ angular.module('app')
           ? SelectionsHelper.getSettingValue(selection, template, Constants.templateSettingKeys.valueFormula)
           : ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.valueFormula);
 
-        if (selection && !valueFormula) {
+        if (!valueFormula) {
           const selectionType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.selectionType);
           if (selectionType === Constants.selectionTypes.selectOption || selectionType === Constants.selectionTypes.select) {
             scope.contentUrl = 'client/layout/views/tab-selector-select.html';
@@ -394,11 +394,31 @@ angular.module('app')
           }
         }
 
-        scope.$watch('inputSelectionItem.getSelection().value', function (newValue, oldValue) {
-          if (scope.inputSelectionItem && selection) {
-            SelectionsHelper.setSelectionValue(scope.thebid.templateLibraries, scope.pendingChanges.selections,
-              scope.pendingChanges.selectionRelationships, scope.pendingChanges.metadata, scope.thebid.lookupData, selection, newValue, oldValue,
-              selection.valueSource, Constants.valueSources.userEntry);
+        scope.$watch('inputSelectionItem.value', function (newValue, oldValue) {
+          if (newValue !== oldValue && scope.inputSelectionItem) {
+            if (selection) {
+              if (template.templateType === Constants.templateTypes.specificationGroup) {
+                SelectionsHelper.updateSpecificationGroupSelectionAndChildren(scope.thebid.templateLibraries,
+                  scope.pendingChanges, scope.thebid.lookupData, selection, template, newValue, 0);
+              } else {
+                SelectionsHelper.setSelectionValue(scope.thebid.templateLibraries, scope.pendingChanges.selections,
+                  scope.pendingChanges.selectionRelationships, scope.pendingChanges.metadata, scope.thebid.lookupData, selection, newValue, oldValue,
+                  selection.valueSource, Constants.valueSources.userEntry);
+              }
+            } else {
+              if (template.templateType === Constants.templateTypes.specificationGroup) {
+                const parentSelection = _.find(scope.pendingChanges.selections, (_selection) => _selection._id === scope.inputSelectionItem.parentSelectionId);
+                SelectionsHelper.addSpecificationGroupSelectionAndChildren(scope.thebid.templateLibraries,
+                  scope.pendingChanges, scope.thebid.lookupData, parentSelection, template, newValue, 0);
+              } else {
+                // maybe should just implement additional cases as they arise
+                // const templateLibrary = _.find(scope.thebid.templateLibraries, (templateLibrary) =>
+                //   _.some(templateLibrary.templates, (_template) => _template.id === template.id));
+                // SelectionsHelper.addSelectionForTemplate(templateLibrary, scope.pendingChanges.selections,
+                //   scope.pendingChanges.selectionRelationships, scope.pendingChanges.metadata, scope.thebid.jobId,
+                //   template, newValue, scope.inputSelectionItem.parentSelectionId, 0, scope.thebid.lookupData);
+              }
+            }
           }
         }, true);
       }

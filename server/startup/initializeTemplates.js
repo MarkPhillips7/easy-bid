@@ -406,7 +406,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       id: Random.id(),
       name: "Door Style",
       description: "Door Style",
-      templateType: Constants.templateTypes.definition,
+      templateType: Constants.templateTypes.input,
       templateSettings: [{
         id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
       }, {
@@ -434,11 +434,11 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Quality Level",
       templateType: Constants.templateTypes.specificationGroup,
       templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.specificationGroupType, value: Constants.specificationGroupTypes.required
-      }, {
         id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.select
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Specifications"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.customOptions, value: "GetSpecificationOptions"
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
       }, {
@@ -455,6 +455,30 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       parentTemplateId: templateCompany.id,
       childTemplateId: templateQualityLevel.id
     });
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      dependency: Constants.dependency.optionalOverride,
+      parentTemplateId: templateCustomer.id,
+      childTemplateId: templateQualityLevel.id
+    });
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      dependency: Constants.dependency.optionalOverride,
+      parentTemplateId: templateJob.id,
+      childTemplateId: templateQualityLevel.id
+    });
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      dependency: Constants.dependency.optionalOverride,
+      parentTemplateId: templateArea.id,
+      childTemplateId: templateQualityLevel.id
+    });
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      dependency: Constants.dependency.optionalOverride,
+      parentTemplateId: templateProductSelection.id,
+      childTemplateId: templateQualityLevel.id
+    });
 
     var templateEconomy = {
       id: Random.id(),
@@ -462,7 +486,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Less expensive options favored",
       templateType: Constants.templateTypes.condition,
       templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.conditionType, value: "switch"
+        id: Random.id(), key: Constants.templateSettingKeys.conditionType, value: Constants.conditionTypes.switch
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.switchVariable, value: "qualityLevel"
       }, {
@@ -489,6 +513,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "Wood Veneer"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.overrideType, value: Constants.overrideTypes.fromSpecificationGroup
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateEconomyDoorStyle);
@@ -511,6 +537,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "WHTMELAMINE"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.overrideType, value: Constants.overrideTypes.fromSpecificationGroup
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateEconomyInteriorMaterial);
@@ -526,7 +554,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       description: "Highest quality",
       templateType: Constants.templateTypes.condition,
       templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.conditionType, value: "switch"
+        id: Random.id(), key: Constants.templateSettingKeys.conditionType, value: Constants.conditionTypes.switch
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.switchVariable, value: "qualityLevel"
       }, {
@@ -553,6 +581,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "PLAM - 0.5mm PVC"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.overrideType, value: Constants.overrideTypes.fromSpecificationGroup
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateImperialDoorStyle);
@@ -575,6 +605,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "CHERRY"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.overrideType, value: Constants.overrideTypes.fromSpecificationGroup
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateImperialInteriorMaterial);
@@ -984,7 +1016,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "caseMaterialInteriorSku"
       }, {
-        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "CHERRY"
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "WHTMELAMINE"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateInteriorMaterial);
@@ -1002,6 +1034,12 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     cabinetryTemplateLibrary.templateRelationships.push({
       id: Random.id(),
+      parentTemplateId: templateCompany.id,
+      childTemplateId: templateInteriorMaterial.id
+    });
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      dependency: Constants.dependency.optionalOverride,
       parentTemplateId: templateJob.id,
       childTemplateId: templateInteriorMaterial.id
     });
