@@ -283,11 +283,11 @@
         total-items="bid.productSelectionIds.length"
         class="list-group-item eb-list-group-item">
       <div class="checkbox eb-list-group-item-left-checkbox">
-       <label>
-         <input type="checkbox" ng-checked="bid.isItemSelected(productSelectionId)"
-                ng-click="bid.toggleItemSelection(productSelectionId)">
-       </label>
-     </div>
+        <label>
+          <input type="checkbox" ng-checked="bid.isItemSelected(productSelectionId)"
+                 ng-click="bid.toggleItemSelection(productSelectionId)">
+        </label>
+      </div>
       <a href="" ng-click="bid.editProductSelection(productSelectionId, $event)" class="eb-list-group-item-main-a">
         <img class="eb-list-group-item-main-a-image" data-eb-img-product="{{bid.getProductImage(productSelectionId, bid)}}"/>
         <div class="eb-list-group-item-main-a-quantity">

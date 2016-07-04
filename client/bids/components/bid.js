@@ -10,11 +10,11 @@ SetModule('app');
 @View({
   templateUrl: () => 'client/bids/views/bid.html'
 })
-@Inject('$modal', '$state', '$stateParams', '$timeout', 'bootstrap.dialog', 'toastr')
+@Inject('$modal', '$scope', '$state', '$stateParams', '$timeout', 'bootstrap.dialog', 'toastr')
 @MeteorReactive
 @LocalInjectables
 class bid {
-  constructor($modal, $state, $stateParams, $timeout, bootstrapDialog, toastr) {
+  constructor($modal, $scope, $state, $stateParams, $timeout, bootstrapDialog, toastr) {
     this.itemIdsSelected = [];
     this.perPage = 50;
     this.page = 1;
@@ -192,6 +192,7 @@ class bid {
         console.log('failed to save selection changes', err);
       } else {
         console.log('success saving selection changes', result);
+        this.updateProductSelectionIds();
       }
       // this.startJobAndSelectionSubscriptions();
     });
@@ -242,12 +243,33 @@ class bid {
     job.estimateTotal = this.getJobSubtotal(metadata, selections, selectionRelationships);
   }
 
+  updateProductSelectionIds() {
+    // must not change reference to this.productSelectionIds or ng-repeat won't work.
+    // So first add selections that are missing
+    _.chain(this.selections)
+      .filter((selection) => selection.templateId === this.productSelectionTemplate.id &&
+        !_.contains(this.productSelectionIds, selection._id))
+      .each((selection) => {
+        this.productSelectionIds.push(selection._id);
+      });
+    // Now remove selections that are missing
+    let index;
+    for (index = 0; index < this.productSelectionIds.length; ) {
+      if (!_.find(this.selections, (selection) => selection._id === this.productSelectionIds[index])) {
+        this.productSelectionIds.splice(index, 1);
+        // no need to increment index since item at index has been removed
+      } else {
+        index = index + 1;
+      }
+    }
+    // Actually changing the above to not change reference to this.productSelectionIds
+    // did not seem to help. But this did the trick:
+    this.$scope.$apply();
+  }
+
   initializeSelectionVariables() {
     this.jobSelection = SelectionsHelper.getSelectionByTemplate(this.selections, this.jobTemplate);
-    this.productSelectionIds = _.chain(this.selections)
-      .filter((selection) => selection.templateId === this.productSelectionTemplate.id)
-      .map((selection) => selection._id)
-      .value();
+    this.updateProductSelectionIds();
     _.each(this.productSelectionIds, (productSelectionId) => this.setProductSelectionSelections(productSelectionId, this));
     SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata, this.lookupData);
     this.initializeJobVariables(this.job, this.metadata, this.selections, this.selectionRelationships);
@@ -422,7 +444,7 @@ class bid {
       this.$timeout(() => {
         this.areaTree.expand_all();
         this.selectAreaTreeItem(treeItemToSelect);
-      }, 50);
+      }, 100);
     }
   }
 
@@ -794,7 +816,8 @@ class bid {
       _.each(this.itemIdsSelected, (productSelectionId) => {
         const selectionToDelete =  _.find(this.selections, (selection) => selection._id === productSelectionId);
         SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, this.lookupData, selectionToDelete);
-        this.productSelectionIds = _.without(this.productSelectionIds, productSelectionId);
+        this.updateProductSelectionIds();
+        // this.productSelectionIds = _.without(this.productSelectionIds, productSelectionId);
       });
       const {job, metadata, selections, selectionRelationships} = pendingChanges;
       this.initializeJobVariables(job, metadata, selections, selectionRelationships);
@@ -817,7 +840,8 @@ class bid {
     const pendingChanges = this.getPendingChanges();
     SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, this.lookupData, selectionToDelete);
     const {job, metadata, selections, selectionRelationships} = pendingChanges;
-    this.productSelectionIds = _.without(this.productSelectionIds, productSelectionId);
+    this.updateProductSelectionIds();
+    // this.productSelectionIds = _.without(this.productSelectionIds, productSelectionId);
     // SelectionsHelper.initializeMetadata(metadata, true);
     // SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata);
     this.initializeJobVariables(job, metadata, selections, selectionRelationships);

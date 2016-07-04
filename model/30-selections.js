@@ -1303,7 +1303,7 @@ const addSelectionsForTemplateAndChildren = (templateLibrary, selections, select
 };
 
 const addSelectionChildrenOfProduct = (templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection,
-    productTemplate) => {
+    productTemplate, lookupData) => {
   //Add the template children of the base template before the sub template children because they override some of these
   const parentTemplate =  TemplateLibrariesHelper.parentTemplate(templateLibrary, productTemplate);
   const isABaseTemplate = ItemTemplatesHelper.isABaseTemplate(parentTemplate);
@@ -1312,7 +1312,7 @@ const addSelectionChildrenOfProduct = (templateLibrary, selections, selectionRel
     return;
   }
 
-  addSelectionChildrenOfProduct(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection, parentTemplate);
+  addSelectionChildrenOfProduct(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection, parentTemplate, lookupData);
 
   addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection,
       parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates, null, lookupData);
@@ -1349,7 +1349,7 @@ const addProductSelectionAndChildren = (templateLibraries, pendingChanges, looku
   var subTemplateSelection = addSelectionForTemplate(templateLibrary, selections, selectionRelationships, metadata, jobId,
       productTemplate, productTemplate.id, productSelection._id, 0, lookupData);
 
-  addSelectionChildrenOfProduct(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection, productTemplate);
+  addSelectionChildrenOfProduct(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection, productTemplate, lookupData);
 
   initializeSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, lookupData);
   // ToDo: Make this (call to initializeSelectionVariables) faster by doing something like the commented (only update the necessary selections)

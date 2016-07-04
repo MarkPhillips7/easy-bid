@@ -579,11 +579,13 @@ Schema.TemplateRelationship = new SimpleSchema({
   },
   dependency: {
     type: String,
-    defaultValue: Constants.dependency.required
+    defaultValue: Constants.dependency.required,
+    optional: true
   },
   relationToItem: {
     type: String,
-    defaultValue: Constants.relationToItem.child
+    defaultValue: Constants.relationToItem.child,
+    optional: true
   }
 });
 
