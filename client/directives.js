@@ -207,6 +207,10 @@ angular.module('app')
 
     function link(scope, element, attrs) {
       templateSettingLink(scope, element, attrs, false);
+
+      scope.$watch('templateId', function (newValue, oldValue) {
+        templateSettingLink(scope, element, attrs, false);
+      }, true);
     }
   }])
 
@@ -237,11 +241,13 @@ angular.module('app')
 
     function loadTemplateSettings(scope) {
       scope.templateSettings = [];
-
-      if (scope.template && scope.template.templateSettings) {
-        scope.templateSettings = _.filter(scope.template.templateSettings, function (templateSetting) {
-          return (templateSetting.key === scope.templateSettingInfo.templateSettingKey);
-        });
+      if (scope.templateLibrary) {
+        const template = _.find(scope.templateLibrary.templates, (_template) => _template.id === scope.templateId);
+        if (template && template.templateSettings) {
+          scope.templateSettings = _.filter(template.templateSettings, function (templateSetting) {
+            return (templateSetting.key === scope.templateSettingInfo.templateSettingKey);
+          });
+        }
       }
     }
 
@@ -437,22 +443,23 @@ angular.module('app')
   }]);
 
 function templateSettingLink(scope, element, attrs, justOneSettingValue) {
+  const template = _.find(scope.templateLibrary.templates, (_template) => _template.id === scope.templateId);
   if (attrs.ebTemplateSettings === Constants.templateSettingKeys.displayCaption) {
-    element.text(ItemTemplatesHelper.getDisplayCaption(scope.template));
+    element.text(ItemTemplatesHelper.getDisplayCaption(template));
   }
   else if (attrs.ebTemplateSettings === Constants.templateSettingKeys.unitsText) {
-    element.html(ItemTemplatesHelper.getUnitsText(scope.vm.getTemplateById(scope.templateId)));
+    element.html(ItemTemplatesHelper.getUnitsText(template));
   }
   else if (attrs.ebTemplateSettings === Constants.templateSettingKeys.belongsTo) {
-    var parentTemplate = TemplateLibrariesHelper.parentTemplate(scope.templateLibrary, scope.template);
+    var parentTemplate = TemplateLibrariesHelper.parentTemplate(scope.templateLibrary, template);
     element.text(parentTemplate ? parentTemplate.name : '');
   }
   else {
     if (justOneSettingValue) {
-      element.text(ItemTemplatesHelper.getTemplateSettingValueForTemplate(scope.template, attrs.ebTemplateSetting));
+      element.text(ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, attrs.ebTemplateSetting));
     }
     else {
-      element.text(ItemTemplatesHelper.getTemplateSettingValuesForTemplate(scope.template, attrs.ebTemplateSettings));
+      element.text(ItemTemplatesHelper.getTemplateSettingValuesForTemplate(template, attrs.ebTemplateSettings));
     }
   }
 }

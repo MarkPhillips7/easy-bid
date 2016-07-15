@@ -116,6 +116,7 @@ angular.module("app").controller("templateLibraryDetails",
         if (vm.usageMode === Constants.usageModes.classicEdit){
           vm.recordAction = Constants.recordActions.view;
         }
+        setFullProductHierarchy();
       }
     }
 
@@ -225,7 +226,9 @@ angular.module("app").controller("templateLibraryDetails",
           initialTemplate = TemplateLibrariesHelper.getRootTemplate(vm.templateLibrary);
         }
 
-        selectTemplate(initialTemplate);
+        if (initialTemplate) {
+          selectTemplate(initialTemplate);
+        }
       }
 
       populateAllDisplayCategories();
@@ -236,14 +239,16 @@ angular.module("app").controller("templateLibraryDetails",
     function populateAllDisplayCategories() {
       vm.allDisplayCategories = [];
 
-      vm.templateLibrary.templates.forEach(function (template) {
-        template.templateSettings.forEach(function (templateSetting) {
-          if (templateSetting.key === Constants.templateSettingKeys.displayCategory &&
-            vm.allDisplayCategories.indexOf(templateSetting.value) == -1) {
-            vm.allDisplayCategories.push(templateSetting.value);
-          }
+      if (vm.templateLibrary && vm.templateLibrary.templates) {
+        vm.templateLibrary.templates.forEach(function (template) {
+          template.templateSettings.forEach(function (templateSetting) {
+            if (templateSetting.key === Constants.templateSettingKeys.displayCategory &&
+              vm.allDisplayCategories.indexOf(templateSetting.value) == -1) {
+              vm.allDisplayCategories.push(templateSetting.value);
+            }
+          });
         });
-      });
+      }
     }
 
     function failure(error) {
@@ -473,6 +478,11 @@ angular.module("app").controller("templateLibraryDetails",
         return;
       }
 
+      // SpecificationGroups are like SubTemplates in that they should be ignored when ignoreSubTemplates is true
+      if (ignoreSubTemplates && template.templateType === Constants.templateTypes.specificationGroup) {
+        return;
+      }
+
       var isVariableCollector = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.isVariableCollector);
       var isThisTemplateTypePrimary = isPrimary && (isSelectedTemplateType || !isVariableCollector);
       var variableName = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.variableName);
@@ -558,7 +568,9 @@ angular.module("app").controller("templateLibraryDetails",
       if (vm.templateLibrary) {
         var rootTemplate = TemplateLibrariesHelper.getRootTemplate(vm.templateLibrary); //.getRawObject());
         var visitedTemplates = [];
-        vm.productHierarchyData.push(addItemToTreeData(getTreeDataChildren(rootTemplate, visitedTemplates), rootTemplate));
+        if (rootTemplate) {
+          vm.productHierarchyData.push(addItemToTreeData(getTreeDataChildren(rootTemplate, visitedTemplates), rootTemplate));
+        }
       }
 
       $timeout(function () {
@@ -571,7 +583,7 @@ angular.module("app").controller("templateLibraryDetails",
     }
 
     function getTreeDataChildren(template, visitedTemplates) {
-      var templateChildren = TemplateLibrariesHelper.getTemplateChildren(vm.templateLibrary, template);
+      var templateChildren = TemplateLibrariesHelper.getTemplateChildren(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
       var treeDataChildren = [];
 
       _.each(templateChildren, function (templateChild) {

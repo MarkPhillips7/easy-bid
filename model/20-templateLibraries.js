@@ -12,7 +12,14 @@ TemplateTypeInfoList = [{
   }, {
     name: 'Calculations',
     templateType: Constants.templateTypes.calculation
-  }]
+  }, {
+    name: 'Specification Groups',
+    templateType: Constants.templateTypes.specificationGroup
+  }, {
+    name: 'Lookup Data',
+    templateType: Constants.templateTypes.lookupData
+  }
+]
 }, {
   templateType: Constants.templateTypes.customer,
   displayInHierarchy: true,
@@ -41,6 +48,36 @@ TemplateTypeInfoList = [{
     name: 'Overrides',
     templateType: Constants.templateTypes.override
   }]
+}, {
+  templateType: Constants.templateTypes.lookupData,
+  displayInHierarchy: false,
+  templateSettingInfoList: [{
+    name: 'Name',
+    templateSettingKey: Constants.templateSettingKeys.displayCaption,
+    minCount: 0,
+    maxCount: 1,
+    canDelete: true,
+    canEdit: true,
+    viewShow: true,
+    editShow: true
+  }, {
+    name: 'Variable',
+    templateSettingKey: Constants.templateSettingKeys.variableName,
+    minCount: 1, //Required
+    maxCount: 1,
+    canDelete: false,
+    canEdit: true,
+    viewShow: true,
+    editShow: true
+  }, {
+    name: 'Lookup Key',
+    templateSettingKey: Constants.templateSettingKeys.lookupKey,
+    minCount: 0,
+    maxCount: 1,
+    viewShow: true,
+    editShow: true
+  }],
+  relevantTemplateTypes: []
 }, {
   templateType: Constants.templateTypes.area,
   displayInHierarchy: true,
@@ -496,6 +533,123 @@ TemplateTypeInfoList = [{
     editShow: true
   }],
   relevantTemplateTypes: []
+}, {
+  templateType: Constants.templateTypes.specificationGroup,
+  displayInHierarchy: true,
+  templateSettingInfoList: [{
+    //SelectionType should always be Select
+    name: 'Selection Type',
+    templateSettingKey: Constants.templateSettingKeys.selectionType,
+    templateSettingValue: Constants.selectionTypes.select,
+    minCount: 1, //Required
+    maxCount: 1,
+    canDelete: false,
+    canEdit: false,
+    viewShow: false,
+    editShow: false
+  }, {
+    //customOptions should always be "GetSpecificationOptions"
+    name: 'Custom Options',
+    templateSettingKey: Constants.templateSettingKeys.customOptions,
+    minCount: 1, //Required
+    maxCount: 1,
+    canDelete: false,
+    canEdit: false,
+    viewShow: false,
+    editShow: false
+  }, {
+    name: 'Display Locations',
+    templateSettingKey: Constants.templateSettingKeys.displayCategory,
+    minCount: 0,
+    maxCount: -1, //allow unlimited number
+    options: [{
+      value: 'PrimaryTableColumn',
+      name: 'Main Grid Column'
+    }, {
+      value: 'Primary',
+      name: 'Primary Tab'
+    }], //Any other existing DisplayCategory values should make up remaining options
+    viewShow: true,
+    editShow: true
+  }, {
+    name: 'Variable',
+    templateSettingKey: Constants.templateSettingKeys.variableName,
+    minCount: 1,
+    maxCount: 1,
+    canDelete: false,
+    canEdit: true,
+    viewShow: true,
+    editShow: true
+  }, {
+    name: 'Default Value',
+    templateSettingKey: Constants.templateSettingKeys.defaultValue,
+    minCount: 0,
+    maxCount: 1,
+    canDelete: false,
+    canEdit: true,
+    viewShow: true,
+    editShow: true
+  }, {
+    name: 'Belongs To',
+    templateSettingKey: Constants.templateSettingKeys.belongsTo,
+    minCount: 0,
+    maxCount: 0,//Because not a true template setting
+    canDelete: false,
+    canEdit: false,
+    viewShow: true,
+    editShow: false
+  }],
+  relevantTemplateTypes: [{
+    name: 'Specifications',
+    templateType: Constants.templateTypes.condition
+  }]
+}, {
+  templateType: Constants.templateTypes.condition,
+  displayInHierarchy: true,
+  templateSettingInfoList: [{
+    name: 'Condition Type',
+    templateSettingKey: Constants.templateSettingKeys.conditionType,
+    templateSettingValue: Constants.selectionTypes.select,
+    minCount: 0,
+    maxCount: 1,
+    options: [{
+      value: Constants.conditionTypes.switch,
+      name: 'Case'
+    }],
+    viewShow: false,
+    editShow: false
+  }, {
+    name: 'Switch Variable',
+    templateSettingKey: Constants.templateSettingKeys.switchVariable,
+    minCount: 1,
+    maxCount: 1,
+    canDelete: false,
+    canEdit: true,
+    viewShow: false,
+    editShow: false
+  }, {
+    name: 'Switch Value',
+    templateSettingKey: Constants.templateSettingKeys.switchValue,
+    minCount: 0,
+    maxCount: 1,
+    canDelete: false,
+    canEdit: true,
+    viewShow: true,
+    editShow: true
+  }, {
+    name: 'Belongs To',
+    templateSettingKey: Constants.templateSettingKeys.belongsTo,
+    minCount: 0,
+    maxCount: 0,//Because not a true template setting
+    canDelete: false,
+    canEdit: false,
+    viewShow: true,
+    editShow: false
+  }],
+  relevantTemplateTypes: [{
+    name: 'Overrides',
+    templateType: Constants.templateTypes.override
+  }]
 }];
 
 TemplateLibraries = new Mongo.Collection("templateLibraries");
@@ -806,17 +960,19 @@ function getRootTemplate(templateLibrary) {
   //check(templateLibrary, Schema.TemplateLibrary);
   var rootTemplate = null;
 
-  templateLibrary.templates.forEach(function (template) {
-    var parentTemplate = _.find(templateLibrary.templateRelationships, function (templateRelationship) {
-      return templateRelationship.childTemplateId === template.id;
-    });
+  if (templateLibrary && templateLibrary.templates) {
+      templateLibrary.templates.forEach(function (template) {
+      var parentTemplate = _.find(templateLibrary.templateRelationships, function (templateRelationship) {
+        return templateRelationship.childTemplateId === template.id;
+      });
 
-    // Return the template with no parent
-    if (!parentTemplate) {
-      rootTemplate = template;
-      return;
-    }
-  });
+      // Return the template with no parent
+      if (!parentTemplate) {
+        rootTemplate = template;
+        return;
+      }
+    });
+  }
 
   return rootTemplate;
 }
