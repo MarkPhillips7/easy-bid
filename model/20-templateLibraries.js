@@ -2,6 +2,8 @@
  * Created by Mark on 6/15/2015.
  */
 
+// import XLSX from 'xlsx';
+
 TemplateTypeInfoList = [{
   templateType: Constants.templateTypes.company,
   displayInHierarchy: true,
@@ -687,7 +689,7 @@ var itemTemplateDefinition = {
   },
   name: {
     type: String,
-    regEx: /^[a-z0-9A-z .]{3,50}$/
+    //regEx: /^[a-z0-9A-z .]{3,50}$/
   },
   description: {
     type: String,
@@ -1489,6 +1491,25 @@ const getTemplateFromTemplateName = (templateLibrary, template, templateName, vi
 //   return null;
 // };
 
+const populateLookupOptions = (templateLibrary, template, metadata, selectOptions, lookupData) => {
+  const standardLookupData = lookupData && lookupData.standard;
+  let valuesAdded = [];
+
+  if (standardLookupData) {
+    standardLookupData.forEach(function (lookup) {
+      if (LookupsHelper.isValidLookup(lookupData, Constants.lookupTypes.standard, lookup) &&
+        !_.contains(valuesAdded, lookup.value)) {
+        selectOptions.push({
+          id: lookup.value,
+          name: lookup.name,
+          description: lookup.value,
+        });
+        valuesAdded.push(lookup.value);
+      }
+    });
+  }
+}
+
 const populateCustomOptions = (templateLibrary, template, metadata, selectOptions, lookupData) => {
   const customOptions = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.customOptions);
   let sheetMaterialData;
@@ -1557,11 +1578,12 @@ const populateSelectOptions = (templateLibraries, template, metadata, forceRefre
     if (parentTemplate) {
       selectOptions = populateSelectOptions(templateLibraries, parentTemplate, metadata, forceRefresh, lookupData);
     }
-  }
-  else if (ItemTemplatesHelper.isABaseTemplate(template)) {
+  } else if (ItemTemplatesHelper.isABaseTemplate(template)) {
     addSelectOptions(templateLibrary, selectOptions, template);
-  }
-  else {
+  } else if (ItemTemplatesHelper.getTemplateSettingValueForTemplate(
+    template, Constants.templateSettingKeys.lookupType) === Constants.lookupTypes.standard) {
+    populateLookupOptions(templateLibrary, template, metadata, selectOptions, lookupData);
+  } else {
     populateCustomOptions(templateLibrary, template, metadata, selectOptions, lookupData);
   }
 
@@ -1575,7 +1597,197 @@ const getSelectOptions = (metadata, template) => {
   return metadata.selectOptions[template.id];
 }
 
+const addUnitTemplateSettings = (templateLibrary, templateId, worksheetUnitValue, order) => {
+  switch (worksheetUnitValue.toLowerCase()) {
+    case 'ea':
+      addTemplateSetting(templateLibrary, templateId, Constants.templateSettingKeys.numeratorUnit, UnitOfMeasure.units.dollars, order++);
+      break;
+    case 'pair':
+    default:
+      addTemplateSetting(templateLibrary, templateId, Constants.templateSettingKeys.numeratorUnit, UnitOfMeasure.units.dollars, order++);
+      // addTemplateSetting(templateLibrary, templateId, Constants.templateSettingKeys.denominatorUnit, UnitOfMeasure.units.pair, order++);
+      break;
+  }
+
+  return order;
+}
+
+const camelCase = (text) => {
+  const textArray = text.split(' ');
+  return _.map(textArray, (item, index) => {
+    if (index === 0) {
+      return item.toLowerCase();
+    }
+    else {
+      return item.charAt(0).toUpperCase() + item.slice(1);
+    }
+  }).join('');
+}
+
+const addProductSkuSelectorTemplate = (templateLibrary, parentTemplate) => {
+  let order = 0;
+  const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.input, parentTemplate);
+  newTemplate.name = `${parentTemplate.name} Type`;
+  newTemplate.description = newTemplate.name;
+  const lookupKey = LookupsHelper.getLookupKey(parentTemplate.name);
+  const variableName = camelCase(parentTemplate.name);
+  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.select, order++);
+  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.displayCategory, "Primary", order++);
+  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.variableName, variableName, order++);
+  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.lookupType, Constants.lookupTypes.standard, order++);
+  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.lookupKey, lookupKey, order++);
+  return newTemplate;
+}
+
+const addPriceTemplate = (templateLibrary, parentTemplate, defaultUnitsText) => {
+  let order = 0;
+  const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.override, parentTemplate);
+  newTemplate.name = `${parentTemplate.name} Price Override`;
+  const variableName = camelCase(parentTemplate.name);
+  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.isVariableOverride, 'true', order++);
+  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.variableToOverride, 'priceEach', order++);
+  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.propertyToOverride, Constants.templateSettingKeys.valueFormula, order++);
+  // addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.overrideValue, `[lookup]`, order++);
+  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.lookupType, Constants.lookupTypes.price, order++);
+  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.lookupKeyVariable, variableName, order++);
+  return newTemplate;
+}
+
+const getCellValue = (rowStartCellAddress, worksheet, columnOffset) => {
+  const columnCellAddress = {...rowStartCellAddress, c: rowStartCellAddress.c + columnOffset};
+  const columnCell = SpreadsheetUtils.encode_cell(columnCellAddress);
+  return worksheet[columnCell] && worksheet[columnCell].v;
+}
+
+const addProductSkuLookup = (templateLibrary, lookups, generalProductName, productSku, productName) => {
+  const lookupKey = LookupsHelper.getLookupKey(generalProductName);
+  // it is expected to have multiple lookups with the same key
+  lookups.push({
+    lookupType: Constants.lookupTypes.standard,
+    templateLibraryId: templateLibrary._id,
+    // supplierId,
+    key: lookupKey,
+    name: productName,
+    value: LookupsHelper.getLookupKey(productSku),
+    effectiveDate: new Date(),
+  });
+}
+
+const addPriceLookup = (templateLibrary, lookups, productSku, productName, price, unitsText) => {
+  const lookupKey = LookupsHelper.getLookupKey(productSku);
+  // should not have multiple lookups with the same key
+  if (!_.some(lookups, (lookup) => lookup.key === lookupKey)) {
+    lookups.push({
+      lookupType: Constants.lookupTypes.price,
+      templateLibraryId: templateLibrary._id,
+      // supplierId,
+      key: lookupKey,
+      name: productName,
+      value: price,
+      effectiveDate: new Date(),
+      lookupSettings: [{
+        id: Random.id(),
+        key: Constants.lookupSettingKeys.unitsText,
+        value: unitsText,
+      }],
+    });
+  }
+}
+
+const getColumnValue = (column, rowStartCellAddress, worksheet) => {
+  // 'if (column.columnOffset)' did not work because '(0)' is falsy
+  if (typeof column.columnOffset === 'number') {
+    return getCellValue(rowStartCellAddress, worksheet, column.columnOffset);
+  } else if (column.value) {
+    return column.value;
+  }
+  return undefined;
+}
+
+const getNameColumnValue = (workbookMappings, rowStartCellAddress, worksheet) => {
+  const nameColumn = _.find(workbookMappings.columns, (column) => column.header && column.header.templateProperty && column.header.templateProperty === 'name');
+  if (nameColumn) {
+    return getColumnValue(nameColumn, rowStartCellAddress, worksheet);
+  }
+  // name is at columnOffset of 0 by default
+  return getCellValue(rowStartCellAddress, worksheet, 0);
+}
+
+const addProductsFromWorkbook = (workbook, templateLibrary, lookups, parentTemplate, workbookMappings) => {
+  if (!workbook) {
+    throw 'workbook must be set in addProductsFromWorkbook';
+  }
+  const worksheet = workbook.Sheets[workbookMappings.sheet];
+  let startCellAddress = SpreadsheetUtils.decode_cell(workbookMappings.startCell);
+  console.log(`start cell = ${workbookMappings.startCell} = {r:${startCellAddress.r},c:${startCellAddress.c}} = "${worksheet[workbookMappings.startCell].v}"`);
+
+  const newTemplateName = workbookMappings.generalProductName;
+  if (!newTemplateName ||
+    _.any(templateLibrary.templates, (template) => template.name === newTemplateName)) {
+    // ToDo: maybe we should update existing template or verify it matches
+    return;
+  }
+
+  const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.product, parentTemplate);
+  newTemplate.name = newTemplateName;
+  newTemplate.description = newTemplateName;
+  let order = 0;
+  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.selectOption, order++);
+  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.isASubTemplate, 'true', order++);
+
+  addProductSkuSelectorTemplate(templateLibrary, newTemplate);
+  addPriceTemplate(templateLibrary, newTemplate, workbookMappings.defaultUnits);
+
+  for (let i = 0; i < workbookMappings.rowCount; i++) {
+    const rowStartCellAddress = {...startCellAddress, r: startCellAddress.r + i};
+    const rowStartCell = SpreadsheetUtils.encode_cell(rowStartCellAddress);
+    const rowStartCellValue = worksheet[rowStartCell] && worksheet[rowStartCell].v;
+    // Expect blank rows, just ignore them
+    if (!rowStartCellValue) {
+      continue;
+    }
+
+    const itemName = getNameColumnValue(workbookMappings, rowStartCellAddress, worksheet);
+    if (!itemName) {
+      // ||
+      // _.any(templateLibrary.templates, (template) => template.name === itemName)) {
+      // ToDo: maybe we should update existing template or verify it matches
+      continue;
+    }
+
+    addProductSkuLookup(templateLibrary, lookups, newTemplate.name, itemName, itemName);
+
+    _.each(workbookMappings.columns, (column) => {
+      const columnValue = getColumnValue(column, rowStartCellAddress, worksheet);
+      if (columnValue) {
+        // if (column.header.templateProperty) {
+        //   newTemplate[column.header.templateProperty] = columnValue;
+        // } else if (column.header.templateSettingKey) {
+        //   addTemplateSetting(templateLibrary, newTemplate.id, column.header.templateSettingKey, columnValue, order++);
+        // } else
+        if (column.header.customProperty) {
+          switch (column.header.customProperty) {
+            case 'unit':
+              unitsText = columnValue || '[none]';
+              // order = addUnitTemplateSettings(templateLibrary, newTemplate.id, columnValue, order);
+              break;
+            case 'price':
+              if (!unitsText) {
+                throw `a unit customProperty must be defined before a price customProperty`;
+              }
+              addPriceLookup(templateLibrary, lookups, itemName, itemName, columnValue, unitsText);
+              break;
+            default:
+              throw `'${column.header.customProperty}' is not a valid customProperty`;
+          }
+        }
+      }
+    });
+  }
+}
+
 TemplateLibrariesHelper = {
+  addProductsFromWorkbook,
   addTemplate,
   addTemplateSetting,
   cloneTemplateLibrary,

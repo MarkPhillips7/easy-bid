@@ -44,6 +44,11 @@ Meteor.methods({
               lookupData[lookupKeySetting.value] = SheetMaterials.find({'templateLibraryId': templateLibrary._id}).fetch();
             }
             break;
+          case 'standard':
+            if (!lookupData[lookupKeySetting.value]) {
+              lookupData[lookupKeySetting.value] = Lookups.find({'templateLibraryId': templateLibrary._id}).fetch();
+            }
+            break;
         }
       })
     });

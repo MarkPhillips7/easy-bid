@@ -701,7 +701,7 @@ class bid {
         !onlyIfShouldDisplay || this.selectionShouldDisplay(selection));
 
     const subtotal = SelectionsHelper.sumSelections(this.templateLibraries,
-      this.selections, this.selectionRelationships, this.metadata, selectionsToSum, 'priceTotal');
+      this.selections, this.selectionRelationships, this.metadata, this.lookupData, selectionsToSum, 'priceTotal');
 
     return Filters.unitsFilter(subtotal, '$');
   }

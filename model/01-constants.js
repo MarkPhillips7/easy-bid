@@ -9,6 +9,18 @@ Constants.dependency = {
   optionalOverride:"OptionalOverride"//Assumes the same setting has a default set by a parent
 };
 
+Constants.lookupSettingKeys = {
+  hardwareMaterial:"HardwareMaterial",
+  size:"Size",
+  unitsText:"UnitsText",
+};
+
+Constants.lookupTypes = {
+  label:"Label",
+  price:"Price",
+  standard:"Standard",
+};
+
 Constants.noEmailYet = "noemailyet";
 
 Constants.overrideTypes = {
@@ -82,6 +94,8 @@ Constants.templateSettingKeys = {
   isVariableOverride:"IsVariableOverride",
   levelsDeepCanOverride:"LevelsDeepCanOverride",
   lookupKey:"LookupKey",
+  lookupKeyVariable:"LookupKeyVariable",
+  lookupType:"LookupType",
   nominalThickness:"NominalThickness",
   numeratorUnit:"NumeratorUnit",
   overrideType:"OverrideType",

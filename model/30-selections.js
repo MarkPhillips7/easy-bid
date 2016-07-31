@@ -6,6 +6,7 @@ Schema.SelectionSetting = new SimpleSchema({
   },
   value: {
     type: String,
+    optional: true,
   },
   // suppose selection is a product selection, levelFromHere would be
   // -4 if override from company, -2 if job, -1 if area, 1 if cabinet, 2 if lazy susan cabinet.
@@ -496,12 +497,44 @@ const refreshSelectionsReferencingVariable =
 //   return selectionsToSum.reduce(add, 0);
 // };
 
+// const getLookupValue = (templateLibraries, selections, selectionRelationships, metadata, lookupData,
+//     selection, selectionTemplate) => {
+//   const lookupType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, Constants.templateSettingKeys.lookupType);
+//   let lookupKey = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, Constants.templateSettingKeys.lookupKey);
+//   if (!lookupKey) {
+//     const lookupKeyVariable = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, Constants.templateSettingKeys.lookupKeyVariable);
+//     const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(lookupKeyVariable);
+//     lookupKey = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
+//         selection, jsonVariableName, selection);
+//   }
+//   return LookupsHelper.getLookupValue(lookupData, lookupType, lookupKey);
+// }
+
+const replaceValueFormulaLookupValues = (templateLibraries, selections, selectionRelationships,
+    metadata, lookupData, selection, valueFormula, selectionReferencingVariable) => {
+  // expecting valueFormula like `getLookup${lookupType}(${lookupKey})`, for example `getLookupPrice(drawerSlides)`
+  // ToDo: redo this hack!!!!!
+  if (valueFormula) {
+    const indexOfRightParen = valueFormula.indexOf(')');
+    if (valueFormula.substring(0, 14) === 'getLookupPrice') {
+      const lookupType = 'Price';
+      const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(valueFormula.substring(15, indexOfRightParen));
+      const jsonVariableValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
+        selection, jsonVariableName, selectionReferencingVariable);
+      return LookupsHelper.getLookupValue(lookupData, lookupType, jsonVariableValue) || '0';
+    }
+  }
+  return valueFormula;
+}
+
 const calculateFormulaValue = (templateLibraries, selections, selectionRelationships,
-    metadata, selection, valueFormula, selectionReferencingVariable) => {
+    metadata, lookupData, selection, valueFormula, selectionReferencingVariable) => {
   if (!selection) {
     return 0;
   }
 
+  valueFormula = replaceValueFormulaLookupValues(templateLibraries, selections, selectionRelationships,
+      metadata, lookupData, selection, valueFormula, selectionReferencingVariable);
   const expr = Parser.parse(valueFormula);
   let formulaValue = 0;
   let variableValues = {};
@@ -532,7 +565,7 @@ const calculateFormulaValue = (templateLibraries, selections, selectionRelations
 };
 
 const sumSelections = (templateLibraries, selections, selectionRelationships,
-    metadata, selectionsToSum, valueFormula, selectionReferencingVariable) => {
+    metadata, lookupData, selectionsToSum, valueFormula, selectionReferencingVariable) => {
   if (!selectionsToSum) {
     return 0;
   }
@@ -541,7 +574,7 @@ const sumSelections = (templateLibraries, selections, selectionRelationships,
     const selection = _.find(selections, (_selection) => _selection._id === selectionId);
     const {formulaValue, allVariableValuesFound} = calculateFormulaValue(
         templateLibraries, selections, selectionRelationships,
-        metadata, selection, valueFormula, selectionReferencingVariable)
+        metadata, lookupData, selection, valueFormula, selectionReferencingVariable);
     return previousValue + formulaValue;
   };
 
@@ -576,7 +609,7 @@ const getDescendentSelectionIdsByTemplateType = (templateLibraries, selections, 
   return null;
 };
 
-const applyFunctionOverChildrenOfParent = (templateLibraries, selections, selectionRelationships, metadata, selection) => {
+const applyFunctionOverChildrenOfParent = (templateLibraries, selections, selectionRelationships, metadata, lookupData, selection) => {
   let returnValue = undefined;
   const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selection.templateId);
   const applicableTemplateType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
@@ -591,7 +624,7 @@ const applyFunctionOverChildrenOfParent = (templateLibraries, selections, select
 
   if (functionName.toUpperCase() === 'SUM') {
     returnValue = sumSelections(templateLibraries, selections, selectionRelationships,
-      metadata, descendentSelectionIds, valueFormula, selection);
+      metadata, lookupData, descendentSelectionIds, valueFormula, selection);
   }
   return returnValue;
 };
@@ -703,6 +736,8 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
   let defaultValue;
   let selectionJsonVariableName;
   let customLookup;
+  let lookupType;
+  // const propertyToOverride = getSettingValue(selection, selectionTemplate, Constants.templateSettingKeys.propertyToOverride);
 
   if (selectionTemplate) {
     selectionJsonVariableName = ItemTemplatesHelper.getJsonVariableName(selectionTemplate);
@@ -712,7 +747,7 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
       selectionValueSource = Constants.valueSources.lookupData;
     }
     else if (selectionTemplate.templateType === Constants.templateTypes.function) {
-      selectionValue = applyFunctionOverChildrenOfParent(templateLibraries, selections, selectionRelationships, metadata, selection);
+      selectionValue = applyFunctionOverChildrenOfParent(templateLibraries, selections, selectionRelationships, metadata, lookupData, selection);
       selectionValueSource = Constants.valueSources.calculatedValue;
     }
     //Check for a custom lookup
@@ -725,7 +760,7 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
     else if (valueFormula = getSettingValue(selection,
       selectionTemplate, Constants.templateSettingKeys.valueFormula)) {
       const {formulaValue, allVariableValuesFound} = calculateFormulaValue(templateLibraries, selections, selectionRelationships,
-          metadata, selection, valueFormula, selection);
+          metadata, lookupData, selection, valueFormula, selection);
       if (allVariableValuesFound) {
         selectionValue = formulaValue;
         selectionValueSource = Constants.valueSources.calculatedValue;
@@ -1182,6 +1217,12 @@ const addSelectionsForChildTemplateRelationship = (templateLibrary, selections,
         let variableToOverride = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.variableToOverride);
         let propertyToOverride = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.propertyToOverride);
         let overrideValue = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.overrideValue);
+        let jsonVariableName; // gets set if overrideValue determined by lookup
+        if (!overrideValue) {
+          const lookupType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.lookupType);
+          const lookupKeyVariable = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.lookupKeyVariable);
+          overrideValue = `getLookup${lookupType}(${lookupKeyVariable})`;
+        }
         let overrideType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.overrideType);
         const {selectionToOverride, levelFromHere} =
           getSelectionToOverrideOrAddIfAppropriate(templateLibrary, selection, variableToOverride,

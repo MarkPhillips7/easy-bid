@@ -1,3 +1,5 @@
+import XLSX from 'xlsx';
+
 // Should be called by initializeEverything.js
 Initialization.initializeTemplates = function(companyInfo, userInfo) {
   var templateLibraryId = TemplateLibraries.findOne({"name": "Bid Model"});
@@ -317,7 +319,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     templateLibraryId = TemplateLibraries.insert(companyBidTemplateLibrary);
 
     var cabinetryTemplateLibrary = TemplateLibrariesHelper.cloneTemplateLibrary(bidModelTemplateLibrary);
-
+    cabinetryTemplateLibrary._id = Random.id();
     cabinetryTemplateLibrary.name = 'Cabinetry';
     cabinetryTemplateLibrary.description = 'Cabinetry';
     cabinetryTemplateLibrary.ownerCompanyId = companyId;
@@ -338,6 +340,24 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     });
     templateArea = _.find(cabinetryTemplateLibrary.templates, function (template) {
       return template.templateType === Constants.templateTypes.area
+    });
+
+    var templateLookupData = {
+      id: Random.id(),
+      name: "Lookup Data",
+      description: "Standard lookup data for quick access",
+      templateType: Constants.templateTypes.lookupData,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "standardLookupData"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.lookupKey, value: "standard"
+      }]
+    };
+    cabinetryTemplateLibrary.templates.push(templateLookupData);
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateCompany.id,
+      childTemplateId: templateLookupData.id
     });
 
     var templateSheetMaterialData = {
@@ -381,6 +401,85 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     //  parentTemplateId: templateProduct.id,
     //  childTemplateId: templateLabor.id
     //});
+
+    // const priceEachMappings = [{
+    //   header: { templateSettingKey: Constants.templateSettingKeys.isVariableOverride, },
+    //   value: 'true',
+    // }, {
+    //   header: { templateSettingKey: Constants.templateSettingKeys.variableToOverride, },
+    //   value: 'priceEach',
+    // }, {
+    //   header: { templateSettingKey: Constants.templateSettingKeys.propertyToOverride, },
+    //   value: Constants.templateSettingKeys.valueFormula,
+    // }];
+    const workbookMetadata = {
+      drawerSlides: {
+        generalProductName: 'Drawer Slides',
+        defaultUnits: 'pair',
+        sheet: 'Price List',
+        startCell: 'C165',
+        rowCount: 54,
+        columns: [
+          // ...priceEachMappings,
+          // name is at columnOffset of 0 by default so commented
+          // {
+          //   header: { templateProperty: 'name', },
+          //   columnOffset: 0,
+          // },
+          {
+            header: { customProperty: 'unit', },
+            value: 'Pair', // columnOffset: 2, // 'E165'
+          }, {
+            header: { customProperty: 'price', }, // override priceEach
+            columnOffset: 1, // 'D165'
+          }
+        ],
+        category: {
+          name: 'Hardware',
+        },
+      },
+      hinges: {
+        generalProductName: 'Hinge',
+        defaultUnits: 'each',
+        sheet: 'Price List',
+        startCell: 'C139',
+        rowCount: 3,
+        columns: [
+          //...priceEachMappings,
+          {
+            header: { templateProperty: 'name', },
+            columnOffset: 0,
+          }, {
+            header: { templateProperty: 'description', },
+            columnOffset: 1, // D139 since startCell is C139
+          }, {
+            header: { customProperty: 'unit', },
+            columnOffset: 2, // 'E139'
+          }, {
+            header: { templateSettingKey: Constants.templateSettingKeys.overrideValue, }, // overriding priceEach
+            columnOffset: 3, // 'F139'
+          }, {
+            header: { conditionProperty: 'hardwareMaterial', },
+            absoluteRowOffset: -11, // 'F$128'
+            columnOffset: 3, // 'F$128'
+            columnCount: 4, // F$128, G$128, H$128, I$128
+          }
+        ],
+        category: {
+          name: 'Hardware',
+          subcategory: {
+            name: 'Hinges',
+          },
+        },
+      }
+    };
+    let lookups = [];
+    const workbook = XLSX.readFile(process.env.PWD + '/server/startup/Spreadsheet Estimator V2.1.xlsx');
+    TemplateLibrariesHelper.addProductsFromWorkbook(workbook, cabinetryTemplateLibrary, lookups, templateProduct, workbookMetadata.drawerSlides);
+    // TemplateLibrariesHelper.addTemplatesFromSpreadsheet(spreadsheet, cabinetryTemplateLibrary, lookups, templateProduct, spreadsheetMetadata.hinges);
+    _.each(lookups, (lookup) => {
+      Lookups.insert(lookup);
+    });
 
     var templateCabinet = {
       id: Random.id(),

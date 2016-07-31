@@ -155,6 +155,10 @@ function addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selec
       case Constants.templateTypes.productSelection:
         _.each(TemplateLibrariesHelper.getAllSubTemplatesOfBaseTemplateChild(templateLibrary, childTemplate),
           (subTemplate, index, list) => {
+            if (subTemplate.name !== 'Lazy Susan Cabinet') {
+              return;
+            }
+
             //Add the product selection
             let productSelection = addSelectionsForTemplateAndChildren(templateLibrary, jobId, childTemplate, null, selection, index + 1,
               Constants.selectionAddingModes.ignoreBaseTemplates);
