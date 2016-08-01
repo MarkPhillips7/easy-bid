@@ -513,15 +513,19 @@ const refreshSelectionsReferencingVariable =
 const replaceValueFormulaLookupValues = (templateLibraries, selections, selectionRelationships,
     metadata, lookupData, selection, valueFormula, selectionReferencingVariable) => {
   // expecting valueFormula like `getLookup${lookupType}(${lookupKey})`, for example `getLookupPrice(drawerSlides)`
-  // ToDo: redo this hack!!!!!
   if (valueFormula) {
-    const indexOfRightParen = valueFormula.indexOf(')');
-    if (valueFormula.substring(0, 14) === 'getLookupPrice') {
-      const lookupType = 'Price';
-      const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(valueFormula.substring(15, indexOfRightParen));
-      const jsonVariableValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
-        selection, jsonVariableName, selectionReferencingVariable);
-      return LookupsHelper.getLookupValue(lookupData, lookupType, jsonVariableValue) || '0';
+    const lookupMatches = Formulas.findLookups(valueFormula);
+    if (lookupMatches) {
+      _.each(lookupMatches, (lookupMatch) => {
+        const {lookupType, templateVariableName} = Formulas.parseLookupInfo(lookupMatch);
+        if (lookupType && templateVariableName) {
+          const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(templateVariableName);
+          const jsonVariableValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
+            selection, jsonVariableName, selectionReferencingVariable);
+          const lookupValue = LookupsHelper.getLookupValue(lookupData, lookupType, jsonVariableValue) || '0';
+          valueFormula = valueFormula.replace(lookupMatch, lookupValue);
+        }
+      });
     }
   }
   return valueFormula;
