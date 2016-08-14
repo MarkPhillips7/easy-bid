@@ -955,6 +955,24 @@ const initializeMetadata = (metadata, leaveSelectionIdsToBeInserted) => {
   if (!leaveSelectionIdsToBeInserted) {
     metadata.selectionIdsToBeInserted = [];
   }
+
+  // tabPages should be like
+  //   [
+  //     {
+  //       name: 'All',
+  //       templateIds: [
+  //         '23kmEd92MhLdc4ww6', // id of template
+  //         'wHHJKRr2MhLdc4GkT', // id of template
+  //       ]
+  //     },
+  //     {
+  //       name: 'Hardware',
+  //       templateIds: [
+  //         '23kmEd92MhLdc4ww6', // id of template
+  //       ]
+  //     },
+  //   ]
+  metadata.tabPages = [];
 };
 
 const getInitializedMetadata = () => {
@@ -1323,7 +1341,7 @@ const addSelectionsForTemplateChildren = (templateLibrary, selections, selection
       //If this template is not a base template then still need to add selections for children of parent template(s)
       if (!isABaseTemplate)
       {
-        _.each(TemplateLibrariesHelper.parentTemplates(templateLibrary, template), (parentTemplate) => {
+        _.each(TemplateLibrariesHelper.getTemplateParents(templateLibrary, template), (parentTemplate) => {
           addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata,
             jobId, selection, parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates, null, lookupData);
         });
@@ -1350,7 +1368,7 @@ const addSelectionsForTemplateAndChildren = (templateLibrary, selections, select
 const addSelectionChildrenOfProduct = (templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection,
     productTemplate, lookupData) => {
   //Add the template children of the base template before the sub template children because they override some of these
-  const parentTemplate =  TemplateLibrariesHelper.parentTemplate(templateLibrary, productTemplate);
+  const parentTemplate =  TemplateLibrariesHelper.getTemplateParent(templateLibrary, productTemplate);
   const isABaseTemplate = ItemTemplatesHelper.isABaseTemplate(parentTemplate);
   const isASubTemplate = ItemTemplatesHelper.isASubTemplate(parentTemplate);
   if (!isABaseTemplate && !isASubTemplate) {

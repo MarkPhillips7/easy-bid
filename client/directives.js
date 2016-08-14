@@ -451,7 +451,7 @@ function templateSettingLink(scope, element, attrs, justOneSettingValue) {
     element.html(ItemTemplatesHelper.getUnitsText(template));
   }
   else if (attrs.ebTemplateSettings === Constants.templateSettingKeys.belongsTo) {
-    var parentTemplate = TemplateLibrariesHelper.parentTemplate(scope.templateLibrary, template);
+    var parentTemplate = TemplateLibrariesHelper.getTemplateParent(scope.templateLibrary, template);
     element.text(parentTemplate ? parentTemplate.name : '');
   }
   else {

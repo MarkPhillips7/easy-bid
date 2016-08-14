@@ -133,11 +133,24 @@ class bid {
     });
   };
 
+  getProductOptions(tabPageName) {
+    if (!tabPageName || !this.productOptions || !this.metadata || !this.metadata.tabPages) {
+      return [];
+    }
+    const tabPage = _.find(this.metadata.tabPages, (_tabPage) => _tabPage.name === tabPageName);
+    if (!tabPage) {
+      return [];
+    }
+    return _.filter(this.productOptions, (productOption) => {
+      return _.some(tabPage.templateIds, (templateId) => templateId === productOption.id);
+    });
+  }
+
   initializeTemplateVariables() {
     this.areaTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.area);
     this.jobTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.job);
     this.productSelectionTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.productSelection);
-    this.productTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.product);
+    this.productTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.baseProduct);
     this.columnTemplates = this.getTemplatesByTemplateSetting('DisplayCategory', 'PrimaryTableColumn');
     this.productCategories = [
       {
@@ -155,6 +168,7 @@ class bid {
     ];
     this.productOptions = TemplateLibrariesHelper.populateSelectOptions(this.templateLibraries, this.productTemplate,
       this.metadata, false, this.lookupData);
+    TemplateLibrariesHelper.populateTabPages(this.templateLibraries, this.productTemplate, this.metadata);
   }
 
   // restoreOriginalData() {
@@ -880,7 +894,7 @@ class bid {
       pendingChanges = this.getPendingChanges();
     }
     this.selectedProductSelectionId = productSelectionId;
-    this.setTabs(pendingChanges);
+    this.setTabs(pendingChanges, productSelectionId);
     const modalInstance = this.$modal.open({
       templateUrl: 'client/product-selections/views/product-selection-edit.html',
       controller: 'productSelection',
@@ -1045,8 +1059,8 @@ class bid {
     return tabs;
   };
 
-  setTabs(pendingChanges) {
-    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(this.templateLibraries);
+  setTabs(pendingChanges, productSelectionId) {
+    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(pendingChanges, this.templateLibraries, productSelectionId);
     this.tabs = this.getTabsFromTemplates(templatesForTabs, pendingChanges);
 
     //Initialize first tab as selected

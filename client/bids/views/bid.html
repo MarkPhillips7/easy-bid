@@ -212,25 +212,30 @@
       </div>
       <div class="eb-top-buffer">
         <tabset>
-          <tab heading="All">
+          <tab data-ng-repeat="tabPage in bid.metadata.tabPages" heading="{{tabPage.name}}">
             <div class="list-group">
-              <a href="" data-ng-repeat="option in bid.productOptions"
+              <a href="" data-ng-repeat="option in bid.getProductOptions(tabPage.name)"
                  class="list-group-item" ng-click="bid.addProductSelectionOption(option)">
-
-
                 <p class="list-group-item-text">
                     <img data-eb-img-product="{{option.imageSource}}"/>{{option.name}}
                 </p>
-                <!--<p class="list-group-item-text">Put something here...</p>-->
-
-
+              </a>
+            </div>
+          </tab>
+          <!-- <tab heading="All">
+            <div class="list-group">
+              <a href="" data-ng-repeat="option in bid.productOptions"
+                 class="list-group-item" ng-click="bid.addProductSelectionOption(option)">
+                <p class="list-group-item-text">
+                    <img data-eb-img-product="{{option.imageSource}}"/>{{option.name}}
+                </p>
               </a>
             </div>
           </tab>
           <tab heading="Base Cabs"></tab>
           <tab heading="Wall Cabs"></tab>
           <tab heading="Tall Cabs"></tab>
-          <tab heading="Moulding"></tab>
+          <tab heading="Moulding"></tab> -->
         </tabset>
       </div>
       <div class="clearfix"></div>

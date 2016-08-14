@@ -1047,7 +1047,7 @@ function getChildTemplateRelationships(templateLibrary, parentTemplateId, depend
   });
 }
 
-function parentTemplate(templateLibrary, template, dependenciesToIgnore) {
+function getTemplateParent(templateLibrary, template, dependenciesToIgnore) {
   if (templateLibrary && template) {
     var templateRelationship = _.find(templateLibrary.templateRelationships, function (relationship) {
       return relationship.childTemplateId === template.id
@@ -1063,7 +1063,7 @@ function parentTemplate(templateLibrary, template, dependenciesToIgnore) {
   return null;
 }
 
-function parentTemplates(templateLibrary, template, dependenciesToIgnore) {
+function getTemplateParents(templateLibrary, template, dependenciesToIgnore) {
   var parentTemplates = [];
 
   if (templateLibrary && template) {
@@ -1074,7 +1074,7 @@ function parentTemplates(templateLibrary, template, dependenciesToIgnore) {
 
     parentTemplates = _.map(parentTemplateRelationships, function (templateRelationship) {
       return _.find(templateLibrary.templates, function (templ) {
-        return templ.id == templateRelationship.parentTemplateId;
+        return templ.id === templateRelationship.parentTemplateId;
       })
     });
   }
@@ -1403,13 +1403,101 @@ const getTemplateSettingsForTabs = (template) => {
   });
 };
 
-const getTemplatesForTabs = (templateLibraries) => {
+// Of the children of the product selection return the template of the one whose templateType is Product
+const  getProductTemplate = ({selections, selectionRelationships}, templateLibraries, productSelectionId) => {
+  const productSelection = _.find(selections, (_selection) => _selection._id === productSelectionId);
+  const childSelectionIds = _.chain(selectionRelationships)
+      .filter((relationship) => relationship.parentSelectionId === productSelectionId)
+      .map((relationship) => relationship.childSelectionId)
+      .value();
+  let productTemplate = null;
+  _.find(childSelectionIds, (childSelectionId) => {
+    const childSelection = _.find(selections, (_selection) => _selection._id === childSelectionId);
+    _.find(templateLibraries, (templateLibrary) => {
+      const childSelectionTemplate = _.find(templateLibrary.templates,
+        (template) => template.id === childSelection.templateId);
+      if (childSelectionTemplate && childSelectionTemplate.templateType === Constants.templateTypes.product) {
+        productTemplate = childSelectionTemplate;
+        return true;
+      }
+      return false;
+    })
+    return productTemplate;
+  });
+  return productTemplate;
+};
+
+// return whether there is a direct relationship where candidateTemplate is a child of targetTemplate
+// or (if templateTypeCandidates is specified) where candidateTemplate is a child of a parent of
+// targetTemplate (or its parent, .etc.) that is of an appropriate template type.
+// Essentially trying to determine if candidateTemplate belongs to a product or one of its base products.
+const getAncestorRelationship = (templateLibrary, candidateTemplate, targetTemplate, templateTypeCandidates) => {
+  if (!targetTemplate) {
+    return null;
+  }
+  if (templateTypeCandidates && !_.some(templateTypeCandidates,
+    (templateTypeCandidate) => templateTypeCandidate === targetTemplate.templateType)) {
+    return null;
+  }
+  const candidateTemplateParents = getTemplateParents(templateLibrary, candidateTemplate, []);
+  let qualifyingRelationship = _.find(candidateTemplateParents, (parentTemplate) => {
+    if (!parentTemplate || !targetTemplate) {
+      return null;
+    }
+    return parentTemplate.id === targetTemplate.id;
+  });
+  if (!qualifyingRelationship && templateTypeCandidates) {
+    const targetTemplateParents = getTemplateParents(templateLibrary, targetTemplate, []);
+    _.find(targetTemplateParents, (parentTemplate) => {
+      qualifyingRelationship = getAncestorRelationship(templateLibrary, candidateTemplate, parentTemplate, templateTypeCandidates);
+      return qualifyingRelationship;
+    });
+  }
+  return qualifyingRelationship;
+};
+
+// A template is appropriate for tabs (the tabs when editing a product selection) based on the following rules:
+// 1) One of these must be true:
+//    candidateTemplate has a templateRelationship where it is the child of targetTemplate.
+//    candidateTemplate has a templateRelationship where it is the child of productTemplate or a base template of productTemplate.
+// 2) candidateTemplate cannot be a product (or base product)
+// 3) If candidateTemplate has a userRole then the user must have that role (ToDo: implement)
+// 4) There must be no template higher in the hierarchy with a noOverride templateSetting (ToDo: implement)
+// 5) There must be no selection higher in the hierarchy with a noOverride selectionSetting (ToDo: implement)
+const templateIsAppropriateForTabs = (templateLibrary, candidateTemplate, targetTemplate, productTemplate) => {
+  // 1) One of these must be true:
+  //    candidateTemplate has a templateRelationship where it is the child of targetTemplate.
+  //    candidateTemplate has a templateRelationship where it is the child of productTemplate or a base template of productTemplate.
+  let qualifyingRelationship = getAncestorRelationship(templateLibrary, candidateTemplate, targetTemplate, null);
+  if (!qualifyingRelationship && productTemplate) {
+    qualifyingRelationship = getAncestorRelationship(templateLibrary, candidateTemplate, productTemplate,
+      [Constants.templateTypes.product, Constants.templateTypes.baseProduct]);
+  }
+  if (!qualifyingRelationship) {
+    return false;
+  }
+
+  // 2) candidateTemplate cannot be a product (or base product)
+  if (candidateTemplate.templateType === Constants.templateTypes.product) {
+    return false;
+  }
+
+  return true;
+};
+
+const getTemplatesForTabs = (pendingChanges, templateLibraries, selectionId) => {
+  const {selections} = pendingChanges;
+  const selection = _.find(selections, (_selection) => _selection._id === selectionId);
+  const selectionTemplate = getTemplateById(templateLibraries, selection.templateId);
+  const productTemplate = selectionTemplate.templateType === Constants.templateTypes.productSelection
+    ? getProductTemplate(pendingChanges, templateLibraries, selectionId) : null;
   const templates = [];
   const templateToTemplateLibrary = {};
   _.each(templateLibraries, (templateLibrary) => {
     _.each(templateLibrary.templates, (template) => {
-      const templateSettingsForTabs = getTemplateSettingsForTabs(template);
-      if (templateSettingsForTabs.length > 0 && _.indexOf(templates, template) === -1 ) {
+      // const templateSettingsForTabs = getTemplateSettingsForTabs(template);
+      // if (templateSettingsForTabs.length > 0 && _.indexOf(templates, template) === -1 ) {
+      if (templateIsAppropriateForTabs(templateLibrary, template, selectionTemplate, productTemplate)) {
         templates.push(template);
         templateToTemplateLibrary[template] = templateLibrary;
       }
@@ -1473,7 +1561,7 @@ const getTemplateFromTemplateName = (templateLibrary, template, templateName, vi
   }
 
   //Now check parent(s)
-  const templateParents = TemplateLibrariesHelper.parentTemplates(templateLibrary, template);
+  const templateParents = TemplateLibrariesHelper.getTemplateParents(templateLibrary, template);
   _.find(templateParents, (parentTemplate) => {
     return getTemplateFromTemplateName(templateLibrary, parentTemplate, templateName, visitedTemplates);
   });
@@ -1574,7 +1662,7 @@ const populateSelectOptions = (templateLibraries, template, metadata, forceRefre
   let selectOptions = [];
 
   if (ItemTemplatesHelper.isASubTemplate(template)) {
-    const parentTemplate = TemplateLibrariesHelper.parentTemplate(templateLibrary, template);
+    const parentTemplate = TemplateLibrariesHelper.getTemplateParent(templateLibrary, template);
     if (parentTemplate) {
       selectOptions = populateSelectOptions(templateLibraries, parentTemplate, metadata, forceRefresh, lookupData);
     }
@@ -1590,6 +1678,42 @@ const populateSelectOptions = (templateLibraries, template, metadata, forceRefre
   metadata.selectOptions[template.id] = selectOptions;
 
   return selectOptions;
+}
+
+const populateTabPages = (templateLibraries, template, metadata) => {
+  const selectOptions = metadata.selectOptions[template.id];
+  const tabPageAll = {
+    name: 'All',
+    templateIds: [],
+  };
+  const tabPages = [tabPageAll];
+  _.each(selectOptions, (selectOption) => {
+    const selectOptionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selectOption.id);
+    const selectOptionTabPageNames = ItemTemplatesHelper.getTemplateSettingValuesForTemplate(
+      selectOptionTemplate, Constants.templateSettingKeys.displayCategory);
+
+    // First put products on the All page
+    if (!_.contains(tabPageAll.templateIds, selectOptionTemplate.id)) {
+      tabPageAll.templateIds.push(selectOptionTemplate.id);
+    }
+
+    // Now add products to the explicitly identified tab pages
+    _.each(selectOptionTabPageNames, (selectOptionTabPageName) => {
+      const tabPage = _.find(tabPages, (_tabPage) => _tabPage.name === selectOptionTabPageName);
+      if (tabPage) {
+        if (!_.contains(tabPage.templateIds, selectOptionTemplate.id)) {
+          tabPage.templateIds.push(selectOptionTemplate.id);
+        }
+      } else {
+        tabPages.push({
+          name: selectOptionTabPageName,
+          templateIds: [selectOptionTemplate.id],
+        });
+      }
+    });
+  });
+  metadata.tabPages = tabPages;
+  return tabPages;
 }
 
 const getSelectOptions = (metadata, template) => {
@@ -1734,6 +1858,9 @@ const addProductsFromWorkbook = (workbook, templateLibrary, lookups, parentTempl
   let order = 0;
   addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.selectOption, order++);
   addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.isASubTemplate, 'true', order++);
+  if (workbookMappings.category && workbookMappings.category.name) {
+    addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.displayCategory, workbookMappings.category.name);
+  }
 
   addProductSkuSelectorTemplate(templateLibrary, newTemplate);
   addPriceTemplate(templateLibrary, newTemplate, workbookMappings.defaultUnits);
@@ -1809,7 +1936,8 @@ TemplateLibrariesHelper = {
   getTemplatesByTemplateSetting,
   getTemplatesForTabs,
   getTemplateSettingsForTabs,
-  parentTemplate,
-  parentTemplates,
+  getTemplateParent,
+  getTemplateParents,
   populateSelectOptions,
+  populateTabPages,
 }

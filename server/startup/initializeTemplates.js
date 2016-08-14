@@ -2,308 +2,312 @@ import XLSX from 'xlsx';
 
 // Should be called by initializeEverything.js
 Initialization.initializeTemplates = function(companyInfo, userInfo) {
-  var templateLibraryId = TemplateLibraries.findOne({"name": "Bid Model"});
+  const initializeBidModelTemplateLibrary = () => {
+    var templateLibrary = {
+      name: "Bid Model",
+      description: "Bid Model",
+      isReadOnly: true,
+      isPublic: true,
+      //imageUrl: templateLibrary.websiteUrl,
+      //ownerCompanyId:
+      createdBy: userInfo.systemAdminUserId,
+      templates: [],
+      templateRelationships: []
+    };
+
+    var templateCompany = {
+      id: Random.id(),
+      name: "Company",
+      description: "Company that provides service",
+      templateType: Constants.templateTypes.company,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
+      }]
+    };
+    templateLibrary.templates.push(templateCompany);
+
+    var templateCustomer = {
+      id: Random.id(),
+      name: "Customer",
+      description: "Customer requesting a bid",
+      templateType: Constants.templateTypes.customer,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
+      }]
+    };
+    templateLibrary.templates.push(templateCustomer);
+    templateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateCompany.id,
+      childTemplateId: templateCustomer.id
+    });
+
+    var templateJob = {
+      id: Random.id(),
+      name: "Job",
+      description: "The job or project being bid",
+      templateType: Constants.templateTypes.job,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
+      }]
+    };
+    templateLibrary.templates.push(templateJob);
+    templateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateCustomer.id,
+      childTemplateId: templateJob.id
+    });
+
+    var templateJobSubtotal = {
+      id: Random.id(),
+      name: "Job Subtotal",
+      description: "Job Subtotal",
+      templateType: Constants.templateTypes.function,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.notApplicable
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Job Subtotal"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "jobSubtotal"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.function, value: "SUM"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.applicableTemplateType, value: "Area"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "areaSubtotal"
+      }]
+    };
+    templateLibrary.templates.push(templateJobSubtotal);
+    templateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateJob.id,
+      childTemplateId: templateJobSubtotal.id
+    });
+
+    var templateArea = {
+      id: Random.id(),
+      name: "Area",
+      description: "Area",
+      templateType: Constants.templateTypes.area,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "area"
+      }]
+    };
+    templateLibrary.templates.push(templateArea);
+    templateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateJob.id,
+      childTemplateId: templateArea.id
+    });
+    templateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateArea.id,
+      childTemplateId: templateArea.id,
+      dependency: Constants.dependency.optionalExplicit
+    });
+
+    var templateAreaSubtotal = {
+      id: Random.id(),
+      name: "Area Subtotal",
+      description: "Area Subtotal",
+      templateType: Constants.templateTypes.function,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.notApplicable
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Area Subtotal"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "areaSubtotal"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.function, value: "SUM"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.applicableTemplateType, value: "ProductSelection"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "priceTotal"
+      }]
+    };
+    templateLibrary.templates.push(templateAreaSubtotal);
+    templateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateArea.id,
+      childTemplateId: templateAreaSubtotal.id
+    });
+
+    var templateProductSelection = {
+      id: Random.id(),
+      name: "Product Selection",
+      description: "Product Selection",
+      templateType: Constants.templateTypes.productSelection,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableRow"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
+      }]
+    };
+    templateLibrary.templates.push(templateProductSelection);
+    templateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateArea.id,
+      childTemplateId: templateProductSelection.id
+    });
+
+    var templateProduct = {
+      id: Random.id(),
+      name: "Product",
+      description: "Product",
+      templateType: Constants.templateTypes.baseProduct,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.isABaseTemplate, value: "true"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.select
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "2"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "product"
+      }]
+    };
+    templateLibrary.templates.push(templateProduct);
+    templateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateProductSelection.id,
+      childTemplateId: templateProduct.id
+    });
+
+    var templatePriceEach = {
+      id: Random.id(),
+      name: "Price Each",
+      description: "Price Each",
+      templateType: Constants.templateTypes.calculation,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Each"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "99"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "priceEach"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "111111.11" //Ridiculous value that better be overridden
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
+      }]
+    };
+    templateLibrary.templates.push(templatePriceEach);
+    templateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateProductSelection.id,
+      childTemplateId: templatePriceEach.id
+    });
+
+    var templatePriceTotal = {
+      id: Random.id(),
+      name: "Price Total",
+      description: "Price Total",
+      templateType: Constants.templateTypes.calculation,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Total"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "100"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "priceTotal"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "(priceEach * quantity)"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
+      }]
+    };
+    templateLibrary.templates.push(templatePriceTotal);
+    templateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateProductSelection.id,
+      childTemplateId: templatePriceTotal.id
+    });
+
+    var templateAreaColumn = {
+      id: Random.id(),
+      name: "Area Column",
+      description: "Area Column",
+      templateType: Constants.templateTypes.variableDisplay,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.notApplicable
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Area"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableToDisplay, value: "area"
+      }]
+    };
+    templateLibrary.templates.push(templateAreaColumn);
+    templateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateProductSelection.id,
+      childTemplateId: templateAreaColumn.id
+    });
+
+    var templateQuantity = {
+      id: Random.id(),
+      name: "Quantity",
+      description: "Quantity",
+      templateType: Constants.templateTypes.input,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Quantity"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "33"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "quantity"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "1"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "70"
+      }]
+    };
+    templateLibrary.templates.push(templateQuantity);
+    templateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateProductSelection.id,
+      childTemplateId: templateQuantity.id
+    });
+
+    return TemplateLibraries.insert(templateLibrary);
+  };
+
+  let templateLibraryId = TemplateLibraries.findOne({"name": "Bid Model"});
 
   if (templateLibraryId) {
     return;
   }
 
-  var templateLibrary = {
-    name: "Bid Model",
-    description: "Bid Model",
-    isReadOnly: true,
-    isPublic: true,
-    //imageUrl: templateLibrary.websiteUrl,
-    //ownerCompanyId:
-    createdBy: userInfo.systemAdminUserId,
-    templates: [],
-    templateRelationships: []
-  };
-
-  var templateCompany = {
-    id: Random.id(),
-    name: "Company",
-    description: "Company that provides service",
-    templateType: Constants.templateTypes.company,
-    templateSettings: [{
-      id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
-    }]
-  };
-  templateLibrary.templates.push(templateCompany);
-
-  var templateCustomer = {
-    id: Random.id(),
-    name: "Customer",
-    description: "Customer requesting a bid",
-    templateType: Constants.templateTypes.customer,
-    templateSettings: [{
-      id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
-    }]
-  };
-  templateLibrary.templates.push(templateCustomer);
-  templateLibrary.templateRelationships.push({
-    id: Random.id(),
-    parentTemplateId: templateCompany.id,
-    childTemplateId: templateCustomer.id
-  });
-
-  var templateJob = {
-    id: Random.id(),
-    name: "Job",
-    description: "The job or project being bid",
-    templateType: Constants.templateTypes.job,
-    templateSettings: [{
-      id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
-    }]
-  };
-  templateLibrary.templates.push(templateJob);
-  templateLibrary.templateRelationships.push({
-    id: Random.id(),
-    parentTemplateId: templateCustomer.id,
-    childTemplateId: templateJob.id
-  });
-
-  var templateJobSubtotal = {
-    id: Random.id(),
-    name: "Job Subtotal",
-    description: "Job Subtotal",
-    templateType: Constants.templateTypes.function,
-    templateSettings: [{
-      id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.notApplicable
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Job Subtotal"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "jobSubtotal"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.function, value: "SUM"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.applicableTemplateType, value: "Area"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "areaSubtotal"
-    }]
-  };
-  templateLibrary.templates.push(templateJobSubtotal);
-  templateLibrary.templateRelationships.push({
-    id: Random.id(),
-    parentTemplateId: templateJob.id,
-    childTemplateId: templateJobSubtotal.id
-  });
-
-  var templateArea = {
-    id: Random.id(),
-    name: "Area",
-    description: "Area",
-    templateType: Constants.templateTypes.area,
-    templateSettings: [{
-      id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "area"
-    }]
-  };
-  templateLibrary.templates.push(templateArea);
-  templateLibrary.templateRelationships.push({
-    id: Random.id(),
-    parentTemplateId: templateJob.id,
-    childTemplateId: templateArea.id
-  });
-  templateLibrary.templateRelationships.push({
-    id: Random.id(),
-    parentTemplateId: templateArea.id,
-    childTemplateId: templateArea.id,
-    dependency: Constants.dependency.optionalExplicit
-  });
-
-  var templateAreaSubtotal = {
-    id: Random.id(),
-    name: "Area Subtotal",
-    description: "Area Subtotal",
-    templateType: Constants.templateTypes.function,
-    templateSettings: [{
-      id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.notApplicable
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Area Subtotal"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "areaSubtotal"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.function, value: "SUM"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.applicableTemplateType, value: "ProductSelection"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "priceTotal"
-    }]
-  };
-  templateLibrary.templates.push(templateAreaSubtotal);
-  templateLibrary.templateRelationships.push({
-    id: Random.id(),
-    parentTemplateId: templateArea.id,
-    childTemplateId: templateAreaSubtotal.id
-  });
-
-  var templateProductSelection = {
-    id: Random.id(),
-    name: "Product Selection",
-    description: "Product Selection",
-    templateType: Constants.templateTypes.productSelection,
-    templateSettings: [{
-      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableRow"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.isVariableCollector, value: "true"
-    }]
-  };
-  templateLibrary.templates.push(templateProductSelection);
-  templateLibrary.templateRelationships.push({
-    id: Random.id(),
-    parentTemplateId: templateArea.id,
-    childTemplateId: templateProductSelection.id
-  });
-
-  var templateProduct = {
-    id: Random.id(),
-    name: "Product",
-    description: "Product",
-    templateType: Constants.templateTypes.baseProduct,
-    templateSettings: [{
-      id: Random.id(), key: Constants.templateSettingKeys.isABaseTemplate, value: "true"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.select
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "2"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "product"
-    }]
-  };
-  templateLibrary.templates.push(templateProduct);
-  templateLibrary.templateRelationships.push({
-    id: Random.id(),
-    parentTemplateId: templateProductSelection.id,
-    childTemplateId: templateProduct.id
-  });
-
-  var templatePriceEach = {
-    id: Random.id(),
-    name: "Price Each",
-    description: "Price Each",
-    templateType: Constants.templateTypes.calculation,
-    templateSettings: [{
-      id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Each"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "99"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "priceEach"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "111111.11" //Ridiculous value that better be overridden
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
-    }]
-  };
-  templateLibrary.templates.push(templatePriceEach);
-  templateLibrary.templateRelationships.push({
-    id: Random.id(),
-    parentTemplateId: templateProductSelection.id,
-    childTemplateId: templatePriceEach.id
-  });
-
-  var templatePriceTotal = {
-    id: Random.id(),
-    name: "Price Total",
-    description: "Price Total",
-    templateType: Constants.templateTypes.calculation,
-    templateSettings: [{
-      id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Total"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "100"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "priceTotal"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "(priceEach * quantity)"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
-    }]
-  };
-  templateLibrary.templates.push(templatePriceTotal);
-  templateLibrary.templateRelationships.push({
-    id: Random.id(),
-    parentTemplateId: templateProductSelection.id,
-    childTemplateId: templatePriceTotal.id
-  });
-
-  var templateAreaColumn = {
-    id: Random.id(),
-    name: "Area Column",
-    description: "Area Column",
-    templateType: Constants.templateTypes.variableDisplay,
-    templateSettings: [{
-      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.notApplicable
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Area"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.variableToDisplay, value: "area"
-    }]
-  };
-  templateLibrary.templates.push(templateAreaColumn);
-  templateLibrary.templateRelationships.push({
-    id: Random.id(),
-    parentTemplateId: templateProductSelection.id,
-    childTemplateId: templateAreaColumn.id
-  });
-
-  var templateQuantity = {
-    id: Random.id(),
-    name: "Quantity",
-    description: "Quantity",
-    templateType: Constants.templateTypes.input,
-    templateSettings: [{
-      id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Quantity"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "33"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "quantity"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "1"
-    }, {
-      id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "70"
-    }]
-  };
-  templateLibrary.templates.push(templateQuantity);
-  templateLibrary.templateRelationships.push({
-    id: Random.id(),
-    parentTemplateId: templateProductSelection.id,
-    childTemplateId: templateQuantity.id
-  });
-
-  templateLibraryId = TemplateLibraries.insert(templateLibrary);
+  templateLibraryId = initializeBidModelTemplateLibrary();
 
   _.each(companyInfo.companies, function (company) {
     var companyId = company._id;
@@ -326,19 +330,22 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     cabinetryTemplateLibrary.isPublic = false;
     cabinetryTemplateLibrary.isReadOnly = false;
 
-    templateCompany = _.find(cabinetryTemplateLibrary.templates, function (template) {
+    const templateCompany = _.find(cabinetryTemplateLibrary.templates, function (template) {
       return template.templateType === Constants.templateTypes.company
     });
-    templateCustomer = _.find(cabinetryTemplateLibrary.templates, function (template) {
+    const templateCustomer = _.find(cabinetryTemplateLibrary.templates, function (template) {
       return template.templateType === Constants.templateTypes.customer
     });
-    templateProduct = _.find(cabinetryTemplateLibrary.templates, function (template) {
+    const templateProductSelection = _.find(cabinetryTemplateLibrary.templates, function (template) {
+      return template.templateType === Constants.templateTypes.productSelection
+    });
+    const templateProduct = _.find(cabinetryTemplateLibrary.templates, function (template) {
       return template.templateType === Constants.templateTypes.baseProduct
     });
-    templateJob = _.find(cabinetryTemplateLibrary.templates, function (template) {
+    const templateJob = _.find(cabinetryTemplateLibrary.templates, function (template) {
       return template.templateType === Constants.templateTypes.job
     });
-    templateArea = _.find(cabinetryTemplateLibrary.templates, function (template) {
+    const templateArea = _.find(cabinetryTemplateLibrary.templates, function (template) {
       return template.templateType === Constants.templateTypes.area
     });
 
@@ -516,14 +523,42 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "doorStyle"
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "PLAM - 0.5mm PVC"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "5"
       }]
+      //, {
+        // Can override at customer, job, area but not product (because some products don't have doors).
+        // Can also override at cabinet.
+        // Seems better to explicitly specify with templateRelationship with optionalOverride
+        //id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "3"
+      // }]
     };
     cabinetryTemplateLibrary.templates.push(templateDoorStyle);
     cabinetryTemplateLibrary.templateRelationships.push({
       id: Random.id(),
       parentTemplateId: templateCompany.id,
+      childTemplateId: templateDoorStyle.id
+    });
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      dependency: Constants.dependency.optionalOverride,
+      parentTemplateId: templateCustomer.id,
+      childTemplateId: templateDoorStyle.id
+    });
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      dependency: Constants.dependency.optionalOverride,
+      parentTemplateId: templateJob.id,
+      childTemplateId: templateDoorStyle.id
+    });
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      dependency: Constants.dependency.optionalOverride,
+      parentTemplateId: templateArea.id,
+      childTemplateId: templateDoorStyle.id
+    });
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      dependency: Constants.dependency.optionalOverride,
+      parentTemplateId: templateCabinet.id,
       childTemplateId: templateDoorStyle.id
     });
 
@@ -544,8 +579,6 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "qualityLevel"
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "Economy"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "5"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateQualityLevel);
@@ -570,12 +603,6 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       id: Random.id(),
       dependency: Constants.dependency.optionalOverride,
       parentTemplateId: templateArea.id,
-      childTemplateId: templateQualityLevel.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateProductSelection.id,
       childTemplateId: templateQualityLevel.id
     });
 
@@ -730,14 +757,24 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborCostMultiplier"
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "1"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "5"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateLaborCostMultiplier);
     cabinetryTemplateLibrary.templateRelationships.push({
       id: Random.id(),
       parentTemplateId: templateCompany.id,
+      childTemplateId: templateLaborCostMultiplier.id
+    });
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      dependency: Constants.dependency.optionalOverride,
+      parentTemplateId: templateCustomer.id,
+      childTemplateId: templateLaborCostMultiplier.id
+    });
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      dependency: Constants.dependency.optionalOverride,
+      parentTemplateId: templateJob.id,
       childTemplateId: templateLaborCostMultiplier.id
     });
 
@@ -760,8 +797,6 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingRate"
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "60"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "0"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateLaborSawingRate);
@@ -854,6 +889,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.selectOption
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.isASubTemplate, value: "true"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Base Cabs"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateOneDoorBaseCabinet);
@@ -897,6 +934,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         id: Random.id(), key: Constants.templateSettingKeys.isASubTemplate, value: "true"
       }, {
         id: Random.id(), key: Constants.templateSettingKeys.imageSource, value: "LazySusan.png"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Base Cabs"
       }]
     };
     cabinetryTemplateLibrary.templates.push(templateLazySusanCabinet);

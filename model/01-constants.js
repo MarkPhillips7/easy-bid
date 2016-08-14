@@ -73,6 +73,8 @@ Constants.selectionTypes = {
 };
 
 Constants.templateSettingKeys = {
+  // Instead of applicableTemplateId use a templateRelationship with an optionalOverride dependency
+  // applicableTemplateId:"ApplicableTemplateId",
   applicableTemplateType:"ApplicableTemplateType",
   belongsTo:"BelongsTo",
   caseMaterialInteriorSku:"CaseMaterialInteriorSku",
@@ -92,7 +94,8 @@ Constants.templateSettingKeys = {
   isASubTemplate:"IsASubTemplate",
   isVariableCollector:"IsVariableCollector",
   isVariableOverride:"IsVariableOverride",
-  levelsDeepCanOverride:"LevelsDeepCanOverride",
+  // Commenting levelsDeepCanOverride because it seems better to explicitly specify with optionalOverride templateRelationship
+  // levelsDeepCanOverride:"LevelsDeepCanOverride",
   lookupKey:"LookupKey",
   lookupKeyVariable:"LookupKeyVariable",
   lookupType:"LookupType",

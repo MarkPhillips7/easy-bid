@@ -199,7 +199,7 @@ angular.module("app").controller("templateLibraryDetails",
         templateType = vm.selectedTemplate ? vm.selectedTemplate.templateType : null;
       }
       if (!parentTemplate) {
-        parentTemplate = TemplateLibrariesHelper.parentTemplate(vm.templateLibrary, vm.selectedTemplate);
+        parentTemplate = TemplateLibrariesHelper.getTemplateParent(vm.templateLibrary, vm.selectedTemplate);
       }
 
       var templateToAdd = TemplateLibrariesHelper.addTemplate(vm.templateLibrary, templateType, parentTemplate);
@@ -318,7 +318,7 @@ angular.module("app").controller("templateLibraryDetails",
         class: isActive ? 'active' : ''
       });
 
-      var parentTemplate = TemplateLibrariesHelper.parentTemplate(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
+      var parentTemplate = TemplateLibrariesHelper.getTemplateParent(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
       if (parentTemplate) {
         populateBreadcrumbItems(breadcrumbItems, parentTemplate, false);
       }
@@ -532,7 +532,7 @@ angular.module("app").controller("templateLibraryDetails",
       }
 
       //Now populate helper templates for parent(s)
-      var parentTemplates = TemplateLibrariesHelper.parentTemplates(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
+      var parentTemplates = TemplateLibrariesHelper.getTemplateParents(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
       for (var i = 0; i < parentTemplates.length; i++) {
         populateTypicalRelevantTemplates(parentTemplates[i], visitedTemplates, false, false, false, levelsFromSelected + 1);
       }
@@ -641,7 +641,7 @@ angular.module("app").controller("templateLibraryDetails",
     //    if (ItemTemplatesHelper.isABaseTemplate(productTemplate)) {
     //      childrenArrayToAddThisTo = vm.productHierarchyData;
     //    } else {
-    //      childrenArrayToAddThisTo = addProductToHierarchyAndReturnChildrenArray(null, TemplateLibrariesHelper.parentTemplate(vm.templatelibrary, productTemplate));
+    //      childrenArrayToAddThisTo = addProductToHierarchyAndReturnChildrenArray(null, TemplateLibrariesHelper.getTemplateParent(vm.templatelibrary, productTemplate));
     //    }
     //
     //    treeItem = addItemToTreeData(childrenArrayToReturn, productTemplate);

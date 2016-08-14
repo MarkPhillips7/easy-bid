@@ -86,7 +86,7 @@ function addSelectionsForTemplateChildren(templateLibrary, jobId, selection, tem
       //If this template is not a base template then still need to add selections for children of parent template(s)
       if (!isABaseTemplate)
       {
-        _.each(TemplateLibrariesHelper.parentTemplates(templateLibrary, template), (parentTemplate) => {
+        _.each(TemplateLibrariesHelper.getTemplateParents(templateLibrary, template), (parentTemplate) => {
           addSelectionsForTemplateChildren(templateLibrary, jobId, selection, parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates);
         });
       }
@@ -168,7 +168,7 @@ function addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selec
 
             //Add the template children of the base template before the sub template children because they override some of these
             addSelectionsForTemplateChildren(templateLibrary, jobId, subTemplateSelection,
-              TemplateLibrariesHelper.parentTemplate(templateLibrary, subTemplate),
+              TemplateLibrariesHelper.getTemplateParent(templateLibrary, subTemplate),
               Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates);
 
             //Add selection and template children for this sub template
