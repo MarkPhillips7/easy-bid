@@ -31,6 +31,7 @@ class bid {
     this.fullHierarchyTree = {};
     this.fullHierarchyTreeData = [];
     this.ignoreUpdatesTemporarily = false;
+    this.ignoreSelectionUpdatesTemporarily = true;
     this.includeChildAreas = false;
     this.jobId = this.$stateParams.bidId;
     this.jobSelection = null;
@@ -38,9 +39,6 @@ class bid {
     this.lookupData = null;
     // metadata used to keep track of ui state of various data
     this.metadata = SelectionsHelper.getInitializedMetadata();
-    // this.originalSelections = null;
-    // this.originalJob = null;
-    // this.originalSelectionRelationships = null;
     this.productCategories = [];
     this.productOptions = [];
     this.productSelectionTemplate = null;
@@ -70,7 +68,8 @@ class bid {
       templateLibraries: this._templateLibrariesCollection,
       jobsTemplateLibraries: this._jobsTemplateLibrariesCollection,
       isLoggedIn: this._isLoggedIn,
-      updateDependencies: this._updateDependencies
+      updateDependencies: this._updateDependencies,
+      updateSelectionDependencies: this._updateSelectionDependencies,
     });
 
     this.initializeCompanyId();
@@ -79,7 +78,6 @@ class bid {
       onReady: () => {this.subscriptionsReady.company = true;}});
     this.customerSubscriptionHandle = this.subscribe('customer', this._customerSubscription.bind(this), {
       onReady: () => {this.subscriptionsReady.customer = true;}});
-    // this.startJobAndSelectionSubscriptions();
     this.jobSubscriptionHandle = this.subscribe('job', this._jobSubscription.bind(this), {
       onReady: () => {this.subscriptionsReady.job = true;}});
     this.selectionDataSubscriptionHandle = this.subscribe('selectionData', this._selectionDataSubscription.bind(this), {
@@ -120,8 +118,18 @@ class bid {
         this.lookupData = result;
         console.log('updating dependencies');
         this.initializeSelectionVariables();
+        this.initializeAfterSelectionVariablesOneTime();
+        this.ignoreSelectionUpdatesTemporarily = false;
       }
     });
+  }
+
+  _updateSelectionDependencies() {
+    this.getReactively(`selections`, true);
+    if (!this.getReactively('ignoreSelectionUpdatesTemporarily')) {
+      console.log('updating selection dependencies');
+      this.initializeSelectionVariables();
+    }
   }
 
   getTemplatesByTemplateSetting(templateSettingKey, templateSettingValue) {
@@ -171,23 +179,8 @@ class bid {
     TemplateLibrariesHelper.populateTabPages(this.templateLibraries, this.productTemplate, this.metadata);
   }
 
-  // restoreOriginalData() {
-  //   if (!this.originalSelections
-  //     || !this.originalSelectionRelationships
-  //     || !this.originalJob) {
-  //     return;
-  //   }
-  //
-  //   this.selections = this.originalSelections;
-  //   this.selectionRelationships = this.originalSelectionRelationships;
-  //   this.job = this.originalJob;
-  // }
-
   cancel() {
-    // this.restoreOriginalData();
     this.ignoreUpdatesTemporarily = false;
-    // this.startJobAndSelectionSubscriptions();
-    // this._updateDependencies();
   }
 
   save(job, selections, selectionRelationships, metadata) {
@@ -206,14 +199,11 @@ class bid {
         console.log('failed to save selection changes', err);
       } else {
         console.log('success saving selection changes', result);
-        this.updateProductSelectionIds();
       }
-      // this.startJobAndSelectionSubscriptions();
     });
   }
 
   confirmSaveChanges(job, selections, selectionRelationships, metadata, saveWithoutPrompting = false) {
-    // this.stopJobAndSelectionSubscriptions();
     const pendingSelectionChangeMessages = SelectionsHelper.getPendingChangeMessages(this.templateLibraries,
       selections, selectionRelationships, metadata);
     const pendingJobChangeMessages = JobsHelper.getPendingChangeMessages(job);
@@ -250,7 +240,6 @@ class bid {
 
     return metadata.variables[variableCollectorSelection._id] &&
         metadata.variables[variableCollectorSelection._id][jsonVariableName];
-        //parseFloat(this.metadata.variables[variableCollectorSelection._id][jsonVariableName]);
   };
 
   initializeJobVariables(job, metadata, selections, selectionRelationships) {
@@ -258,7 +247,7 @@ class bid {
   }
 
   updateProductSelectionIds() {
-    // must not change reference to this.productSelectionIds or ng-repeat won't work.
+    // must not change reference to this.productSelectionIds or ng-repeat won't work (actually not sure about this).
     // So first add selections that are missing
     _.chain(this.selections)
       .filter((selection) => selection.templateId === this.productSelectionTemplate.id &&
@@ -278,7 +267,8 @@ class bid {
     }
     // Actually changing the above to not change reference to this.productSelectionIds
     // did not seem to help. But this did the trick:
-    this.$scope.$apply();
+    // this.$scope.$apply();
+    // But calling $apply caused problems and then seemed unnecessary.
   }
 
   initializeSelectionVariables() {
@@ -287,6 +277,9 @@ class bid {
     _.each(this.productSelectionIds, (productSelectionId) => this.setProductSelectionSelections(productSelectionId, this));
     SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata, this.lookupData);
     this.initializeJobVariables(this.job, this.metadata, this.selections, this.selectionRelationships);
+  }
+
+  initializeAfterSelectionVariablesOneTime() {
     this.confirmSaveChanges(this.job, this.selections, this.selectionRelationships, this.metadata, false);
 
     //Initialize first selection as selected if none currently selected
@@ -328,7 +321,7 @@ class bid {
       }
       // Otherwise there must just be one selection or something went wrong
       else if (productSelections && productSelections.length !== 1) {
-        // throw new Error('Error: There must be exactly one selection for the given productSelection and columnTemplate');
+        throw new Error('Error: There must be exactly one selection for the given productSelection and columnTemplate');
       }
       else {
         selection = productSelections[0];
@@ -498,8 +491,8 @@ class bid {
     return text;
   }
 
-  selectionShouldDisplay(selection) {
-    return this.inSelectedArea(selection);
+  selectionShouldDisplay(selectionId) {
+    return this.inSelectedArea(selectionId);
   }
 
   toggleIncludeChildAreas() {
@@ -710,9 +703,9 @@ class bid {
     }
   }
 
-  subtotalSelections(selections, onlyIfShouldDisplay) {
-    const selectionsToSum = _.filter(selections, (selection) =>
-        !onlyIfShouldDisplay || this.selectionShouldDisplay(selection));
+  subtotalSelections(selectionIds, onlyIfShouldDisplay) {
+    const selectionsToSum = _.filter(selectionIds, (selectionId) =>
+        !onlyIfShouldDisplay || this.selectionShouldDisplay(selectionId));
 
     const subtotal = SelectionsHelper.sumSelections(this.templateLibraries,
       this.selections, this.selectionRelationships, this.metadata, this.lookupData, selectionsToSum, 'priceTotal');
@@ -721,8 +714,6 @@ class bid {
   }
 
   editBidDetails(event) {
-    // this.stopJobAndSelectionSubscriptions();
-    // this.setOriginalSelectionData();
     const modalInstance = this.$modal.open({
       templateUrl: 'client/bids/views/bid-details-edit.html',
       controller: 'bidDetails',
@@ -753,32 +744,17 @@ class bid {
     this.productToAdd = option && TemplateLibrariesHelper.getTemplateById(this.templateLibraries, option.id);
     this.addProductSelection();
   }
-  //
-  // stopJobAndSelectionSubscriptions() {
-  //   this.jobSubscriptionHandle.stop();
-  //   this.subscriptionsReady.job = false;
-  //   this.selectionDataSubscriptionHandle.stop();
-  //   this.subscriptionsReady.selectionData = false;
-  // }
-  //
-  // startJobAndSelectionSubscriptions() {
-  //   this.jobSubscriptionHandle = this.subscribe('job', this._jobSubscription.bind(this), {
-  //     onReady: () => {this.subscriptionsReady.job = true;}});
-  //   this.selectionDataSubscriptionHandle = this.subscribe('selectionData', this._selectionDataSubscription.bind(this), {
-  //     onReady: () => {this.subscriptionsReady.selectionData = true;}});
-  // }
 
   getPendingChanges() {
     return {
       job: _.clone(this.job),
-      metadata: _.clone(this.metadata),
-      selections: _.map(this.selections, _.clone),
-      selectionRelationships: _.map(this.selectionRelationships, _.clone),
+      metadata: JSON.parse(JSON.stringify(this.metadata)), //_.clone(this.metadata) not an option as it does not do a deep clone
+      selections: JSON.parse(JSON.stringify(this.selections)), //_.map(this.selections, _.clone),
+      selectionRelationships: JSON.parse(JSON.stringify(this.selectionRelationships)), //_.map(this.selectionRelationships, _.clone),
     };
   }
 
   addProductSelection() {
-    // this.stopJobAndSelectionSubscriptions();
     this.ignoreUpdatesTemporarily = true;
     const parentSelectionId = this.areaSelectedId;
     const parentSelection =  _.find(this.selections, (selection) => selection._id === parentSelectionId);
@@ -793,16 +769,8 @@ class bid {
       .map((selection) => selection._id)
       .value();
     _.each(productSelectionIds, (productSelectionId) => this.setProductSelectionSelections(productSelectionId, pendingChanges));
-    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata, this.lookupData);
 
-    // SelectionsHelper.initializeMetadata(metadata, true);
-    // SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata);
-    this.initializeJobVariables(job, metadata, selections, selectionRelationships);
     this.selectedProductSelectionId = newProductSelection._id;
-    // this.productSelectionIdToEdit = newProductSelection._id;
-    // Not saving before editing anymore
-    // this.deleteProductSelectionOnCancel = true;
-    // this.confirmSaveChanges(job, selections, selectionRelationships, metadata, true);
     this.editProductSelection(newProductSelection._id, null, false, pendingChanges);
   }
 
@@ -830,8 +798,6 @@ class bid {
       _.each(this.itemIdsSelected, (productSelectionId) => {
         const selectionToDelete =  _.find(this.selections, (selection) => selection._id === productSelectionId);
         SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, this.lookupData, selectionToDelete);
-        this.updateProductSelectionIds();
-        // this.productSelectionIds = _.without(this.productSelectionIds, productSelectionId);
       });
       const {job, metadata, selections, selectionRelationships} = pendingChanges;
       this.initializeJobVariables(job, metadata, selections, selectionRelationships);
@@ -854,19 +820,9 @@ class bid {
     const pendingChanges = this.getPendingChanges();
     SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, this.lookupData, selectionToDelete);
     const {job, metadata, selections, selectionRelationships} = pendingChanges;
-    this.updateProductSelectionIds();
-    // this.productSelectionIds = _.without(this.productSelectionIds, productSelectionId);
-    // SelectionsHelper.initializeMetadata(metadata, true);
-    // SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata);
     this.initializeJobVariables(job, metadata, selections, selectionRelationships);
     this.confirmSaveChanges(job, selections, selectionRelationships, metadata, true);
   }
-
-  // setOriginalSelectionData() {
-  //   this.originalJob = _.clone(this.job);
-  //   this.originalSelections = _.map(this.selections, _.clone);
-  //   this.originalSelectionRelationships = _.map(this.selectionRelationships, _.clone);
-  // };
 
   editSelected() {
     const editCount = this.itemIdsSelected.length;
@@ -884,12 +840,6 @@ class bid {
   }
 
   editProductSelection(productSelectionId, event, deleteIfCanceled, pendingChanges) {
-  // editProductSelection(data, event, deleteIfCanceled, job, selections, selectionRelationships) {
-    // this.stopJobAndSelectionSubscriptions();
-    // job = job || this.job;
-    // selections = selections || this.selections;
-    // selectionRelationships = selectionRelationships || this.selectionRelationships;
-    // this.setOriginalSelectionData();
     if (!pendingChanges) {
       pendingChanges = this.getPendingChanges();
     }
@@ -913,7 +863,6 @@ class bid {
       const {job, metadata, selections, selectionRelationships} = pendingChanges;
       job.estimateTotal = this.getJobSubtotal(metadata, selections, selectionRelationships);
       this.save(job, selections, selectionRelationships, metadata);
-      // this.save(job, selections, selectionRelationships);
     }, () => {
       console.log('Modal dismissed at: ' + new Date());
       if (deleteIfCanceled) {
@@ -1008,7 +957,8 @@ class bid {
     const columnSelectionIds = metadata.columnSelectionIds[productSelectionId];
 
     if (columnSelectionIds && columnSelectionIds.length > 4) {
-      return _.find(selections, (selection) => selection._id === columnSelectionIds[4]).value;
+      const selection = _.find(selections, (selection) => selection._id === columnSelectionIds[4]);
+      return (selection && selection.value) || '';
     }
     return '';
   }

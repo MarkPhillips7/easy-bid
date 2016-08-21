@@ -830,49 +830,6 @@ const initializeValueToUse = (templateLibraries, selections, selectionRelationsh
   getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, lookupData, selection);
 };
 
-const refreshValueToUse = (templateLibraries, selections, selectionRelationships, metadata, lookupData, selection) => {
-  if (selection) {
-    const childSelections = getChildSelections(selection, selections, selectionRelationships);
-    _.each(childSelections, (childSelection) => {
-      refreshValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, childSelection);
-    });
-
-    // Make sure formulas that reference selection's variable get updated
-    if (metadata.selectionIdsReferencingVariables[selection._id]) {
-      _.each(metadata.selectionIdsReferencingVariables[selection._id].selectionIds, (selectionId) => {
-        const selectionReferencingVariable = _.find(selections, (_selection) => _selection._id === selectionId);
-        if (selectionReferencingVariable) {
-          getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, lookupData, selectionReferencingVariable);
-        }
-      });
-    }
-  }
-};
-
-// const populateVariablesUndefined = (selection, variablesUndefined) => {
-//     if (selection && selection.variablesUndefined) {
-//         selection.variablesUndefined.forEach(function (jsonVariableName) {
-//             if ($.inArray(jsonVariableName, variablesUndefined) == -1) {
-//                 variablesUndefined.push(jsonVariableName);
-//             }
-//         });
-//     }
-//
-//     var childSelections = getSelectionsBySelectionParent(selection);
-//
-//     for (var i = 0; i < childSelections.length; i += 1) {
-//         populateVariablesUndefined(childSelections[i], variablesUndefined);
-//     }
-// };
-//
-// const getAllVariablesUndefined = (selection) => {
-//   let variablesUndefined = [];
-//
-//   populateVariablesUndefined(selection, variablesUndefined);
-//
-//   return variablesUndefined;
-// };
-
 const initializeMetadata = (metadata, leaveSelectionIdsToBeInserted) => {
   // columnSelectionIds should be like
   // {
@@ -982,8 +939,6 @@ const getInitializedMetadata = () => {
 };
 
 const initializeSelectionVariables = (templateLibraries, selections, selectionRelationships, metadata, lookupData) => {
-  // initializeMetadata(metadata);
-
   // start with the topmost selection, which should be the company selection
   const companyTemplate = TemplateLibrariesHelper.getTemplateByType(templateLibraries, Constants.templateTypes.company);
   if (!companyTemplate) {
@@ -999,14 +954,10 @@ const initializeSelectionVariables = (templateLibraries, selections, selectionRe
 
   initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, companySelection);
 
-  // metadata.variablesUndefined = getAllVariablesUndefined(companySelection);
-
   //If any dependent variables are undefined, then something must be wrong.
   if (metadata.variablesUndefined.length > 0) {
       throw new Error('Variables not defined:' + metadata.variablesUndefined.join(","));
   }
-
-  refreshValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, companySelection);
 };
 
 const getDisplayDescription = (templateLibraries, selections, selectionRelationships, selection) => {
@@ -1136,6 +1087,78 @@ const setSelectionValue = (templateLibraries, selections, selectionRelationships
   }
 }
 
+const getVariableCollectorSelectionWithVariableValue = (templateLibraries,
+    selections, selectionRelationships, metadata, selection, jsonVariableName) => {
+  if (!selection) {
+    return null;
+  }
+  const variableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selection);
+  if (jsonVariableName && variableCollectorSelection
+      && metadata.variables
+      && metadata.variables[variableCollectorSelection._id]
+      && metadata.variables[variableCollectorSelection._id][jsonVariableName] !== undefined) {
+    return variableCollectorSelection;
+  }
+  const parentSelection = SelectionsHelper.getParentSelections(variableCollectorSelection, selections, selectionRelationships)[0];
+  return getVariableCollectorSelectionWithVariableValue(templateLibraries,
+      selections, selectionRelationships, metadata, parentSelection, jsonVariableName);
+}
+
+const isCandidateSelectionAnAncestor = (selections, selectionRelationships, selection, candidateSelection) => {
+  if (!selection || !candidateSelection) {
+    return false;
+  }
+  if (selection._id === candidateSelection._id) {
+    return true;
+  }
+  const parentSelection = SelectionsHelper.getParentSelections(selection, selections, selectionRelationships)[0];
+  return isCandidateSelectionAnAncestor(selections, selectionRelationships, parentSelection, candidateSelection);
+}
+
+// If there is a variable associated with this template, a different selection up the hierarchy is
+// probably its variableCollectorSelection, so we need to find all of the
+// selectionIdsReferencingVariables and move some of them to the new variableCollectorSelection.
+// Essentially we need to move the ones that have the new variableCollectorSelection as an ancestor.
+const moveVariableReferencesToNewVariableCollectorSelection = (templateLibraries, template,
+    selections, selectionRelationships, metadata, selection) => {
+  const jsonVariableName = ItemTemplatesHelper.getJsonVariableName(template);
+  const oldVariableCollectorSelection = getVariableCollectorSelectionWithVariableValue(templateLibraries,
+    selections, selectionRelationships, metadata, selection, jsonVariableName);
+  const newVariableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selection);
+
+  if (oldVariableCollectorSelection && newVariableCollectorSelection &&
+      metadata.selectionIdsReferencingVariables[oldVariableCollectorSelection._id]) {
+    const oldSelectionIdsReferencingVariable = _.find(metadata.selectionIdsReferencingVariables[oldVariableCollectorSelection._id],
+      (selectionIdsReferencingVariable) => {
+        return (selectionIdsReferencingVariable.jsonVariableName === jsonVariableName);
+    });
+    let newSelectionIdsReferencingVariable = _.find(metadata.selectionIdsReferencingVariables[newVariableCollectorSelection._id],
+      (selectionIdsReferencingVariable) => {
+        return (selectionIdsReferencingVariable.jsonVariableName === jsonVariableName);
+    });
+    if (oldSelectionIdsReferencingVariable) {
+      if (!newSelectionIdsReferencingVariable) {
+        newSelectionIdsReferencingVariable = {
+          jsonVariableName,
+          selectionIds: []
+        };
+        metadata.selectionIdsReferencingVariables[newVariableCollectorSelection._id].push(newSelectionIdsReferencingVariable);
+      }
+      // Remove selectionsReferencingVariable from oldVariableCollectorSelection and add to newVariableCollectorSelection
+      // for jsonVariableName if newVariableCollectorSelection is an ancestor of selectionReferencingVariable.
+      for (let oldIndex = oldSelectionIdsReferencingVariable.selectionIds.length - 1; oldIndex >= 0; oldIndex--) {
+        const selectionReferencingVariableId = oldSelectionIdsReferencingVariable.selectionIds[oldIndex];
+        const selectionReferencingVariable = _.find(selections, (_selection) => _selection._id === selectionReferencingVariableId);
+        if (selectionReferencingVariable &&
+            isCandidateSelectionAnAncestor(selections, selectionRelationships, selectionReferencingVariable, newVariableCollectorSelection)) {
+          oldSelectionIdsReferencingVariable.selectionIds.splice(oldIndex, 1);
+          newSelectionIdsReferencingVariable.selectionIds.push(selectionReferencingVariableId);
+        }
+      };
+    }
+  }
+}
+
 // See also jobs method version of addSelectionForTemplate
 const addSelectionForTemplate = (templateLibrary, selections, selectionRelationships,
     metadata, jobId, template, selectionValue, parentSelectionId, childOrder, lookupData) => {
@@ -1174,6 +1197,13 @@ const addSelectionForTemplate = (templateLibrary, selections, selectionRelations
   }
 
   // ToDo: add selection settings?
+
+  // If there is a variable associated with this template, a different selection up the hierarchy is
+  // probably its variableCollectorSelection, so we need to find all of the
+  // selectionIdsReferencingVariables and move some of them to the new variableCollectorSelection.
+  // Essentially we need to move the ones that have the new variableCollectorSelection as an ancestor.
+  moveVariableReferencesToNewVariableCollectorSelection([templateLibrary], template,
+    selections, selectionRelationships, metadata, selection);
 
   // Call getSelectionValue to update relevant metadata (or maybe instead setSelectionValue)
   setSelectionValue([templateLibrary], selections, selectionRelationships,

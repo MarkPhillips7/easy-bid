@@ -418,27 +418,16 @@ angular.module('app')
                   scope.pendingChanges, scope.thebid.lookupData, parentSelection, template, newValue, 0);
               } else {
                 // maybe should just implement additional cases as they arise
-                // const templateLibrary = _.find(scope.thebid.templateLibraries, (templateLibrary) =>
-                //   _.some(templateLibrary.templates, (_template) => _template.id === template.id));
-                // SelectionsHelper.addSelectionForTemplate(templateLibrary, scope.pendingChanges.selections,
-                //   scope.pendingChanges.selectionRelationships, scope.pendingChanges.metadata, scope.thebid.jobId,
-                //   template, newValue, scope.inputSelectionItem.parentSelectionId, 0, scope.thebid.lookupData);
+                const templateLibrary = _.find(scope.thebid.templateLibraries, (templateLibrary) =>
+                  _.some(templateLibrary.templates, (_template) => _template.id === template.id));
+                SelectionsHelper.addSelectionForTemplate(templateLibrary, scope.pendingChanges.selections,
+                  scope.pendingChanges.selectionRelationships, scope.pendingChanges.metadata, scope.thebid.jobId,
+                  template, newValue, scope.inputSelectionItem.parentSelectionId, 0, scope.thebid.lookupData);
               }
             }
           }
         }, true);
       }
-
-      // scope.$watch('inputSelectionItem.getSelection().selectedOption', function (newValue, oldValue) {
-      //     if (scope.inputSelectionItem && scope.inputSelectionItem.getSelection()) {
-      //         if (newValue && newValue.id) {
-      //             scope.inputSelectionItem.getSelection().value = newValue.id.toString();
-      //         }
-      //         else if (newValue !== oldValue) {
-      //             scope.inputSelectionItem.getSelection().value = null;
-      //         }
-      //     }
-      // }, false);
     }
   }]);
 
