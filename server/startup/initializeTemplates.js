@@ -605,6 +605,12 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       parentTemplateId: templateArea.id,
       childTemplateId: templateQualityLevel.id
     });
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      dependency: Constants.dependency.optionalOverride,
+      parentTemplateId: templateProduct.id,
+      childTemplateId: templateQualityLevel.id
+    });
 
     var templateEconomy = {
       id: Random.id(),

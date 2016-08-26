@@ -1,4 +1,4 @@
 <label class="col-sm-5 control-label" for="{{inputSelectionItem.id}}">{{inputSelectionItem.template.description}}</label>
 <span id="{{inputSelectionItem.id}}"
       class="col-sm-7 form-control-static"
-      ng-bind-html="inputSelectionItem.getValue() | ebunitsfilter:thebid.getUnitsText(inputSelectionItem.template)"></span>
+      ng-bind-html="inputSelectionItem.value | ebunitsfilter:thebid.getUnitsText(inputSelectionItem.template)"></span>

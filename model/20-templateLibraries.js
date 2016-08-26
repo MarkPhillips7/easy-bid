@@ -54,7 +54,7 @@ TemplateTypeInfoList = [{
   templateType: Constants.templateTypes.lookupData,
   displayInHierarchy: false,
   templateSettingInfoList: [{
-    name: 'Name',
+    name: 'Label',
     templateSettingKey: Constants.templateSettingKeys.displayCaption,
     minCount: 0,
     maxCount: 1,

@@ -432,6 +432,9 @@ angular.module('app')
   }]);
 
 function templateSettingLink(scope, element, attrs, justOneSettingValue) {
+  if (!scope || !scope.templateLibrary) {
+    return;
+  }
   const template = _.find(scope.templateLibrary.templates, (_template) => _template.id === scope.templateId);
   if (attrs.ebTemplateSettings === Constants.templateSettingKeys.displayCaption) {
     element.text(ItemTemplatesHelper.getDisplayCaption(template));

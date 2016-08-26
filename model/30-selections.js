@@ -1132,6 +1132,8 @@ const moveVariableReferencesToNewVariableCollectorSelection = (templateLibraries
       (selectionIdsReferencingVariable) => {
         return (selectionIdsReferencingVariable.jsonVariableName === jsonVariableName);
     });
+    metadata.selectionIdsReferencingVariables[newVariableCollectorSelection._id] =
+      metadata.selectionIdsReferencingVariables[newVariableCollectorSelection._id] || [];
     let newSelectionIdsReferencingVariable = _.find(metadata.selectionIdsReferencingVariables[newVariableCollectorSelection._id],
       (selectionIdsReferencingVariable) => {
         return (selectionIdsReferencingVariable.jsonVariableName === jsonVariableName);

@@ -990,11 +990,11 @@ class bid {
           const tabMatch = _.find(tabs, (tab) => tab.title === templateSetting.value);
           if (tabMatch) {
             tabMatch.inputSelectionItems.push(new InputSelectionItem(this.templateLibraries,
-              selections, selectionRelationships, templateForTab, this.selectedProductSelectionId, metadata));
+              selections, selectionRelationships, templateForTab, this.selectedProductSelectionId, metadata, this.lookupData));
           }
           else {
             const newTab = new TabSection(templateSetting.value, this.templateLibraries,
-              selections, selectionRelationships, templateForTab, this.selectedProductSelectionId, metadata);
+              selections, selectionRelationships, templateForTab, this.selectedProductSelectionId, metadata, this.lookupData);
               //Ultimately need a better way of ordering tabs, but for now just make Primary the first
             if (templateSetting.value === 'Primary') {
               tabs.unshift(newTab);
@@ -1027,7 +1027,7 @@ class bid {
 
     _.each(templatesForTabs, (templateForTab) => {
       this.productSelectionEditItems.push(new InputSelectionItem(this.templateLibraries,
-        selections, selectionRelationships, templateForTab, this.selectedProductSelectionId, metadata));
+        selections, selectionRelationships, templateForTab, this.selectedProductSelectionId, metadata, this.lookupData));
     });
   }
 

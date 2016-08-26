@@ -9,12 +9,13 @@ const getSelectionsBySelectionParentAndTemplate = (templateLibraries, allSelecti
   return selections;
 };
 
-InputSelectionItem = function (templateLibraries, allSelections, selectionRelationships, template, productSelectionId, metadata) {
+InputSelectionItem = function (templateLibraries, allSelections, selectionRelationships,
+  template, productSelectionId, metadata, lookupData) {
   var inputSelectionItem = this;
   inputSelectionItem.id = nextId++;
   inputSelectionItem.template = template;
   inputSelectionItem.parentSelectionId = productSelectionId;
-  inputSelectionItem.value = undefined;
+  // inputSelectionItem.value = undefined;
   inputSelectionItem.getSelection = function () {
     var selections = getSelectionsBySelectionParentAndTemplate(templateLibraries, allSelections, selectionRelationships, template, productSelectionId);
     if (selections && selections.length > 0) {
@@ -35,17 +36,34 @@ InputSelectionItem = function (templateLibraries, allSelections, selectionRelati
     }
     return null;
   }
-  inputSelectionItem.getValue = function () {
-    inputSelectionItem.value = inputSelectionItem.reallyGetValue();
-    return inputSelectionItem.value;
+  // inputSelectionItem.getValue = function () {
+  //   inputSelectionItem.value = inputSelectionItem.reallyGetValue();
+  //   return inputSelectionItem.value;
+  // }
+  // inputSelectionItem.getValue();
+  inputSelectionItem.reallySetValue = function (value) {
+    var selection = inputSelectionItem.getSelection();
+    if (selection) {
+      SelectionsHelper.setSelectionValue(templateLibraries, allSelections,
+        selectionRelationships, metadata, lookupData, selection, value, selection.value,
+        selection.valueSource, Constants.valueSources.userEntry);
+    } else {
+      throw new Error('cannot set value on inputSelectionItem with no selection');
+    }
   }
-  inputSelectionItem.getValue();
+  Object.defineProperty(inputSelectionItem, 'value', {
+    get : function(){ return inputSelectionItem.reallyGetValue(); },
+    set : function( value ){ inputSelectionItem.reallySetValue(value); }
+  });
+  inputSelectionItem.value;
 };
 
-TabSection = function (title, templateLibraries, selections, selectionRelationships, template, productSelectionId, metadata) {
+TabSection = function (title, templateLibraries, selections, selectionRelationships,
+  template, productSelectionId, metadata, lookupData) {
   var tab = this;
   tab.title = title;
   tab.active = false;
   tab.disabled = false;
-  tab.inputSelectionItems = [new InputSelectionItem(templateLibraries, selections, selectionRelationships, template, productSelectionId, metadata)];
+  tab.inputSelectionItems = [new InputSelectionItem(templateLibraries, selections,
+    selectionRelationships, template, productSelectionId, metadata, lookupData)];
 };
