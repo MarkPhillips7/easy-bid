@@ -116,6 +116,33 @@ body {
   font-size: 90%;
 }
 
+// https://github.com/wix/angular-tree-control/issues/46 and http://stackoverflow.com/questions/14736496/use-font-awesome-icons-in-css
+treecontrol.tree-boot li.tree-expanded i.tree-branch-head.a3 {
+  background: none;
+  padding-left: 4px;
+  padding-right: 5px;
+  position: relative;
+}
+
+treecontrol.tree-boot li.tree-expanded i.a3:before {
+  font-family: FontAwesome;
+  color: #000;
+  content: "\f068"; // fa-minus
+}
+
+treecontrol.tree-boot li.tree-collapsed i.tree-branch-head.a4 {
+  background: none;
+  padding-left: 4px;
+  padding-right: 5px;
+  position: relative;
+}
+
+treecontrol.tree-boot li.tree-collapsed i.a4:before {
+  font-family: FontAwesome;
+  color: #000;
+  content: "\f067"; // fa-plus
+}
+
 /*#region Mark P added here to be able to add a margin above a div */
 .eb-top-buffer {
   margin-top:10px;

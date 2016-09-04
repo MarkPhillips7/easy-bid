@@ -1,3 +1,6 @@
+import treeControl from 'angular-tree-control';
+import 'angular-tree-control/css/tree-control.css';
+
 angular.module('app', [
   'accounts.ui',
   'angular-meteor',
@@ -9,6 +12,7 @@ angular.module('app', [
   'formly',
   'formlyBootstrap',
   'toastr',
+  treeControl,
   'uiGmapgoogle-maps',
   'ui.bootstrap',      // ui-bootstrap (ex: carousel, pagination, dialog)
   'ui.router'

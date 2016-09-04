@@ -58,14 +58,37 @@
             </div>
         </form>
         <div class="pre-scrollable eb-area-hierarchy">
-          <abn-tree tree-data="bid.areaTreeData"
+          <!-- <abn-tree tree-data="bid.areaTreeData"
                     tree-control="bid.areaTree"
                     icon-leaf=""
                     icon-expand="fa fa-plus"
                     icon-collapse="fa fa-minus"
                     on-select="bid.onAreaTreeItemSelected(branch)"
                     expand-level="2">
-          </abn-tree>
+          </abn-tree> -->
+          <treecontrol class="tree-boot"
+                    tree-model="bid.areaTreeData"
+                    expanded-nodes="bid.expandedNodes"
+                    selected-node="bid.selectedNode"
+                    options="bid.areaTreeOptions"
+                    on-selection="bid.onAreaTreeItemSelected(node)">
+            <!-- <span ng-switch="" on="node.type">
+              <span ng-switch-when="folder" aria-hidden="true"><i class="fa fa-times"></i></span>
+              <span ng-switch-when="area" class="fa fa-home" aria-hidden="true"></span>
+              <span ng-switch-when="doc" class="glyphicon glyphicon-file" aria-hidden="true"></span>
+              <span ng-switch-when="file" class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
+              <span ng-switch-when="movie" class="glyphicon glyphicon-film" aria-hidden="true"></span>
+              <span ng-switch-when="email" class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
+              <span ng-switch-when="home" class="glyphicon glyphicon-home" aria-hidden="true"></span>
+              <span ng-switch-when="trash" class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+            </span> -->
+            {{node.label}}
+            <span data-ng-repeat="specification in node.specifications"
+              class="{{specification.class}}">{{specification.label}}</span>
+            <button class="btn btn-default btn-xs" data-ng-click="bid.editArea(node)">
+              <i class="fa fa-edit"></i>
+            </button>
+          </treecontrol>
         </div>
     </div>
     <!-- <div class="col-md-4">
@@ -222,20 +245,6 @@
               </a>
             </div>
           </tab>
-          <!-- <tab heading="All">
-            <div class="list-group">
-              <a href="" data-ng-repeat="option in bid.productOptions"
-                 class="list-group-item" ng-click="bid.addProductSelectionOption(option)">
-                <p class="list-group-item-text">
-                    <img data-eb-img-product="{{option.imageSource}}"/>{{option.name}}
-                </p>
-              </a>
-            </div>
-          </tab>
-          <tab heading="Base Cabs"></tab>
-          <tab heading="Wall Cabs"></tab>
-          <tab heading="Tall Cabs"></tab>
-          <tab heading="Moulding"></tab> -->
         </tabset>
       </div>
       <div class="clearfix"></div>

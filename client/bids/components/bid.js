@@ -22,7 +22,7 @@ class bid {
     this.areaSelectedId = '';
     this.areaTemplate = null;
     this.areaToAdd = '';
-    this.areaTree = {};
+    // this.areaTree = {};
     this.areaTreeData = [];
     this.bootstrapDialog = bootstrapDialog;
     this.columnTemplates = [];
@@ -55,6 +55,23 @@ class bid {
     this.productSelectionItems = [];
     this.tabs = [];
     this.toastr = toastr;
+    this.areaTreeOptions = {
+      allowDeselect: false,
+      nodeChildren: "children",
+      dirSelectable: true,
+      injectClasses: {
+        ul: "a1",
+        li: "a2",
+        liSelected: "a7",
+        iExpanded: "a3",
+        iCollapsed: "a4",
+        iLeaf: "a5",
+        label: "a6",
+        labelSelected: "a8"
+      }
+    };
+    this.expandedNodes = [];
+    this.selectedNode = null;
 
     this.helpers({
       areAnyItemsSelected: this._areAnyItemsSelected,
@@ -438,6 +455,15 @@ class bid {
     return true;
   }
 
+  populateAllExpandableNodes(treeDataArray, expandableNodes) {
+    _.each(treeDataArray, (treeDataItem) => {
+      if (treeDataItem.children && treeDataItem.children.length > 0) {
+        expandableNodes.push(treeDataItem);
+        this.populateAllExpandableNodes(treeDataItem.children, expandableNodes);
+      }
+    });
+  }
+
   setAreaTreeData() {
     const pendingAreaTreeData = this.getPendingAreaTreeData();
     const treeItemSelected = this.getTreeItemSelected(pendingAreaTreeData);
@@ -448,10 +474,15 @@ class bid {
       //if (this.areaTree) {
       //    this.areaTree.expand_all();
       //}
-      this.$timeout(() => {
-        this.areaTree.expand_all();
-        this.selectAreaTreeItem(treeItemToSelect);
-      }, 100);
+      // this.$timeout(() => {
+      //   this.areaTree.expand_all();
+      //   this.selectAreaTreeItem(treeItemToSelect);
+      // }, 100);
+      let expandableNodes = [];
+      this.populateAllExpandableNodes(this.areaTreeData, expandableNodes);
+      this.expandedNodes = expandableNodes;
+      this.selectedNode = treeItemToSelect;
+      this.onAreaTreeItemSelected(this.selectedNode);
     }
   }
 
@@ -473,6 +504,37 @@ class bid {
     return pendingAreaTreeData;
   }
 
+  getBranchBySelectionIdAndTreeDataArray(selectionId, treeDataArray) {
+    let branch;
+    _.find(treeDataArray, (treeDataItem) => {
+      if (treeDataItem.data.selectionId === selectionId) {
+        branch = treeDataItem;
+        return branch;
+      }
+      branch = this.getBranchBySelectionIdAndTreeDataArray(selectionId, treeDataItem.children);
+      return branch;
+    });
+    return branch;
+  }
+
+  getBranchBySelectionId(selectionId) {
+    return this.getBranchBySelectionIdAndTreeDataArray(selectionId, this.areaTreeData);
+  }
+
+  getParentBranch(branch, treeDataArray) {
+    let parentBranch = _.find(treeDataArray, (treeDataItem) => {
+      return _.find(treeDataItem.children, (childItem) => childItem === branch);
+    });
+    if (parentBranch) {
+      return parentBranch;
+    }
+    _.find(treeDataArray, (treeDataItem) => {
+      parentBranch = this.getParentBranch(branch, treeDataItem.children);
+      return parentBranch;
+    });
+    return parentBranch;
+  }
+
   getBreadcrumbText(branch, text) {
     var parent;
     if (branch && branch.label) {
@@ -482,7 +544,8 @@ class bid {
         text = branch.label;
       }
 
-      parent = this.areaTree.get_parent_branch(branch);
+      // parent = this.areaTree.get_parent_branch(branch);
+      const parent = this.getParentBranch(branch, this.areaTreeData);
       if (parent) {
         text = this.getBreadcrumbText(parent, text);
       }
@@ -520,13 +583,48 @@ class bid {
     return parentSelection && this.inSelectedArea(parentSelection._id);
   }
 
+  updateSpecifications(treeItem, pendingChanges) {
+    const areaSelection = _.find(this.selections, (selection) => selection._id === treeItem.data.selectionId);
+    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(pendingChanges, this.templateLibraries, areaSelection._id);
+    const applicableSpecificationGroupTemplates =
+      _.filter(templatesForTabs, (template) => template.templateType === Constants.templateTypes.specificationGroup);
+    const specifications = SelectionsHelper.getSpecificationListInfo(this.templateLibraries, pendingChanges,
+      this.lookupData, applicableSpecificationGroupTemplates, areaSelection);
+    treeItem.specifications = specifications;
+
+    if (treeItem.children) {
+      _.each(treeItem.children, (_treeItem) => {
+        this.updateSpecifications(_treeItem, pendingChanges);
+      });
+    }
+  }
+
+  updateSpecificationsForAreaTreeData(pendingChanges) {
+    _.each(this.areaTreeData, (treeItem) => {
+      this.updateSpecifications(treeItem, pendingChanges);
+    });
+  }
+
   addItemToTreeData(areaTreeDataArray, areaSelection) {
     const areaTemplate = this.areaTemplate;
+    const pendingChanges = {
+      job: this.job,
+      metadata: this.metadata,
+      selections: this.selections,
+      selectionRelationships: this.selectionRelationships
+    };
+    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(pendingChanges, this.templateLibraries, areaSelection._id);
+    const applicableSpecificationGroupTemplates =
+      _.filter(templatesForTabs, (template) => template.templateType === Constants.templateTypes.specificationGroup);
+    const specifications = SelectionsHelper.getSpecificationListInfo(this.templateLibraries, pendingChanges,
+      this.lookupData, applicableSpecificationGroupTemplates, areaSelection);
     var i;
     var areaSelectionChildren = [];
     var treeItem = {
         data: {selectionId: areaSelection._id},
         label: areaSelection.value,
+        type: 'area',
+        specifications,
         children: areaSelectionChildren
     }
     areaTreeDataArray.push(treeItem);
@@ -615,11 +713,24 @@ class bid {
       return;
     }
 
-    if (this.areaTree.get_selected_branch()) {
+    // if (this.areaTree.get_selected_branch()) {
+    //   const selection = Selections.findOne(this.areaSelectedId);
+    //   if (selection) {
+    //     this.areaTree.expand_branch();
+    //     this.addAreaToArray(this.areaTree.get_selected_branch().children, selection);
+    //   } else {
+    //     console.log(`selection ${this.areaSelectedId} not found in addChildArea`);
+    //   }
+    // } else {
+    //   console.log("An area must be selected to add a child area");
+    // }
+    if (this.selectedNode) {
       const selection = Selections.findOne(this.areaSelectedId);
       if (selection) {
-        this.areaTree.expand_branch();
-        this.addAreaToArray(this.areaTree.get_selected_branch().children, selection);
+        this.addAreaToArray(this.selectedNode.children, selection);
+        if (!_.contains(this.expandedNodes, this.selectedNode)) {
+          this.expandedNodes.push(this.selectedNode);
+        }
       } else {
         console.log(`selection ${this.areaSelectedId} not found in addChildArea`);
       }
@@ -641,6 +752,7 @@ class bid {
           newSelection = result;
           treeItem = this.addItemToTreeData(areaTreeDataArray, newSelection);
           this.selectAreaTreeItem(treeItem);
+          this.onAreaTreeItemSelected(treeItem);
           this.areaToAdd = null;
         }
       });
@@ -653,7 +765,8 @@ class bid {
     let confirmDelete = () => {
       const selection = Selections.findOne(this.areaSelectedId);
       if (selection) {
-        var parentBranch = this.areaTree.get_parent_branch(selectedBranch);
+        const parentBranch = this.getParentBranch(this.selectedNode, this.areaTreeData);
+        // var parentBranch = this.areaTree.get_parent_branch(selectedBranch);
         var parentBranchChildren = parentBranch ? parentBranch.children : this.areaTreeData;
         var index;
         var branchToSelect;
@@ -663,15 +776,19 @@ class bid {
             console.log('failed to deleteSelectionAndRelated', err);
           } else {
             // console.log('success getting companyIdsRelatedToUser', result);
-            index = parentBranchChildren.indexOf(selectedBranch);
+            // index = parentBranchChildren.indexOf(selectedBranch);
+            index = parentBranchChildren.indexOf(this.selectedNode);
             if (index > -1) {
               parentBranchChildren.splice(index, 1);
               //Select the branch that was the next sibling after the one deleted or the one before or the parent branch or nothing
               branchToSelect = parentBranchChildren.length > 0 ? parentBranchChildren[Math.min(index, parentBranchChildren.length - 1)] : parentBranch;
               if (branchToSelect) {
-                this.areaTree.select_branch(branchToSelect);
+                // this.areaTree.select_branch(branchToSelect);
+                this.selectedNode = branchToSelect;
+                this.onAreaTreeItemSelected(branchToSelect);
               } else {
-                this.areaTree.select_branch(null);
+                this.selectedNode = null;
+                // this.areaTree.select_branch(null);
                 this.onAreaTreeItemSelected(null);
               }
             }
@@ -680,9 +797,10 @@ class bid {
       }
     };
 
-    var selectedBranch = this.areaTree.get_selected_branch && this.areaTree.get_selected_branch();
-    if (selectedBranch) {
-      this.bootstrapDialog.confirmationDialog("Delete area and its selections", "Are you sure you want to delete '" + selectedBranch.label + "' and its selections and child areas?")
+    // var selectedBranch = this.areaTree.get_selected_branch && this.areaTree.get_selected_branch();
+    if (this.selectedNode) {
+      this.bootstrapDialog.confirmationDialog("Delete area and its selections", "Are you sure you want to delete '" +
+        this.selectedNode.label + "' and its selections and child areas?")
       .then(confirmDelete, cancelDelete);
     } else {
       console.log("An area must be selected to delete");
@@ -690,7 +808,8 @@ class bid {
   }
 
   selectAreaTreeItem(treeItem) {
-    this.areaTree.select_branch(treeItem);
+    this.selectedNode = treeItem;
+    // this.areaTree.select_branch(treeItem);
   }
 
   onAreaTreeItemSelected(branch) {
@@ -863,6 +982,7 @@ class bid {
       const {job, metadata, selections, selectionRelationships} = pendingChanges;
       job.estimateTotal = this.getJobSubtotal(metadata, selections, selectionRelationships);
       this.save(job, selections, selectionRelationships, metadata);
+      this.updateSpecificationsForAreaTreeData(pendingChanges);
     }, () => {
       console.log('Modal dismissed at: ' + new Date());
       if (deleteIfCanceled) {
@@ -870,6 +990,12 @@ class bid {
       }
       // this.cancel();
     });
+  }
+
+  editArea(areaNode) {
+    if (areaNode && areaNode.data && areaNode.data.selectionId) {
+      this.editProductSelection(areaNode.data.selectionId);
+    }
   }
 
   getSelectionTemplateName(selection) {
@@ -887,11 +1013,24 @@ class bid {
     }
     const selectedProductSelection = _.find(selections, (selection) => selection._id === this.selectedProductSelectionId);
     const selectedProductSelectionId = selectedProductSelection && selectedProductSelection._id;
-    const titleText = this.getTitle(selectedProductSelectionId, pendingChanges);
-    const priceEachText = this.getPriceEach(selectedProductSelectionId, pendingChanges);
-    const priceTotalText = this.getPriceTotal(selectedProductSelectionId, pendingChanges);
-    const quantityText = this.getQuantity(selectedProductSelectionId, pendingChanges);
-    return `${titleText} x ${quantityText} at ${priceEachText} each = ${priceTotalText}`;
+    const template = selectedProductSelection &&
+      TemplateLibrariesHelper.getTemplateById(this.templateLibraries, selectedProductSelection.templateId);
+    if (template) {
+      switch (template.templateType) {
+        case Constants.templateTypes.productSelection:
+          const titleText = this.getTitle(selectedProductSelectionId, pendingChanges);
+          const priceEachText = this.getPriceEach(selectedProductSelectionId, pendingChanges);
+          const priceTotalText = this.getPriceTotal(selectedProductSelectionId, pendingChanges);
+          const quantityText = this.getQuantity(selectedProductSelectionId, pendingChanges);
+          return `${titleText} x ${quantityText} at ${priceEachText} each = ${priceTotalText}`;
+        case Constants.templateTypes.area:
+          const branch = this.getBranchBySelectionId(selectedProductSelectionId);
+          return this.getBreadcrumbText(branch, '');
+        default:
+          return selectedProductSelection.value;
+      }
+    }
+
   }
 
   getTitle(productSelectionId, pendingChanges = {}) {
@@ -982,7 +1121,6 @@ class bid {
   // returns array of TabSection objects
   getTabsFromTemplates(templatesForTabs, pendingChanges) {
     var tabs = [];
-    const {metadata, selections, selectionRelationships} = pendingChanges;
     if (templatesForTabs) {
       _.each(templatesForTabs, (templateForTab) => {
         const templateSettingsForTabs = TemplateLibrariesHelper.getTemplateSettingsForTabs(templateForTab);
@@ -990,11 +1128,11 @@ class bid {
           const tabMatch = _.find(tabs, (tab) => tab.title === templateSetting.value);
           if (tabMatch) {
             tabMatch.inputSelectionItems.push(new InputSelectionItem(this.templateLibraries,
-              selections, selectionRelationships, templateForTab, this.selectedProductSelectionId, metadata, this.lookupData));
+              pendingChanges, templateForTab, this.selectedProductSelectionId, this.lookupData));
           }
           else {
             const newTab = new TabSection(templateSetting.value, this.templateLibraries,
-              selections, selectionRelationships, templateForTab, this.selectedProductSelectionId, metadata, this.lookupData);
+              pendingChanges, templateForTab, this.selectedProductSelectionId, this.lookupData);
               //Ultimately need a better way of ordering tabs, but for now just make Primary the first
             if (templateSetting.value === 'Primary') {
               tabs.unshift(newTab);
@@ -1027,7 +1165,7 @@ class bid {
 
     _.each(templatesForTabs, (templateForTab) => {
       this.productSelectionEditItems.push(new InputSelectionItem(this.templateLibraries,
-        selections, selectionRelationships, templateForTab, this.selectedProductSelectionId, metadata, this.lookupData));
+        pendingChanges, templateForTab, this.selectedProductSelectionId, this.lookupData));
     });
   }
 

@@ -231,13 +231,14 @@ function getSelectionToOverride(templateLibrary, selection, variableToOverride,
       returnValue.selectionToOverride = selection;
     }
 
-    //Next check child selections that are not sub templates
+    //Next check child selections that are not sub templates and not variable collectors
     if (!returnValue.selectionToOverride) {
       let childSelections = SelectionsHelper.getChildSelections(selection, selections, selectionRelationships);
       if (childSelections) {
         childSelections.forEach(function (childSelection) {
           const childSelectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibrary, childSelection.templateId);
           if (!returnValue.selectionToOverride && childSelectionTemplate &&
+            !ItemTemplatesHelper.getTemplateSettingValueForTemplate(childSelectionTemplate, Constants.templateSettingKeys.isVariableCollector) &&
             !ItemTemplatesHelper.isASubTemplate(childSelectionTemplate)) {
             returnValue = getSelectionToOverride(templateLibrary, childSelection, variableToOverride,
               selectionIdsToIgnore, selections, selectionRelationships, levelFromHere - 1);
@@ -285,6 +286,7 @@ function populateTemplateIds(templateLibrary, templateIds, template, onlyIfBaseO
 };
 
 //Return array of all selections that are children (or grandchildren, Etc.) that match template.
+//
 function getSelectionsBySelectionParentAndTemplate(templateLibrary, selections,
   selectionRelationships, selectionParent, template) {
   var templateIds = [];
@@ -315,9 +317,14 @@ function getSelectionsBySelectionParentAndTemplateIds(templateLibrary, selection
         if (_.contains(templateIds, childSelection.templateId)) {
           selectionsToReturn.push(childSelection);
         } else {
-          // Check for descendent selections for the template. Often the desired selection is a grandchild of the original selectionParent.
-          populateSelectionsBySelectionParent(templateLibrary, selections,
-            selectionRelationships, childSelection);
+          const selectionTemplate = TemplateLibrariesHelper.getTemplateById([templateLibrary], childSelection.templateId);
+          if (selectionTemplate &&
+              !SelectionsHelper.getSettingValue(childSelection, selectionTemplate,
+              Constants.templateSettingKeys.isVariableCollector)) {
+            // Check for descendent selections for the template. Often the desired selection is a grandchild of the original selectionParent.
+            populateSelectionsBySelectionParent(templateLibrary, selections,
+              selectionRelationships, childSelection);
+          }
         }
       });
     }
@@ -956,7 +963,8 @@ const initializeSelectionVariables = (templateLibraries, selections, selectionRe
 
   //If any dependent variables are undefined, then something must be wrong.
   if (metadata.variablesUndefined.length > 0) {
-      throw new Error('Variables not defined:' + metadata.variablesUndefined.join(","));
+    console.log('Variables not defined:' + metadata.variablesUndefined.join(","));
+      // throw new Error('Variables not defined:' + metadata.variablesUndefined.join(","));
   }
 };
 
@@ -1578,15 +1586,32 @@ const deleteSelectionAndRelated = (templateLibraries, pendingChanges, lookupData
   _.each(selectionsToDelete, (selectionToDelete) => {
     const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selectionToDelete.templateId);
     const variableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selectionToDelete);
-    let selectionJsonVariableName;
+    const populateSelectionRefreshesNeeded = (selectionJsonVariableName) => {
+      if (selectionJsonVariableName) {
+        selectionRefreshesNeeded.push({variableCollectorSelection, selectionJsonVariableName});
+      }
+    }
     if (selectionTemplate) {
-      selectionJsonVariableName = ItemTemplatesHelper.getJsonVariableName(selectionTemplate);
-      selectionRefreshesNeeded.push({variableCollectorSelection, selectionJsonVariableName});
+      populateSelectionRefreshesNeeded(ItemTemplatesHelper.getJsonVariableName(selectionTemplate));
+      // a condition selection can impact variables determined by each of its children
+      if (selectionTemplate.templateType === Constants.templateTypes.condition) {
+        const templateChildren = TemplateLibrariesHelper.getTemplateChildren(templateLibraries[0], selectionTemplate);
+        _.each(templateChildren, (templateChild) => {
+          const templateVariableName = ItemTemplatesHelper.getTemplateSettingValueForTemplate(templateChild, 'VariableToOverride');
+          const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(templateVariableName);
+          populateSelectionRefreshesNeeded(jsonVariableName);
+        });
+      }
     }
   })
   pendingChanges.selections = _.filter(selections, (selection) =>
     !_.any(selectionsToDelete, (selectionToDelete) => selectionToDelete._id === selection._id));
   pendingChanges.selectionRelationships = _.filter(selectionRelationships, (selectionRelationship) => !_.contains(selectionRelationshipIdsToDelete, selectionRelationship._id));
+
+  // Remove deleted selections from metadata
+  const selectionIdsToDelete = _.map(selectionsToDelete, (selectionToDelete) => selectionToDelete._id);
+  pendingChanges.metadata.selectionIdsReferencingVariables =
+    _.omit(pendingChanges.metadata.selectionIdsReferencingVariables, (value, key) => _.contains(selectionIdsToDelete, key));
 
   // Make sure formulas that reference deleted selection variables get updated
   _.each(selectionRefreshesNeeded, (selectionInfo) => {
@@ -1597,11 +1622,6 @@ const deleteSelectionAndRelated = (templateLibraries, pendingChanges, lookupData
         variableCollectorSelection, selectionJsonVariableName);
     }
   });
-
-  // Remove deleted selections from metadata
-  const selectionIdsToDelete = _.map(selectionsToDelete, (selectionToDelete) => selectionToDelete._id);
-  pendingChanges.metadata.selectionIdsReferencingVariables =
-    _.omit(pendingChanges.metadata.selectionIdsReferencingVariables, (value, key) => _.contains(selectionIdsToDelete, key));
 };
 
 const deleteSelectionChildren = (templateLibraries, pendingChanges, lookupData, selection) => {
@@ -1610,6 +1630,21 @@ const deleteSelectionChildren = (templateLibraries, pendingChanges, lookupData, 
   _.each(childSelections, (childSelection) => {
     deleteSelectionAndRelated(templateLibraries, pendingChanges, lookupData, childSelection);
   });
+};
+
+const getSpecificationListInfo = (templateLibraries, pendingChanges, lookupData,
+  applicableSpecificationGroupTemplates, selection) => {
+  const {metadata, selections, selectionRelationships} = pendingChanges;
+  let specifications = [];
+  _.each(applicableSpecificationGroupTemplates, (template) => {
+    const selectionItem = new InputSelectionItem(templateLibraries, pendingChanges,
+      template, selection._id, lookupData);
+    specifications.push({
+      label: selectionItem.value,
+      class: selectionItem.isDefinedAtThisLevel ? "label label-success" : "label label-default",
+    });
+  });
+  return specifications;
 };
 
 SelectionsHelper = {
@@ -1632,6 +1667,7 @@ SelectionsHelper = {
   getSelectionToOverride: getSelectionToOverride,
   getSelectionsBySelectionParentAndTemplate: getSelectionsBySelectionParentAndTemplate,
   getSelectionValue: getSelectionValue,
+  getSpecificationListInfo,
   getVariableCollectorSelection: getVariableCollectorSelection,
   initializeMetadata,
   initializeSelectionVariables: initializeSelectionVariables,

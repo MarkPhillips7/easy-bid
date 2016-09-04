@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "angular-tree-control": "^0.2.28",
     "angular2-now": "^1.1.6",
     "meteor-node-stubs": "^0.2.3",
     "rus-diff": "^1.1.0",
