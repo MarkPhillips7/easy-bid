@@ -91,43 +91,43 @@ Meteor.methods({
   addSelectionForTemplate,
   // Actually deletes selection, parent selection relationships (but not parent selection), child selection relationships,
   // and all descendent selections (children, grandchildren, etc.)
-  deleteSelectionAndRelated: function (selection) {
-    check(selection, Match.Any);// Schema.Selection);
-
-    if (!Meteor.call("userCanUpdateJob", this.userId, selection.jobId)) {
-      throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
-    }
-
-    let selectionIdsToDelete = [];
-    let selectionRelationshipIdsToDelete = [];
-
-    // First get the parent relationships to delete
-    const parentRelationshipIds = SelectionRelationships
-        .find({childSelectionId: selection._id})
-        .fetch()
-        .map((relationship) => relationship._id);
-    selectionRelationshipIdsToDelete.push(parentRelationshipIds);
-
-    addSelectionAndRelationshipIdsOfDescendents(
-      selection._id,
-      selectionIdsToDelete,
-      selectionRelationshipIdsToDelete);
-    Selections.remove({_id: {$in: selectionIdsToDelete}});
-    SelectionRelationships.remove({_id: {$in: selectionRelationshipIdsToDelete}});
-
-    function addSelectionAndRelationshipIdsOfDescendents(
-    selectionId, selectionIds, selectionRelationshipIds) {
-      selectionIds.push(selectionId);
-      const childRelationships = SelectionRelationships
-          .find({parentSelectionId: selectionId})
-          .fetch();
-      _.each(childRelationships, (relationship) => {
-        selectionRelationshipIdsToDelete.push(relationship._id);
-        addSelectionAndRelationshipIdsOfDescendents(
-          relationship.childSelectionId, selectionIds, selectionRelationshipIds);
-      });
-    }
-  },
+  // deleteSelectionAndRelated: function (selection) {
+  //   check(selection, Match.Any);// Schema.Selection);
+  //
+  //   if (!Meteor.call("userCanUpdateJob", this.userId, selection.jobId)) {
+  //     throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+  //   }
+  //
+  //   let selectionIdsToDelete = [];
+  //   let selectionRelationshipIdsToDelete = [];
+  //
+  //   // First get the parent relationships to delete
+  //   const parentRelationshipIds = SelectionRelationships
+  //       .find({childSelectionId: selection._id})
+  //       .fetch()
+  //       .map((relationship) => relationship._id);
+  //   selectionRelationshipIdsToDelete.push(parentRelationshipIds);
+  //
+  //   addSelectionAndRelationshipIdsOfDescendents(
+  //     selection._id,
+  //     selectionIdsToDelete,
+  //     selectionRelationshipIdsToDelete);
+  //   Selections.remove({_id: {$in: selectionIdsToDelete}});
+  //   SelectionRelationships.remove({_id: {$in: selectionRelationshipIdsToDelete}});
+  //
+  //   function addSelectionAndRelationshipIdsOfDescendents(
+  //   selectionId, selectionIds, selectionRelationshipIds) {
+  //     selectionIds.push(selectionId);
+  //     const childRelationships = SelectionRelationships
+  //         .find({parentSelectionId: selectionId})
+  //         .fetch();
+  //     _.each(childRelationships, (relationship) => {
+  //       selectionRelationshipIdsToDelete.push(relationship._id);
+  //       addSelectionAndRelationshipIdsOfDescendents(
+  //         relationship.childSelectionId, selectionIds, selectionRelationshipIds);
+  //     });
+  //   }
+  // },
   saveSelectionChanges: function (jobToSave, selectionsToSave, selectionIdsToDelete,
       selectionRelationshipsToSave, selectionRelationshipIdsToDelete, lookupData) {
     check(jobToSave, Schema.Job);

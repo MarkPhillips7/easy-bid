@@ -1564,7 +1564,9 @@ const deleteSelectionAndRelated = (templateLibraries, pendingChanges, lookupData
     _.each(childRelationships, (relationship) => {
       selectionRelationshipIdsToDelete.push(relationship._id);
       const childSelection = _.find(selections, (selection) => selection._id === relationship.childSelectionId);
-      addSelectionAndRelationshipIdsOfDescendents(childSelection, selectionsToDelete, selectionRelationshipIds);
+      if (childSelection) {
+        addSelectionAndRelationshipIdsOfDescendents(childSelection, selectionsToDelete, selectionRelationshipIds);
+      }
     });
   };
   let selectionsToDelete = [];

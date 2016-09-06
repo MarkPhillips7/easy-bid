@@ -771,29 +771,49 @@ class bid {
         var index;
         var branchToSelect;
 
-        Meteor.call('deleteSelectionAndRelated', selection, (err, result) => {
-          if (err) {
-            console.log('failed to deleteSelectionAndRelated', err);
+        const pendingChanges = this.getPendingChanges();
+        SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, this.lookupData, selection);
+        const {job, metadata, selections, selectionRelationships} = pendingChanges;
+        this.initializeJobVariables(job, metadata, selections, selectionRelationships);
+        this.confirmSaveChanges(job, selections, selectionRelationships, metadata, true);
+        index = parentBranchChildren.indexOf(this.selectedNode);
+        if (index > -1) {
+          parentBranchChildren.splice(index, 1);
+          //Select the branch that was the next sibling after the one deleted or the one before or the parent branch or nothing
+          branchToSelect = parentBranchChildren.length > 0 ? parentBranchChildren[Math.min(index, parentBranchChildren.length - 1)] : parentBranch;
+          if (branchToSelect) {
+            // this.areaTree.select_branch(branchToSelect);
+            this.selectedNode = branchToSelect;
+            this.onAreaTreeItemSelected(branchToSelect);
           } else {
-            // console.log('success getting companyIdsRelatedToUser', result);
-            // index = parentBranchChildren.indexOf(selectedBranch);
-            index = parentBranchChildren.indexOf(this.selectedNode);
-            if (index > -1) {
-              parentBranchChildren.splice(index, 1);
-              //Select the branch that was the next sibling after the one deleted or the one before or the parent branch or nothing
-              branchToSelect = parentBranchChildren.length > 0 ? parentBranchChildren[Math.min(index, parentBranchChildren.length - 1)] : parentBranch;
-              if (branchToSelect) {
-                // this.areaTree.select_branch(branchToSelect);
-                this.selectedNode = branchToSelect;
-                this.onAreaTreeItemSelected(branchToSelect);
-              } else {
-                this.selectedNode = null;
-                // this.areaTree.select_branch(null);
-                this.onAreaTreeItemSelected(null);
-              }
-            }
+            this.selectedNode = null;
+            // this.areaTree.select_branch(null);
+            this.onAreaTreeItemSelected(null);
           }
-        });
+        }
+        // Meteor.call('deleteSelectionAndRelated', selection, (err, result) => {
+        //   if (err) {
+        //     console.log('failed to deleteSelectionAndRelated', err);
+        //   } else {
+        //     // console.log('success getting companyIdsRelatedToUser', result);
+        //     // index = parentBranchChildren.indexOf(selectedBranch);
+        //     index = parentBranchChildren.indexOf(this.selectedNode);
+        //     if (index > -1) {
+        //       parentBranchChildren.splice(index, 1);
+        //       //Select the branch that was the next sibling after the one deleted or the one before or the parent branch or nothing
+        //       branchToSelect = parentBranchChildren.length > 0 ? parentBranchChildren[Math.min(index, parentBranchChildren.length - 1)] : parentBranch;
+        //       if (branchToSelect) {
+        //         // this.areaTree.select_branch(branchToSelect);
+        //         this.selectedNode = branchToSelect;
+        //         this.onAreaTreeItemSelected(branchToSelect);
+        //       } else {
+        //         this.selectedNode = null;
+        //         // this.areaTree.select_branch(null);
+        //         this.onAreaTreeItemSelected(null);
+        //       }
+        //     }
+        //   }
+        // });
       }
     };
 
