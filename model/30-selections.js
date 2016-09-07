@@ -837,6 +837,10 @@ const initializeValueToUse = (templateLibraries, selections, selectionRelationsh
   getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, lookupData, selection);
 };
 
+const initializePendingSelectionChanges = (metadata) => {
+  metadata.pendingSelectionChanges = {};
+}
+
 const initializeMetadata = (metadata, leaveSelectionIdsToBeInserted) => {
   // columnSelectionIds should be like
   // {
@@ -1672,6 +1676,7 @@ SelectionsHelper = {
   getSpecificationListInfo,
   getVariableCollectorSelection: getVariableCollectorSelection,
   initializeMetadata,
+  initializePendingSelectionChanges,
   initializeSelectionVariables: initializeSelectionVariables,
   setSelectionValue: setSelectionValue,
   sumSelections: sumSelections,

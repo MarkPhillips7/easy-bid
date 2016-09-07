@@ -59,6 +59,7 @@ class bid {
       allowDeselect: false,
       nodeChildren: "children",
       dirSelectable: true,
+      dirExpandDisabled: false, // will only work if https://github.com/wix/angular-tree-control/pull/233 gets included
       injectClasses: {
         ul: "a1",
         li: "a2",
@@ -68,10 +69,12 @@ class bid {
         iLeaf: "a5",
         label: "a6",
         labelSelected: "a8"
-      }
+      },
+      isSelectable: (node) => node.isSelectable,
     };
     this.expandedNodes = [];
     this.selectedNode = null;
+    this.metadataHtml = '';
 
     this.helpers({
       areAnyItemsSelected: this._areAnyItemsSelected,
@@ -216,6 +219,7 @@ class bid {
         console.log('failed to save selection changes', err);
       } else {
         console.log('success saving selection changes', result);
+        SelectionsHelper.initializePendingSelectionChanges(this.metadata);
       }
     });
   }
@@ -494,12 +498,7 @@ class bid {
     let i;
 
     if (jobSelection && areaTemplate) {
-      const childSelections = SelectionsHelper.getChildSelectionsWithTemplateId(jobSelection, areaTemplate.id);
-
-      for (i = 0; i < childSelections.length; i += 1) {
-        const childSelection = childSelections[i];
-        this.addItemToTreeData(pendingAreaTreeData, childSelection);
-      }
+      this.addItemToTreeData(pendingAreaTreeData, jobSelection, true);
     }
     return pendingAreaTreeData;
   }
@@ -605,7 +604,7 @@ class bid {
     });
   }
 
-  addItemToTreeData(areaTreeDataArray, areaSelection) {
+  addItemToTreeData(areaTreeDataArray, selection, isJobTreeItem) {
     const areaTemplate = this.areaTemplate;
     const pendingChanges = {
       job: this.job,
@@ -613,26 +612,27 @@ class bid {
       selections: this.selections,
       selectionRelationships: this.selectionRelationships
     };
-    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(pendingChanges, this.templateLibraries, areaSelection._id);
+    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(pendingChanges, this.templateLibraries, selection._id);
     const applicableSpecificationGroupTemplates =
       _.filter(templatesForTabs, (template) => template.templateType === Constants.templateTypes.specificationGroup);
     const specifications = SelectionsHelper.getSpecificationListInfo(this.templateLibraries, pendingChanges,
-      this.lookupData, applicableSpecificationGroupTemplates, areaSelection);
+      this.lookupData, applicableSpecificationGroupTemplates, selection);
     var i;
-    var areaSelectionChildren = [];
-    var treeItem = {
-        data: {selectionId: areaSelection._id},
-        label: areaSelection.value,
-        type: 'area',
+    var selectionChildren = [];
+    const treeItem = {
+        data: {selectionId: selection._id},
+        label: isJobTreeItem ? 'Job' : selection.value,
+        isSelectable: !isJobTreeItem,
+        type: isJobTreeItem ? 'job' : 'area',
         specifications,
-        children: areaSelectionChildren
+        children: selectionChildren
     }
     areaTreeDataArray.push(treeItem);
 
-    const childSelections = SelectionsHelper.getChildSelectionsWithTemplateId(areaSelection, areaTemplate.id);
+    const childSelections = SelectionsHelper.getChildSelectionsWithTemplateId(selection, areaTemplate.id);
 
     for (i = 0; i < childSelections.length; i += 1) {
-      treeItem = this.addItemToTreeData(areaSelectionChildren, childSelections[i]);
+      this.addItemToTreeData(selectionChildren, childSelections[i], false);
     }
 
     return treeItem;
@@ -1238,5 +1238,9 @@ class bid {
     }
 
     return treeItem;
+  }
+
+  showMetadata() {
+    this.metadataHtml = JSON.stringify(this.metadata, undefined, 2);
   }
 }
