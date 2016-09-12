@@ -7,7 +7,7 @@ Schema.Company = new SimpleSchema({
   },
   name: {
     type: String,
-    regEx: /^[a-z0-9A-z .]{3,30}$/
+    // regEx: /^[a-z0-9A-z .]{3,30}$/
   },
   nameLower: {
     type: String,
@@ -63,6 +63,30 @@ Schema.Company = new SimpleSchema({
     optional: true
   }
 });
+
+// does not look easy to use auto form (SimpleSchema) with angular.
+// I tried using autoformly, but it does not have npm package and does not seem to be used, so...
+CompanyFields = [
+  {
+    key: 'name',
+    type: 'input',
+    templateOptions: {
+      label: 'Name',
+      // placeholder: 'Bid Masters Inc',
+      required: true
+    }
+  },
+  {
+    key: 'websiteUrl',
+    type: 'input',
+    templateOptions: {
+      type: 'url',
+      label: 'Website',
+      // placeholder: 'www.BidMasters.com',
+      required: false,
+    }
+  }
+];
 
 Companies.attachSchema(Schema.Company);
 

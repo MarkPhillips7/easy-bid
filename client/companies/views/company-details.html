@@ -1,23 +1,13 @@
 <div class="container">
   <div class="row">
-    <div ng-controller="company as vm">
-      <legend>
-        Company Details
-      </legend>
-      <form class="form">
-        <div class="form-group">
-          <label>Company Name</label>
-          <input ng-model="vm.company.name" type="text"
-                 class="form-control">
-        </div>
-        <div class="form-group">
-          <label>Company Website</label>
-          <input ng-model="vm.company.websiteUrl" type="text"
-                 class="form-control">
-        </div>
-      </form>
-      <formly-form model="vm.company" fields="vm.companyFields">
+    <legend>
+      Company Details
+    </legend>
+    <form ng-submit="company.submit()" name="company.form" novalidate>
+      <formly-form model="company.company" fields="company.companyFields" options="company.options" form="company.form">
+        <button type="submit" class="btn btn-primary submit-button" ng-disabled="company.form.$invalid">Submit</button>
+        <button type="button" class="btn btn-default" ng-click="company.options.resetModel()">Reset</button>
       </formly-form>
-    </div>
+    </form>
   </div>
 </div>

@@ -17,7 +17,6 @@ random@1.0.10
 
 audit-argument-checks@1.0.7
 underscore@1.0.9
-vivekkatta:meteor-angular-formly
 themeteorchef:bert
 alanning:roles
 msavin:mongol
@@ -39,7 +38,6 @@ ejson@1.0.12
 spacebars@1.0.12
 
 
-angularutils:pagination
 urigo:angular-blaze-template
 angularui:angular-ui-bootstrap
 jasonaibrahim:angular-moment

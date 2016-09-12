@@ -17,6 +17,7 @@ class companies {
   constructor() {
     this.itemIdsSelected = [];
     this.perPage = 3;
+    this.pagination = undefined; // attempt to resolve intermittent problem of pagination controls not appearing... does not work. ToDo: fix!
     this.page = 1;
     this.sort = {
       'nameLower': 1

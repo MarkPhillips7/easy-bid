@@ -1,18 +1,75 @@
-angular.module("app").controller("company", ['$scope', '$meteor', '$rootScope', '$stateParams',
-  function ($scope, $meteor, $rootScope, $stateParams) {
-    var vm = this;
-    vm.company = $meteor.object(Companies, $stateParams.companyId);
+import {diff} from 'rus-diff';
+import {
+  Component, View, SetModule, Inject, MeteorReactive, LocalInjectables, init
+} from 'angular2-now';
+init();
+SetModule('app');
 
-    initialize();
+@Component({
+  selector: 'company'
+})
+@View({
+  templateUrl: () => 'client/companies/views/company-details.html'
+})
+@Inject('$state', '$stateParams')
+@MeteorReactive
+@LocalInjectables
+class company {
+  constructor() {
+    this.companyId = this.$stateParams.companyId;
+    this.isNew = this.$stateParams.companyId.toLowerCase() === 'new';
+    this.companyFields = CompanyFields;
+    this.originalCompany = undefined;
+    this.form = {};
+    this.options = {};
 
-    function initialize () {
-      var subscriptionHandle;
-      $meteor.subscribe('companies').then(function (handle) {
-        subscriptionHandle = handle;
-      });
+    this.helpers({
+      company: this._company,
+      isLoggedIn: this._isLoggedIn,
+    });
 
-      $scope.$on('$destroy', function () {
-        subscriptionHandle.stop();
-      });
+    this.subscribe('company', this._companySubscription.bind(this));
+  }
+
+  _companySubscription() {
+    return [this.companyId];
+  }
+
+  _isLoggedIn() {
+    return Meteor.userId() !== null;
+  }
+
+  _company() {
+    let returnValue = {};
+    if (!this.isNew) {
+      console.log(`about to get company ${this.companyId}`);
+      returnValue = Companies.findOne({ _id: this.companyId });
     }
-  }]);
+    if (!this.originalCompany) {
+      this.originalCompany = returnValue && {...returnValue};
+    }
+    return returnValue;
+  }
+
+  cancelSave() {
+    this.$state.go('companies')
+  }
+
+  submit() {
+    if (this.form.$valid) {
+      if (this.isNew) {
+        Companies.insert(this.company);
+      } else {
+        const companyMods = diff(this.originalCompany, this.company);
+        if (companyMods) {
+          Companies.update({_id: this.company._id}, companyMods);
+          this.originalCompany = this.company && {...this.company};
+        }
+      }
+    }
+    // if (vm.form.$valid) {
+    //   vm.options.updateInitialValue();
+    //   alert(JSON.stringify(vm.model), null, 2);
+    // }
+  }
+}

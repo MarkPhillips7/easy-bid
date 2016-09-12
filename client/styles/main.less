@@ -143,6 +143,57 @@ treecontrol.tree-boot li.tree-collapsed i.a4:before {
   content: "\f067"; // fa-plus
 }
 
+/*#region Mark P added here for formly validation messages http://angular-formly.com/#/example/advanced/validation-on-form-submit */
+// body {
+//   margin: 20px
+// }
+
+.formly-field {
+  margin-bottom: 26px;
+}
+
+.error-messages {
+  position: relative;
+}
+
+.error-messages, .message {
+  opacity: 1;
+  transition: .3s linear all;
+}
+
+.message {
+  font-size: .8em;
+  position: absolute;
+  width: 100%;
+  color: #a94442;
+  margin-top: 2px;
+}
+
+.error-messages.ng-enter.ng-enter-active,
+.message.ng-enter.ng-enter-active {
+  opacity: 1;
+  top: 0;
+}
+
+.error-messages.ng-enter,
+.message.ng-enter {
+  opacity: 0;
+  top: -10px;
+}
+
+.error-messages.ng-leave,
+.message.ng-leave {
+  opacity: 1;
+  top: 0;
+}
+
+.error-messages.ng-leave-active,
+.message.ng-leave-active {
+  opacity: 0;
+  top: -10px;
+}
+/*#endregion */
+
 /*#region Mark P added here to be able to add a margin above a div */
 .eb-top-buffer {
   margin-top:10px;
