@@ -5,7 +5,7 @@
     </legend>
     <form ng-submit="company.submit()" name="company.form" novalidate>
       <formly-form model="company.company" fields="company.companyFields" options="company.options" form="company.form">
-        <button type="submit" class="btn btn-primary submit-button" ng-disabled="company.form.$invalid">Submit</button>
+        <button type="submit" class="btn btn-primary submit-button" ng-disabled="!company.form.$dirty || company.form.$invalid">Submit</button>
         <button type="button" class="btn btn-default" ng-click="company.options.resetModel()">Reset</button>
       </formly-form>
     </form>
