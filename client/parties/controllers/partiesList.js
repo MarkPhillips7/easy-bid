@@ -7,7 +7,7 @@ angular.module("app").controller("PartiesListCtrl", ['$scope', '$meteor', '$root
     $scope.orderProperty = '1';
 
     $scope.users = $meteor.collection(Meteor.users, false).subscribe('users');
-    
+
     $scope.parties = $meteor.collection(function() {
       return Parties.find({}, {
         sort : $scope.getReactively('sort')

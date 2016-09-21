@@ -1,3 +1,6 @@
+import angular from 'angular';
+import angularMeteor from 'angular-meteor';
+import angularMoment from 'angular-moment';
 import dirPagination from 'angular-utils-pagination';
 import ngAnimate from 'angular-animate';
 import ngMessages from 'angular-messages';
@@ -5,25 +8,27 @@ import formly from 'angular-formly';
 import formlyBootstrap from 'angular-formly-templates-bootstrap';
 import treeControl from 'angular-tree-control';
 import 'angular-tree-control/css/tree-control.css';
+import ngSanitize from 'angular-sanitize';
+import toastr from 'angular-toastr';
+import uiRouter from 'angular-ui-router';
+import 'angular-ui-bootstrap/ui-bootstrap-tpls';
 
 angular.module('app', [
   'accounts.ui',
-  'angular-meteor',
-  'ngSanitize',
+  angularMeteor,
   'angularBootstrapNavTree',
-  'angularMoment',
+  angularMoment,
   dirPagination,
-  // angularUtils.directives.dirPagination,
   'common.bootstrap', // bootstrap dialog wrapper functions
   formly,
   formlyBootstrap,
   ngAnimate,
   ngMessages,
-  'toastr',
+  ngSanitize,
+  toastr,
   treeControl,
-  'uiGmapgoogle-maps',
   'ui.bootstrap',      // ui-bootstrap (ex: carousel, pagination, dialog)
-  'ui.router'
+  uiRouter,
 ]);
 
 angular.module('app')
@@ -54,7 +59,7 @@ angular.module('app')
 
 function onReady() {
   angular.bootstrap(document, ['app'], {
-    strictDi: true
+    // strictDi: true
   });
 }
 

@@ -4,17 +4,13 @@
 # 'meteor add' and 'meteor remove' will edit this file for you,
 # but you can also edit it by hand.
 
-angularui:angular-ui-router
 accounts-password@1.3.0
 tmeasday:publish-counts
 email@1.1.17
-angularui:angular-google-maps
 twbs:bootstrap
 less@2.7.5
 momentjs:moment
 random@1.0.10
-
-
 audit-argument-checks@1.0.7
 underscore@1.0.9
 themeteorchef:bert
@@ -36,20 +32,12 @@ logging@1.1.15
 reload@1.1.10
 ejson@1.0.12
 spacebars@1.0.12
-
-
-urigo:angular-blaze-template
-angularui:angular-ui-bootstrap
-jasonaibrahim:angular-moment
-
-
 dburles:collection-helpers
-angular:angular-sanitize
 reywood:publish-composite
 standard-minifier-css@1.2.0
 standard-minifier-js@1.2.0
-dotansimha:accounts-ui-angular-moded
-angular
 modules@0.7.6
-vishalm:angular-toastr
 shell-server
+pbastowski:angular-babel
+dotansimha:accounts-ui-angular
+angular-templates
