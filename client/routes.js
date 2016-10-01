@@ -3,7 +3,7 @@ angular.module("app").run(["$rootScope", "$location", function ($rootScope, $loc
     // We can catch the error thrown when the $requireUser promise is rejected
     // and redirect the user back to the main page
     if (error === "AUTH_REQUIRED") {
-      $location.path("/parties");
+      $location.path("/signup");
     }
   });
   $rootScope.Constants = Constants
@@ -109,31 +109,6 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         url: '/signup',
         templateUrl: 'client/account/views/signup.html',
         controller: 'signup'
-      })
-      .state('intro', {
-        url: '/parties',
-        templateUrl: 'client/parties/views/parties-list.html',
-        controller: 'PartiesListCtrl'
-      })
-      .state('parties', {
-        url: '/parties',
-        templateUrl: 'client/parties/views/parties-list.html',
-        controller: 'PartiesListCtrl'
-      })
-      .state('partyDetails', {
-        url: '/parties/:partyId',
-        templateUrl: 'client/parties/views/party-details.html',
-        controller: 'PartyDetailsCtrl',
-        resolve: {
-          currentUser: ($q) => {
-            if (Meteor.userId() == null) {
-              return $q.reject('AUTH_REQUIRED');
-            }
-            else {
-              return $q.resolve();
-            }
-          }
-        }
       })
       .state('companies', {
         url: '/companies',

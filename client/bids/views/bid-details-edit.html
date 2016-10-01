@@ -8,27 +8,27 @@
         <div class="form-group">
           <label class="col-sm-3 control-label" for="BidCustomer">Customer</label>
           <div class="col-sm-9">
-            <select class="form-control" ng-model="bid.job.customerId" id="BidCustomer" ng-change="changeCustomer()"
+            <select class="form-control" ng-model="job.customerId" id="BidCustomer" ng-change="changeCustomer()"
             ng-options="customer._id as (customer.profile.firstName + ' ' + customer.profile.lastName) for customer in customers"></select>
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-3 control-label" for="BidDescription">Description</label>
           <div class="col-sm-9">
-            <input class="form-control" type="text" id="BidDescription" ng-model="bid.job.name" />
+            <input class="form-control" type="text" id="BidDescription" ng-model="job.name" />
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-3 control-label" for="BidStatus">Status</label>
           <div class="col-sm-9">
-            <input class="form-control" type="text" id="BidStatus" ng-model="bid.job.status" />
+            <input class="form-control" type="text" id="BidStatus" ng-model="job.status" />
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-3 control-label" for="BidCreated">Created</label>
           <div class="col-sm-9">
             <span id="BidCreated" class="form-control-static">
-              {{bid.job.createdAt | date:'short'}}
+              {{job.createdAt | date:'short'}}
             </span>
           </div>
         </div>
@@ -37,32 +37,32 @@
           <div class="col-sm-9">
             <input type="text" class="form-control" id="BidDue"
                 datepicker-popup="yyyy-MM-dd" is-open="data.isOpen" ng-click="data.isOpen = true"
-                show-weeks="false" ng-model="bid.job.dueAt" />
+                show-weeks="false" ng-model="job.dueAt" />
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-3 control-label" for="BidEstimator">Estimator</label>
           <div class="col-sm-9">
-            <select class="form-control" ng-model="bid.job.estimatorId" id="BidEstimator" ng-change="changeEstimator()"
+            <select class="form-control" ng-model="job.estimatorId" id="BidEstimator" ng-change="changeEstimator()"
             ng-options="estimator._id as (estimator.profile.firstName + ' ' + estimator.profile.lastName) for estimator in coworkers"></select>
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-3 control-label" for="BidNotes">Notes</label>
           <div class="col-sm-9">
-            <input class="form-control" type="text" id="BidNotes" ng-model="bid.job.notes" />
+            <input class="form-control" type="text" id="BidNotes" ng-model="job.notes" />
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-3 control-label" for="BidProvisions">General Provisions</label>
           <div class="col-sm-9">
-            <textarea class="form-control" rows="3" id="BidProvisions" ng-model="bid.job.provisions"></textarea>
+            <textarea class="form-control" rows="3" id="BidProvisions" ng-model="job.provisions"></textarea>
           </div>
         </div>
         <div class="form-group">
           <label class="col-sm-3 control-label" for="BidExclusions">Exclusions</label>
           <div class="col-sm-9">
-            <textarea class="form-control" rows="3" id="BidExclusions" ng-model="bid.job.exclusions"></textarea>
+            <textarea class="form-control" rows="3" id="BidExclusions" ng-model="job.exclusions"></textarea>
           </div>
         </div>
       </form>

@@ -7,7 +7,7 @@ Schema.Job = new SimpleSchema({
   },
   name: {
     type: String,
-    regEx: /^[a-z0-9A-z .]{3,30}$/
+    // regEx: /^[a-z0-9A-z .]{3,30}$/
   },
   nameLower: {
     type: String,
@@ -55,15 +55,15 @@ Schema.Job = new SimpleSchema({
   },
   createdAt: {
     type: Date,
-    autoValue: function () {
-      if (this.isInsert) {
-        return new Date;
-      } else if (this.isUpsert) {
-        return {$setOnInsert: new Date};
-      } else {
-        this.unset();
-      }
-    }
+    // autoValue: function () {
+    //   if (this.isInsert) {
+    //     return new Date;
+    //   } else if (this.isUpsert) {
+    //     return {$setOnInsert: new Date};
+    //   } else {
+    //     this.unset();
+    //   }
+    // }
   },
   dueAt: {
     type: Date,
@@ -136,7 +136,7 @@ Jobs.allow({
 
 const getPendingChangeMessages = (candidateJob) => {
   const job = Jobs.findOne(candidateJob._id);
-  if (job.estimateTotal !== candidateJob.estimateTotal) {
+  if (job && job.estimateTotal !== candidateJob.estimateTotal) {
     const displayJobEstimateTotal = Filters.unitsFilter(job.estimateTotal, '$');
     const displayCandidateJobEstimateTotal = Filters.unitsFilter(candidateJob.estimateTotal, '$');
     return [`Estimate Total change from ${displayJobEstimateTotal} to ${displayCandidateJobEstimateTotal}`];

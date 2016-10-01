@@ -20,12 +20,17 @@ Initialization.initializeCompanies = function () {
 
     // If an existing company is not found, create it.
     if (!companyId) {
-      companyId = Companies.insert({
+      const newCompany = {
         _id: company._id,
+        createdAt: new Date(),
         name: company.name,
         websiteUrl: company.websiteUrl,
         logoUrl: company.logoUrl
-      });
+      };
+      // clean so that autoValues get set
+      // extendAutoValueContext needed because of https://github.com/aldeed/meteor-simple-schema/issues/530
+      Schema.Company.clean(newCompany, { extendAutoValueContext: { isUpdate: false, isInsert: true }});
+      companyId = Companies.insert(newCompany);
     }
   });
 

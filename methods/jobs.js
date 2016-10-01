@@ -128,14 +128,21 @@ Meteor.methods({
   //     });
   //   }
   // },
-  saveSelectionChanges: function (jobToSave, selectionsToSave, selectionIdsToDelete,
-      selectionRelationshipsToSave, selectionRelationshipIdsToDelete, lookupData) {
-    check(jobToSave, Schema.Job);
+  saveSelectionChanges: function (templateLibrariesIfNew, jobToSave, selectionsToSave, selectionIdsToDelete,
+      selectionRelationshipsToSave, selectionRelationshipIdsToDelete, lookupData, isInsert) {
+    check(templateLibrariesIfNew, Match.Any);
     check(selectionsToSave, [Schema.Selection]);
     check(selectionIdsToDelete, [String]);
     check(selectionRelationshipsToSave, [Schema.SelectionRelationship]);
     check(selectionRelationshipIdsToDelete, [String]);
     check(lookupData, Match.Any);
+    check(isInsert, Boolean);
+    // Clean jobToSave on server to add autovalue fields.
+    if (Meteor.isServer) {
+      // extendAutoValueContext needed because of https://github.com/aldeed/meteor-simple-schema/issues/530
+      Schema.Job.clean(jobToSave, { extendAutoValueContext: { isUpdate: !isInsert, isInsert }});
+      check(jobToSave, Schema.Job);
+    }
 
     const jobId = jobToSave._id;
     if (_.any(selectionsToSave, (selection) => selection.jobId !== jobId)) {
@@ -243,9 +250,19 @@ Meteor.methods({
     if (selectionRelationshipIdsToDelete && selectionRelationshipIdsToDelete.length > 0) {
       SelectionRelationships.remove({_id: {$in: selectionRelationshipIdsToDelete}});
     }
-    const jobMods = diff(job, jobToSave);
-    if (jobMods) {
-      Jobs.update({_id: jobToSave._id}, jobMods);
+    if (job) {
+      const jobMods = diff(job, jobToSave);
+      if (jobMods) {
+        Jobs.update({_id: jobToSave._id}, jobMods);
+      }
+    } else {
+      Jobs.insert(jobToSave);
+      _.each(templateLibrariesIfNew, (templateLibrary) => {
+        JobsTemplateLibraries.insert({
+          jobId: jobToSave._id,
+          templateLibraryId: templateLibrary._id,
+        });
+      })
     }
   }
 });

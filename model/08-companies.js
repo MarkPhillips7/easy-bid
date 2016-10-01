@@ -40,17 +40,17 @@ Schema.Company = new SimpleSchema({
   },
   createdAt: {
     type: Date,
-    autoValue: function() {
-      if (this.isInsert) {
-        return new Date;
-      } else if (this.isUpsert) {
-        return {
-          $setOnInsert: new Date
-        };
-      } else {
-        this.unset();
-      }
-    }
+    // autoValue: function() {
+    //   if (this.isInsert) {
+    //     return new Date;
+    //   } else if (this.isUpsert) {
+    //     return {
+    //       $setOnInsert: new Date
+    //     };
+    //   } else {
+    //     this.unset();
+    //   }
+    // }
   },
   websiteUrl: {
     type: String,
@@ -61,7 +61,11 @@ Schema.Company = new SimpleSchema({
     type: String,
     regEx: SimpleSchema.RegEx.Url,
     optional: true
-  }
+  },
+  defaultTemplateLibraryId: {
+    type: String,
+    optional: true
+  },
 });
 
 // does not look easy to use auto form (SimpleSchema) with angular.

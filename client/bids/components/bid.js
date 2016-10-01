@@ -27,12 +27,15 @@ class bid {
     this.bootstrapDialog = bootstrapDialog;
     this.columnTemplates = [];
     this.companyId = this.$stateParams.c;
+    this.companyTemplate = null;
     this.customerId = this.$stateParams.r;
+    this.customerTemplate = null;
     this.fullHierarchyTree = {};
     this.fullHierarchyTreeData = [];
     this.ignoreUpdatesTemporarily = false;
     this.ignoreSelectionUpdatesTemporarily = true;
     this.includeChildAreas = false;
+    this.isNew = this.$stateParams.bidId.toLowerCase() === 'new';
     this.jobId = this.$stateParams.bidId;
     this.jobSelection = null;
     this.jobTemplate = null;
@@ -49,7 +52,6 @@ class bid {
     this.productTypeaheadText = '';
     this.selectedAreaBreadcrumbText = '[No Areas]';
     this.selectedProductSelectionId = '';
-    this.subscriptionsReady = {};
     this.productSelectionIds = [];
     this.productSelectionEditItems = [];
     this.productSelectionItems = [];
@@ -75,6 +77,36 @@ class bid {
     this.expandedNodes = [];
     this.selectedNode = null;
     this.metadataHtml = '';
+    this.subscriptionsReady = 0;
+
+    this.initializeCompanyId();
+
+    // Careful: onReady does not get called if a subscription is already ready (https://github.com/meteor/meteor/issues/1173)
+    this.companySubscriptionHandle = this.subscribe('company', this._companySubscription.bind(this), {
+      onReady: () => {this.subscriptionsReady = this.subscriptionsReady + 1;},
+      onStop: (error) => {
+        if (error) {console.log(error);}
+      }});
+    this.customerSubscriptionHandle = this.subscribe('user', this._customerSubscription.bind(this), {
+      onReady: () => {this.subscriptionsReady = this.subscriptionsReady + 1;},
+      onStop: (error) => {
+        if (error) {console.log(error);}
+      }});
+    this.jobSubscriptionHandle = this.subscribe('job', this._jobSubscription.bind(this), {
+      onReady: () => {this.subscriptionsReady = this.subscriptionsReady + 1;},
+      onStop: (error) => {
+        if (error) {console.log(error);}
+      }});
+    this.selectionDataSubscriptionHandle = this.subscribe('selectionData', this._selectionDataSubscription.bind(this), {
+      onReady: () => {this.subscriptionsReady = this.subscriptionsReady + 1;},
+      onStop: (error) => {
+        if (error) {console.log(error);}
+      }});
+    this.templateLibraryDataSubscriptionHandle = this.subscribe('templateLibraryData', this._templateLibraryDataSubscription.bind(this), {
+      onReady: () => {this.subscriptionsReady = this.subscriptionsReady + 1;},
+      onStop: (error) => {
+        if (error) {console.log(error);}
+      }});
 
     this.helpers({
       areAnyItemsSelected: this._areAnyItemsSelected,
@@ -91,19 +123,6 @@ class bid {
       updateDependencies: this._updateDependencies,
       updateSelectionDependencies: this._updateSelectionDependencies,
     });
-
-    this.initializeCompanyId();
-
-    this.companySubscriptionHandle = this.subscribe('company', this._companySubscription.bind(this), {
-      onReady: () => {this.subscriptionsReady.company = true;}});
-    this.customerSubscriptionHandle = this.subscribe('customer', this._customerSubscription.bind(this), {
-      onReady: () => {this.subscriptionsReady.customer = true;}});
-    this.jobSubscriptionHandle = this.subscribe('job', this._jobSubscription.bind(this), {
-      onReady: () => {this.subscriptionsReady.job = true;}});
-    this.selectionDataSubscriptionHandle = this.subscribe('selectionData', this._selectionDataSubscription.bind(this), {
-      onReady: () => {this.subscriptionsReady.selectionData = true;}});
-    this.templateLibraryDataSubscriptionHandle = this.subscribe('templateLibraryData', this._templateLibraryDataSubscription.bind(this), {
-      onReady: () => {this.subscriptionsReady.templateLibraryData = true;}});
   }
 
   pageChanged(newPage) {
@@ -112,20 +131,20 @@ class bid {
 
   // update pretty much all state dependent on subscriptions
   _updateDependencies() {
-    console.log('maybe updating dependencies');
-    if (this.ignoreUpdatesTemporarily) {
+    console.log(`maybe updating dependencies ${this.getReactively('subscriptionsReady')}`);
+    if (this.ignoreUpdatesTemporarily || this.getReactively('subscriptionsReady') === 0) {
       return;
     }
 
-    if (!this.getReactively('subscriptionsReady.templateLibraryData')) {
+    if (!this.templateLibraryDataSubscriptionHandle || !this.templateLibraryDataSubscriptionHandle.ready()) {
       return;
     }
     SelectionsHelper.initializeMetadata(this.metadata);
     this.initializeTemplateVariables();
 
-    if (!this.getReactively('subscriptionsReady.selectionData')
-        || !this.getReactively('subscriptionsReady.job')
-        || !this.getReactively('subscriptionsReady.company')
+    if (!this.selectionDataSubscriptionHandle || !this.selectionDataSubscriptionHandle.ready()
+        || !this.jobSubscriptionHandle || !this.jobSubscriptionHandle.ready()
+        || !this.companySubscriptionHandle || !this.companySubscriptionHandle.ready()
       ) {
       return;
     }
@@ -137,18 +156,24 @@ class bid {
         // console.log('success getting companyIdsRelatedToUser', result);
         this.lookupData = result;
         console.log('updating dependencies');
-        this.initializeSelectionVariables();
-        this.initializeAfterSelectionVariablesOneTime();
         this.ignoreSelectionUpdatesTemporarily = false;
+        if (this.isNew) {
+          this.editBidDetails();
+        } else {
+          this.initializeSelectionVariables();
+          this.initializeAfterSelectionVariablesOneTime();
+        }
       }
     });
   }
 
   _updateSelectionDependencies() {
     this.getReactively(`selections`, true);
-    if (!this.getReactively('ignoreSelectionUpdatesTemporarily')) {
-      console.log('updating selection dependencies');
-      this.initializeSelectionVariables();
+    if (!this.isNew) {
+      if (!this.getReactively('ignoreSelectionUpdatesTemporarily')) {
+        console.log('updating selection dependencies');
+        this.initializeSelectionVariables();
+      }
     }
   }
 
@@ -176,6 +201,8 @@ class bid {
 
   initializeTemplateVariables() {
     this.areaTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.area);
+    this.companyTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.company);
+    this.customerTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.customer);
     this.jobTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.job);
     this.productSelectionTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.productSelection);
     this.productTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.baseProduct);
@@ -208,17 +235,21 @@ class bid {
     const selectionsToInsertOrUpdate = _.filter(selections, (selection) => metadata.pendingSelectionChanges[selection._id]
         && metadata.pendingSelectionChanges[selection._id].displayMessages
         && metadata.pendingSelectionChanges[selection._id].displayMessages.length > 0);
-    Meteor.call('saveSelectionChanges', job,
+    Meteor.call('saveSelectionChanges', this.templateLibraries, job,
       selectionsToInsertOrUpdate,
       _.difference(_.map(this.selections, (selection) => selection._id), _.map(selections, (selection) => selection._id)),
       selectionRelationships,
       _.difference(_.map(this.selectionRelationships, (relationship) => relationship._id), _.map(selectionRelationships, (relationship) => relationship._id)),
       this.lookupData,
+      this.isNew,
       (err, result) => {
       if (err) {
         console.log('failed to save selection changes', err);
       } else {
         console.log('success saving selection changes', result);
+        if (this.isNew) {
+          this.$state.go(`bid`, {bidId: job._id, c: job.companyId, r: job.customerId});
+        }
         SelectionsHelper.initializePendingSelectionChanges(this.metadata);
       }
     });
@@ -252,9 +283,10 @@ class bid {
   }
 
   getJobSubtotal = (metadata, selections, selectionRelationships) => {
+    const jobSelection = SelectionsHelper.getSelectionByTemplate(selections, this.jobTemplate);
     const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName('jobSubtotal');
     const variableCollectorSelection = SelectionsHelper.getVariableCollectorSelection(
-      this.templateLibraries, selections, selectionRelationships, this.jobSelection);
+      this.templateLibraries, selections, selectionRelationships, jobSelection);
     if (!variableCollectorSelection) {
       return null;
     }
@@ -398,8 +430,8 @@ class bid {
           // console.log('success getting companyIdsRelatedToUser', result);
 
           this.companyId = result[0];
-          // console.log(`Changed companyId to ${self.companyId}. Rerouting...`);
-          this.$state.go(`bid/${self.$stateParams.bidId}`, {c: this.companyId, r: this.customerId});
+          // console.log(`Changed companyId to ${this.companyId}. Rerouting...`);
+          this.$state.go(`bid`, {bidId: this.$stateParams.bidId, c: this.companyId, r: this.customerId});
         }
       });
     }
@@ -690,9 +722,7 @@ class bid {
   }
 
   _job() {
-    // console.log(`about to get jobId ${this.jobId}`);
-    const job = Jobs.findOne(this.$stateParams.bidId);
-    return job;
+    return  Jobs.findOne(this.$stateParams.bidId);
   }
 
   _jobSubscription() {
@@ -743,19 +773,22 @@ class bid {
     let treeItem;
     let newSelection;
     if (this.areaToAdd) {
-      const areaTemplate = this.getReactively('areaTemplate');
-      Meteor.call('addSelectionForTemplate', this.templateLibraries[0],
-          this.jobId, areaTemplate, this.areaToAdd, parentSelection._id, 0, (err, result) => {
-        if (err) {
-          console.log('failed to addSelectionForTemplate get in addAreaToArray', err);
-        } else {
-          newSelection = result;
-          treeItem = this.addItemToTreeData(areaTreeDataArray, newSelection);
-          this.selectAreaTreeItem(treeItem);
-          this.onAreaTreeItemSelected(treeItem);
-          this.areaToAdd = null;
-        }
-      });
+      const pendingChanges = this.getPendingChanges();
+      const {job, metadata, selections, selectionRelationships} = pendingChanges;
+      const newAreaSelection = SelectionsHelper.addSelectionForTemplate(this.templateLibraries[0],
+        selections, selectionRelationships, metadata, job._id,
+        this.areaTemplate, this.areaToAdd, parentSelection._id, 0, this.lookupData);
+      SelectionsHelper.addSelectionsForTemplateChildren(this.templateLibraries[0],
+        selections, selectionRelationships, metadata, job._id,
+        newAreaSelection, this.areaTemplate, Constants.selectionAddingModes.handleAnything,
+        this.areaTemplate, this.lookupData);
+      SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata, this.lookupData);
+      this.save(job, selections, selectionRelationships, metadata);
+      // Maybe these things should not happen until the save callback?
+      treeItem = this.addItemToTreeData(areaTreeDataArray, newAreaSelection);
+      this.selectAreaTreeItem(treeItem);
+      this.onAreaTreeItemSelected(treeItem);
+      this.areaToAdd = null;
     }
   }
 
@@ -853,6 +886,8 @@ class bid {
   }
 
   editBidDetails(event) {
+    const pendingChanges = this.getPendingChanges();
+    const {job, metadata, selections, selectionRelationships} = pendingChanges;
     const modalInstance = this.$modal.open({
       templateUrl: 'client/bids/views/bid-details-edit.html',
       controller: 'bidDetails',
@@ -861,11 +896,27 @@ class bid {
         'bid': () => {
           return this;
         },
+        'job': () => {
+          return job;
+        },
       }
     });
 
     modalInstance.result.then((selectedItem) => {
-      this.save(this.job, this.selections, this.selectionRelationships, this.metadata);
+      if (this.isNew) {
+        // new job needs a company selection and all of its appropriate children down to but not including an area.
+        const companySelection = SelectionsHelper.addSelectionForTemplate(this.templateLibraries[0],
+          selections, selectionRelationships, metadata, job._id,
+          this.companyTemplate, this.company._id, null, 0, this.lookupData);
+        SelectionsHelper.addSelectionsForTemplateChildren(this.templateLibraries[0],
+          selections, selectionRelationships, metadata, job._id,
+          companySelection, this.companyTemplate, Constants.selectionAddingModes.handleAnything,
+          this.areaTemplate, this.lookupData);
+        SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata, this.lookupData);
+        this.initializeJobVariables(job, metadata, selections, selectionRelationships);
+        job.estimateTotal = this.getJobSubtotal(metadata, selections, selectionRelationships);
+      }
+      this.save(job, selections, selectionRelationships, metadata);
     }, () => {
       console.log('Modal dismissed at: ' + new Date());
       this.cancel();
@@ -884,9 +935,20 @@ class bid {
     this.addProductSelection();
   }
 
+  getNewJob() {
+    return {
+      _id: Random.id(),
+      company: this.company,
+      companyId: this.companyId,
+      createdAt: new Date(),
+      createdBy: Meteor.userId(),
+      estimatorId: Meteor.userId(),
+    };
+  }
+
   getPendingChanges() {
     return {
-      job: _.clone(this.job),
+      job: this.isNew ? this.getNewJob() : _.clone(this.job),
       metadata: JSON.parse(JSON.stringify(this.metadata)), //_.clone(this.metadata) not an option as it does not do a deep clone
       selections: JSON.parse(JSON.stringify(this.selections)), //_.map(this.selections, _.clone),
       selectionRelationships: JSON.parse(JSON.stringify(this.selectionRelationships)), //_.map(this.selectionRelationships, _.clone),

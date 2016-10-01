@@ -67,16 +67,30 @@ Meteor.publish("templateLibraryData", function (jobId, options) {
     throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
   }
 
-  if (!Meteor.call('userCanViewJob', this.userId, jobId)) {
-    throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+  let jobsTemplateLibraries;
+  let templateLibraries;
+
+  if (jobId === 'new') {
+    const groupsRelatedToUser = Roles.getGroupsForUser(loggedInUser);
+    const defaultTemplateLibraryIdsRelatedToUser = Companies.find({
+      '_id' : { $in: groupsRelatedToUser }
+    }, { fields: { 'defaultTemplateLibraryId': 1 } }).map(function (company) {return company.defaultTemplateLibraryId;});
+    templateLibraries = TemplateLibraries.find({
+      '_id' : defaultTemplateLibraryIdsRelatedToUser[0]
+    });
+    // this should never return any records
+    jobsTemplateLibraries = JobsTemplateLibraries.find({ 'jobId' : jobId }, options);
+  } else {
+    if (!Meteor.call('userCanViewJob', this.userId, jobId)) {
+      throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+    }
+
+    jobsTemplateLibraries = JobsTemplateLibraries.find({ 'jobId' : jobId }, options);
+    const templateLibraryIds = _.map(jobsTemplateLibraries.fetch(), (jobTemplateLibrary) => jobTemplateLibrary.templateLibraryId);
+    templateLibraries = TemplateLibraries.find({
+      _id: { $in: templateLibraryIds }
+    });
   }
-
-  const jobsTemplateLibraries = JobsTemplateLibraries.find({ 'jobId' : jobId }, options);
-  const templateLibraryIds = _.map(jobsTemplateLibraries.fetch(), (jobTemplateLibrary) => jobTemplateLibrary.templateLibraryId);
-  const templateLibraries = TemplateLibraries.find({
-    _id: { $in: templateLibraryIds }
-  });
-
   return [
     jobsTemplateLibraries,
     templateLibraries,

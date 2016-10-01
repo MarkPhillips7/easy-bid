@@ -330,6 +330,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     cabinetryTemplateLibrary.isPublic = false;
     cabinetryTemplateLibrary.isReadOnly = false;
 
+    // make the cabinetry template library the default
+    Companies.update({_id: companyId}, {$set: {defaultTemplateLibraryId: cabinetryTemplateLibrary._id}});
+
     const templateCompany = _.find(cabinetryTemplateLibrary.templates, function (template) {
       return template.templateType === Constants.templateTypes.company
     });

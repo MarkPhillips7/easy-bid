@@ -2,18 +2,20 @@
   'use strict';
   var controllerId = 'bidDetails';
   angular.module('app').controller(controllerId,
-      ['$modalInstance', '$reactive', '$scope', 'bid', bidDetails]);
+      ['$modalInstance', '$reactive', '$scope', 'bid', 'job', bidDetails]);
 
-  function bidDetails($modalInstance, $reactive, $scope, bid) {
+  function bidDetails($modalInstance, $reactive, $scope, bid, job) {
     $reactive(this).attach($scope);
 
     $scope.bid = bid;
+    $scope.job = job;
     $scope.cancel = cancel;
     $scope.save = save;
     $scope.getSummary = getSummary;
     this.cancel = cancel;
     this.save = save;
     this.bid = bid;
+    this.job = job;
     this.getSummary = getSummary;
     this._customersCollection = () => {
       let customerRole = {};
@@ -57,18 +59,18 @@
     }
 
     function getSummary() {
-      return JobsHelper.getSummary(this.bid.job);
+      return JobsHelper.getSummary(this.job);
     }
 
     this.changeCustomer = () => {
-      const customer = _.find(this.customers, (_customer) => _customer._id === this.bid.job.customerId);
-      this.bid.job.customerProfile = customer.profile;
+      const customer = _.find(this.customers, (_customer) => _customer._id === this.job.customerId);
+      this.job.customerProfile = customer.profile;
     }
     $scope.changeCustomer = this.changeCustomer;
 
     this.changeEstimator = () => {
-      const estimator = _.find(this.coworkers, (coworker) => coworker._id === this.bid.job.estimatorId);
-      this.bid.job.estimatorProfile = estimator.profile;
+      const estimator = _.find(this.coworkers, (coworker) => coworker._id === this.job.estimatorId);
+      this.job.estimatorProfile = estimator.profile;
     }
     $scope.changeEstimator = this.changeEstimator;
   }

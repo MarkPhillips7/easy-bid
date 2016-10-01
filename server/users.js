@@ -23,7 +23,7 @@ Meteor.publish("customers", function(companyId, options, searchString) {
 });
 
 Meteor.publish("user", function (userId) {
-  check(userId, String);
+  check(userId, Match.OneOf(String, null));
   const options = {
     fields: {
       emails: 1,

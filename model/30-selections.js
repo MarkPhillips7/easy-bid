@@ -1344,11 +1344,6 @@ const addSelectionsForTemplateChildren = (templateLibrary, selections, selection
     selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt, lookupData) => {
   if (selection && template)
   {
-    //If a child template exists with the same type as templateToStopAt then just return.
-    if (templateToStopAt &&
-      _.find(TemplateLibrariesHelper.templateChildren(templateLibrary, template), (templateChild) => {return templateChild.templateType == templateToStopAt.templateType;})){
-      return;
-    }
 
     if (template.templateType === Constants.templateTypes.condition &&
       !isTemplateConditionMet(templateLibrary, selections, selectionRelationships, metadata, selection, template)) {
@@ -1356,11 +1351,16 @@ const addSelectionsForTemplateChildren = (templateLibrary, selections, selection
     }
 
     //Add selections for template children that are not SubItems (sub templates) first so that everything that might be overridden by sub template exists.
+    // But don't add selections for optionalOverride or optionalExplicit template children at all
     _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(templateLibrary, template.id))
-      .filter((templateRelationship) => {return templateRelationship.relationToItem != Constants.relationToItem.subItem;})
+      .filter((templateRelationship) => {
+        return templateRelationship.relationToItem != Constants.relationToItem.subItem &&
+          templateRelationship.dependency !== Constants.dependency.optionalOverride &&
+          templateRelationship.dependency !== Constants.dependency.optionalExplicit;
+      })
       .each((templateRelationship, index, list) => {
         addSelectionsForChildTemplateRelationship(templateLibrary, selections, selectionRelationships,
-          metadata, jobId, selection, template, selectionAddingMode, templateRelationship, null, lookupData);
+          metadata, jobId, selection, template, selectionAddingMode, templateRelationship, templateToStopAt, lookupData);
       });
 
     //Now it's safe to add selections for template children that are SubItems.
@@ -1368,7 +1368,7 @@ const addSelectionsForTemplateChildren = (templateLibrary, selections, selection
       .filter((templateRelationship) => {return templateRelationship.relationToItem == Constants.relationToItem.subItem;})
       .each((templateRelationship, index, list) => {
         addSelectionsForChildTemplateRelationship(templateLibrary, selections, selectionRelationships,
-          metadata, jobId, selection, template, selectionAddingMode, templateRelationship, null, lookupData);
+          metadata, jobId, selection, template, selectionAddingMode, templateRelationship, templateToStopAt, lookupData);
       });
 
     //Handle case where this is a sub template but also a parent of a sub template. So need to add the template children of the base template
@@ -1380,14 +1380,14 @@ const addSelectionsForTemplateChildren = (templateLibrary, selections, selection
 
       //To get here must be a sub template or base template, so go ahead and add selections for children
       addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata,
-        jobId, selection, template, Constants.selectionAddingModes.ignoreSubTemplates, null, lookupData);
+        jobId, selection, template, Constants.selectionAddingModes.ignoreSubTemplates, templateToStopAt, lookupData);
 
       //If this template is not a base template then still need to add selections for children of parent template(s)
       if (!isABaseTemplate)
       {
         _.each(TemplateLibrariesHelper.getTemplateParents(templateLibrary, template), (parentTemplate) => {
           addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata,
-            jobId, selection, parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates, null, lookupData);
+            jobId, selection, parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates, templateToStopAt, lookupData);
         });
       }
     }
@@ -1656,6 +1656,7 @@ const getSpecificationListInfo = (templateLibraries, pendingChanges, lookupData,
 SelectionsHelper = {
   addProductSelectionAndChildren,
   addSelectionForTemplate,
+  addSelectionsForTemplateChildren,
   addSpecificationGroupSelectionAndChildren,
   applyFunctionOverChildrenOfParent: applyFunctionOverChildrenOfParent,
   deleteSelectionAndRelated,

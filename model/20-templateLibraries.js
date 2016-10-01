@@ -844,6 +844,17 @@ Schema.TemplateLibrary = new SimpleSchema({
       }
     }
   },
+  modifiedBy: {
+    type: String,
+    //denyUpdate: true,
+    optional: true
+  },
+  modifiedAt: {
+    type: Date,
+    autoValue: function () {
+      return new Date;
+    }
+  },
   imageUrl: {
     type: String,
     regEx: SimpleSchema.RegEx.Url,

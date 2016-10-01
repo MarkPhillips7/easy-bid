@@ -5,7 +5,7 @@
 <body>
   <div>
     <nav class="navbar navbar-fixed-top">
-      <div class="container-fluid">
+      <div class="container">
         <div class="navbar-header">
           <a ng-if="$root.isInRole('system-admin')" class="navbar-brand" href="/companies">Companies</a>
           <a class="navbar-brand" href="/customers">Customers</a>
@@ -13,11 +13,12 @@
           <a class="navbar-brand" href="/billing">Billing</a>
           <a class="navbar-brand" href="/libraries">Products</a>
           <a class="navbar-brand" href="/test">Test</a>
-          <a class="navbar-brand" href="/parties">Parties</a>
         </div>
-        <div class="navbar-right navbar-text">
-          <login-buttons></login-buttons>
-        </div>
+        <ul class="nav navbar-nav navbar-right">
+          <li class="navbar-text eb-login-buttons">
+            <login-buttons></login-buttons>
+          </li>
+        </ul>
       </div>
     </nav>
     <div ui-view></div>
