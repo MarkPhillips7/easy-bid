@@ -51,7 +51,7 @@
             <i class="fa fa-times"></i> Delete
           </button>
         </div>
-        <div class="btn-group">
+        <div data-ng-if="bids.company._id" class="btn-group">
           <a type="button" class="btn btn-default btn-sm"
                   data-ng-show="bids.isLoggedIn"
                   href="/bids/new?c={{bids.company._id}}"
