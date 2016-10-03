@@ -40,7 +40,11 @@ class company {
   }
 
   _company() {
-    let returnValue = {};
+    let returnValue = {
+      _id: Random.id(),
+      createdAt: new Date(),
+      createdBy: Meteor.userId(),
+    };
     if (!this.isNew) {
       console.log(`about to get company ${this.companyId}`);
       returnValue = Companies.findOne({ _id: this.companyId });
@@ -66,10 +70,7 @@ class company {
           this.originalCompany = this.company && {...this.company};
         }
       }
+      this.$state.go('companies')
     }
-    // if (vm.form.$valid) {
-    //   vm.options.updateInitialValue();
-    //   alert(JSON.stringify(vm.model), null, 2);
-    // }
   }
 }
