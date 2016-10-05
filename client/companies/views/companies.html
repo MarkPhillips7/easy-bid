@@ -21,10 +21,12 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="sr-only" for="sort-order">Sort Order</label>
-          <select ng-model="companies.orderProperty" class="form-control">
-            <option value="1">Ascending</option>
-            <option value="-1">Descending</option>
+          <label for="sort-order">Sort by</label>
+          <select id="sort-order"
+            ng-options="option as option.name disable when option.notAnOption for option in companies.sortOptions"
+            ng-model="companies.sortOptionSelected"
+            ng-change="companies.updateSort()"
+            class="form-control">
           </select>
         </div>
       </form>
@@ -64,14 +66,15 @@
   </div>
   <ul class="list-group">
     <li dir-paginate="company in companies.companies | itemsPerPage: companies.perPage" total-items="companies.companiesCount"
+        current-page="companies.page"
         class="list-group-item eb-list-group-item">
       <div class="checkbox eb-list-group-item-left-checkbox">
         <label>
           <input type="checkbox" ng-checked="companies.isItemSelected(company._id)"
                  ng-click="companies.toggleItemSelection(company._id)">
         </label>
-       </div>
-       <a href="/companies/{{company._id}}" class="eb-list-group-item-main-a">
+      </div>
+      <a href="/companies/{{company._id}}" class="eb-list-group-item-main-a">
         <div class="row">
           <div class="col-sm-8">
             <span class="eb-list-group-item-main-a-left">

@@ -18,29 +18,50 @@ class companies {
     this.itemIdsSelected = [];
     this.perPage = 3;
     this.page = 1;
-    this.sort = {
-      'nameLower': 1
-    };
-    this.orderProperty = '1';
     this.searchText = '';
+    this.sortOptions = [
+      {
+        name: 'Name',
+        sort: {
+          'nameLower': 1,
+        },
+      },{
+        name: 'Bid Activity: High to Low',
+        sort: {
+          'bidsLast30Days': -1,
+          'nameLower': 1,
+        },
+        notAnOption: true,
+      },{
+        name: 'Bid Activity: Low to High',
+        sort: {
+          'bidsLast30Days': 1,
+          'nameLower': 1,
+        },
+        notAnOption: true,
+      },{
+        name: 'Newest Additions',
+        sort: {
+          'createdAt': -1,
+        },
+      }
+    ];
+    this.sortOptionSelected = this.sortOptions[0];
 
     this.helpers({
       areAnyItemsSelected: this._areAnyItemsSelected,
+      companies: this._companiesCollection,
+      companiesCount: this._companiesCount,
       currentUserId: this._currentUserId,
       isLoggedIn: this._isLoggedIn,
       notShownSelectedCount: this._notShownSelectedCount,
-      companies: this._companiesCollection,
-      companiesCount: this._companiesCount
     });
 
     this.subscribe('companies', this._companiesSubscription.bind(this));
   }
 
   updateSort() {
-    this.sort = {
-      'dueAt': -1,
-      'nameLower': parseInt(this.orderProperty)
-    }
+    this.pageChanged(1);
   };
 
   pageChanged(newPage) {
@@ -90,9 +111,9 @@ class companies {
 
   _companiesCollection() {
     return Companies.find({}, {
-          sort: this.getReactively('sort')
-        }
-      );
+        sort: this.getReactively('sortOptionSelected.sort')
+      }
+    );
   }
 
   _companiesCount() {
@@ -104,7 +125,7 @@ class companies {
       {
         limit: parseInt(this.perPage),
         skip: parseInt((this.getReactively('page') - 1) * this.perPage),
-        sort: this.getReactively('sort')
+        sort: this.getReactively('sortOptionSelected.sort')
       },
       this.getReactively('searchText')
     ]

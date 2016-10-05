@@ -395,9 +395,8 @@ class bid {
   _notShownSelectedCount() {
     const itemIdsSelected = this.getReactively('itemIdsSelected');
     let shownCount = 0;
-    const self = this;
     _.each(itemIdsSelected, (itemIdSelected) => {
-      shownCount += _.some(self.productSelectionIds, (productSelectionId) => productSelectionId === itemIdSelected) ? 1 : 0;
+      shownCount += _.some(this.getReactively('productSelectionIds', true), (productSelectionId) => productSelectionId === itemIdSelected) ? 1 : 0;
     });
 
     return itemIdsSelected.length - shownCount;

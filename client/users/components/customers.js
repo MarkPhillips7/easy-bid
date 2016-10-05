@@ -16,20 +16,33 @@ SetModule('app');
 class customers {
   constructor() {
     this.companyIdToFilterBy = this.$stateParams.c;
+    this.itemIdsSelected = [];
     this.perPage = 3;
     this.page = 1;
-    this.sort = {
-      'profile.nameLower': 1
-    };
-    this.orderProperty = '1';
     this.searchText = '';
+    this.sortOptions = [
+      {
+        name: 'Name',
+        sort: {
+          'profile.nameLower': 1,
+        },
+      },{
+        name: 'Newest Additions',
+        sort: {
+          'createdAt': -1,
+        },
+      }
+    ];
+    this.sortOptionSelected = this.sortOptions[0];
 
     this.helpers({
+      areAnyItemsSelected: this._areAnyItemsSelected,
       company: this._company,
       currentUserId: this._currentUserId,
       customers: this._customersCollection,
       customersCount: this._customersCount,
       isLoggedIn: this._isLoggedIn,
+      notShownSelectedCount: this._notShownSelectedCount,
     });
 
     this.initializeCompanyId();
@@ -38,15 +51,46 @@ class customers {
     this.subscribe('customers', this._customersSubscription.bind(this));
   }
 
+  updateSort() {
+    this.pageChanged(1);
+  };
+
   pageChanged(newPage) {
     this.page = newPage;
   };
 
-  updateSort() {
-    this.sort = {
-      'profile.nameLower': parseInt(this.orderProperty)
-    }
+  _areAnyItemsSelected() {
+    return this.getReactively('itemIdsSelected').length;
   };
+
+  _notShownSelectedCount() {
+    const items = this.customers;
+    const itemIdsSelected = this.getReactively('itemIdsSelected');
+    let shownCount = 0;
+    _.each(itemIdsSelected, (itemIdSelected) => {
+      shownCount += _.some(items, (item) => item._id === itemIdSelected) ? 1 : 0;
+    });
+
+    return itemIdsSelected.length - shownCount;
+  }
+
+  isItemSelected(itemId) {
+    const itemIdIndex = _.indexOf(this.itemIdsSelected, itemId);
+    return itemIdIndex != -1;
+  }
+
+  toggleItemSelection(itemId) {
+    const itemIdIndex = _.indexOf(this.itemIdsSelected, itemId);
+
+    if (itemIdIndex === -1) {
+      this.itemIdsSelected = [...this.itemIdsSelected, itemId];
+    } else {
+      this.itemIdsSelected = [
+        ...this.itemIdsSelected.slice(0, itemIdIndex),
+        ...this.itemIdsSelected.slice(itemIdIndex + 1)
+      ];
+    }
+  }
 
   initializeCompanyId() {
     let self = this;
@@ -93,7 +137,7 @@ class customers {
       // console.log(`about to get users for ${roleGroup} customers`);
       return Meteor.users.find(customerRole,
         {
-          sort: this.getReactively('sort')
+          sort: this.getReactively('sortOptionSelected.sort')
         }
       );
     }
@@ -110,7 +154,7 @@ class customers {
       {
         limit: parseInt(this.perPage),
         skip: parseInt((this.getReactively('page') - 1) * this.perPage),
-        sort: this.getReactively('sort')
+        sort: this.getReactively('sortOptionSelected.sort')
       },
       this.getReactively('searchText')
     ]

@@ -26,6 +26,7 @@ Meteor.publish("user", function (userId) {
   check(userId, Match.OneOf(String, null));
   const options = {
     fields: {
+      createdAt: 1,
       emails: 1,
       profile: 1,
       roles: 1
@@ -93,6 +94,7 @@ function usersRelatedToCompany(userId, rolesToReturn, companyId, options, search
 
   const _options = Object.assign({}, options, {
     fields: {
+      createdAt: 1,
       emails: 1,
       profile: 1,
       roles: 1
