@@ -22,6 +22,7 @@
     "bcrypt": "^0.8.7",
     "bootstrap": "^3.3.7",
     "fibers": "^1.0.14",
+    "isteven-angular-multiselect": "^4.0.0",
     "meteor-node-stubs": "^0.2.3",
     "moment": "^2.15.0",
     "rus-diff": "^1.1.0",

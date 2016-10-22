@@ -198,7 +198,22 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
             }
           }
         }
-      });
+      })
+      .state('lookups', {
+        url: '/lookups',
+        template: '<lookups></lookups>',
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
+        }
+      })
+      ;
       //.state('templateLibraryItemList', {
       //  url: '/libraries/:templateLibraryId/items',
       //  templateUrl: 'client/template-libraries/views/template-library-item-list.html',

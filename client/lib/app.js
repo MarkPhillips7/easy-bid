@@ -12,6 +12,9 @@ import ngSanitize from 'angular-sanitize';
 import toastr from 'angular-toastr';
 import uiRouter from 'angular-ui-router';
 import 'angular-ui-bootstrap/ui-bootstrap-tpls';
+import 'isteven-angular-multiselect/isteven-multi-select';
+import 'isteven-angular-multiselect/isteven-multi-select.css';
+// import 'isteven-multi-select';
 
 angular.module('app', [
   'accounts.ui',
@@ -22,6 +25,8 @@ angular.module('app', [
   'common.bootstrap', // bootstrap dialog wrapper functions
   formly,
   formlyBootstrap,
+  'isteven-multi-select',
+  // multiSelect,
   ngAnimate,
   ngMessages,
   ngSanitize,

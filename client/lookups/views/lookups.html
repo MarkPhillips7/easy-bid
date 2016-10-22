@@ -1,0 +1,152 @@
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="alert alert-info" ng-hide="$root.currentUser || $root.loggingIn">
+        Log in to view lookups!
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+      <form class="form-inline search-form">
+        <div class="form-group">
+          <h2 class="eb-inline">Lookup Data</h2>
+        </div>
+        <div class="form-group">
+          <label class="sr-only" for="search">Search</label>
+          <div class="input-group">
+            <div class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>
+            <input type="text" ng-model="lookups.searchText" placeholder="Search" id="search" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="sort-order">Sort by</label>
+          <select id="sort-order"
+            ng-options="option as option.name disable when option.notAnOption for option in lookups.sortOptions"
+            ng-model="lookups.sortOptionSelected"
+            ng-change="lookups.updateSort()"
+            class="form-control">
+          </select>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row eb-option-buttons">
+    <div class="col-sm-12">
+      <div class="pull-right">
+        <span class="label label-danger"
+              data-ng-show="lookups.notShownSelectedCount > 0">
+          {{lookups.notShownSelectedCount}} selected item{{lookups.notShownSelectedCount > 1 ? 's' : ''}} not shown
+        </span>
+        <div class="btn-group eb-btn-group">
+          <button type="button" class="btn btn-default btn-sm"
+                  data-ng-show="lookups.areAnyItemsSelected"
+                  data-ng-click="lookups.editSelected()"
+                  tooltip="Edit">
+            <i class="fa fa-edit"></i> Edit
+          </button>
+          <button type="button" class="btn btn-default btn-sm"
+                  data-ng-show="lookups.areAnyItemsSelected"
+                  data-ng-click="lookups.deleteSelected(lookups.selectedTemplate)"
+                  tooltip="Delete">
+            <i class="fa fa-times"></i> Delete
+          </button>
+        </div>
+        <div class="btn-group">
+          <a type="button" class="btn btn-default btn-sm"
+                  data-ng-show="lookups.isLoggedIn"
+                  href="/lookups/new"
+                  tooltip="Add">
+            <i class="fa fa-plus"></i> Add
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-3">
+      <div class="form-group">
+        <label for="product-library">Product Library</label>
+        <isteven-multi-select directive-id="product-library"
+          input-model="lookups.templateLibraryOptions"
+          output-model="lookups.templateLibraryOptionsSelected"
+          helper-elements=""
+          search-property="name"
+          button-label="icon name"
+          item-label="icon name"
+          tick-property="ticked"
+          selection-mode="single">
+        </isteven-multi-select>
+      </div>
+      <div class="form-group">
+        <label for="lookup-type">Lookup Type</label>
+        <isteven-multi-select directive-id="lookup-type"
+          input-model="lookups.lookupTypeOptions"
+          output-model="lookups.lookupTypeOptionsSelected"
+          helper-elements=""
+          search-property="name"
+          button-label="icon name"
+          item-label="icon name"
+          tick-property="ticked"
+          selection-mode="single">
+        </isteven-multi-select>
+      </div>
+      <div class="form-group">
+        <label for="lookup-key">Lookup Key</label>
+        <isteven-multi-select directive-id="lookup-key"
+          input-model="lookups.lookupKeyOptions"
+          output-model="lookups.lookupKeyOptionsSelected"
+          helper-elements="filter"
+          search-property="name"
+          button-label="icon name"
+          item-label="icon name"
+          tick-property="ticked"
+          selection-mode="single">
+        </isteven-multi-select>
+      </div>
+    </div>
+    <div class="col-sm-9">
+      <ul class="list-group">
+        <li dir-paginate="lookup in lookups.lookups | itemsPerPage: lookups.perPage" total-items="lookups.lookupsCount"
+            current-page="lookups.page"
+            class="list-group-item eb-list-group-item">
+          <div class="checkbox eb-list-group-item-left-checkbox">
+            <label>
+              <input type="checkbox" ng-checked="lookups.isItemSelected(lookup._id)"
+                     ng-click="lookups.toggleItemSelection(lookup._id)">
+            </label>
+          </div>
+          <a href="/lookups/{{lookup._id}}" class="eb-list-group-item-main-a">
+            <div class="row">
+              <div class="col-sm-8">
+                <span class="eb-list-group-item-main-a-left">
+                  <!-- <img data-eb-img-product="{{lookups.getImageSource(lookup.lookupType)}}"/> -->
+                  <span class="fa-stack">
+                    <i class={{lookups.getIconStack2xClass(lookup.lookupType)}}></i>
+                    <i class={{lookups.getIconStack1xClass(lookup.lookupType)}}></i>
+                  </span>
+                  <span class="badge">{{lookup.key}}</span>
+                  <strong>{{lookup.name}}</strong>
+                </span>
+              </div>
+              <div class="col-sm-4">
+                <span class="eb-price">
+                  {{lookup.value | ebunitsfilter:'$'}}
+                </span>
+                <div class="pull-right">
+                  <span data-toggle="tooltip"
+                    title="effective {{lookup.effectiveDate | amDateFormat:'MMMM Do, YYYY' }}"
+                    am-time-ago="lookup.effectiveDate"></span>
+                </div>
+              </div>
+            </div>
+          </a>
+        </li>
+      </ul>
+      <span ng-show="!lookups.lookups.length">No matches found</span>
+      <dir-pagination-controls on-page-change="lookups.pageChanged(newPageNumber)"></dir-pagination-controls>
+    </div>
+  </div>
+</div>

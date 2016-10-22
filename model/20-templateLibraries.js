@@ -1923,6 +1923,45 @@ const addProductsFromWorkbook = (workbook, templateLibrary, lookups, parentTempl
     });
   }
 }
+//
+// const getIconStack2xClass = (lookupType) => {
+//   return "fa fa-circle-o fa-stack-2x";
+// };
+//
+// const getIconStack1xClass = (lookupType) => {
+//   switch (lookupType) {
+//     case Constants.lookupTypes.label:
+//       return "fa fa-ellipsis-h fa-stack-1x";
+//     case Constants.lookupTypes.price:
+//       return "fa fa-dollar fa-stack-1x";
+//     case Constants.lookupTypes.standard:
+//     default:
+//       return "fa fa-arrow-up fa-stack-1x";
+//   }
+// };
+//
+// const getStackedIcon = (lookupType) => {
+//   return `<span class="fa-stack">
+//       <i class="${getIconStack2xClass(lookupType)}"></i>
+//       <i class="${getIconStack1xClass(lookupType)}"></i>
+//     </span>`;
+// };
+
+const getTemplateLibraryOptions = (templateLibraries, $filter) => {
+  return _.chain(templateLibraries)
+    .sortBy((templateLibrary) => templateLibrary.createdAt)
+    .reverse()
+    .map((templateLibrary, index) => {
+      const createdAt = $filter('amDateFormat')(templateLibrary.createdAt, 'MMM Do, YYYY');
+      return {
+        _id: templateLibrary._id,
+        icon: "<span></span>",
+        name: `${templateLibrary.name} - ${createdAt}`,
+        ticked: index === 0
+      };
+    })
+    .value();
+}
 
 TemplateLibrariesHelper = {
   addProductsFromWorkbook,
@@ -1939,6 +1978,7 @@ TemplateLibrariesHelper = {
   getTemplateById,
   getTemplateByType,
   getTemplateChildren,
+  getTemplateLibraryOptions,
   getTemplateLibraryWithTemplate,
   getTemplateRelationshipById,
   getTemplateSettingByIds,
