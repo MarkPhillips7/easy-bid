@@ -484,6 +484,33 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       }
     };
     let lookups = [];
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
+      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Hierarchical', Constants.lookupTypes.hierarchical, [
+        {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
+        {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-sitemap fa-stack-1x'},
+      ]);
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
+      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Label', Constants.lookupTypes.label, [
+        {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
+        {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-ellipsis-h fa-stack-1x'},
+      ]);
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
+      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Price', Constants.lookupTypes.price, [
+        {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
+        {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-dollar fa-stack-1x'},
+      ]);
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
+      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Standard', Constants.lookupTypes.standard, [
+        {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
+        {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-arrow-up fa-stack-1x'},
+      ]);
+
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
+      Constants.lookupSubTypes.lookupSubType, `${Constants.hierarchyRoot}${Constants.lookupTypes.hierarchical}`,
+      Constants.lookupSubTypes.lookupType, Constants.lookupSubTypes.lookupType);
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
+      Constants.lookupSubTypes.lookupSubType, `${Constants.hierarchyRoot}${Constants.lookupTypes.hierarchical}.${Constants.lookupSubTypes.lookupType}`,
+      Constants.lookupSubTypes.lookupSubType, Constants.lookupSubTypes.lookupSubType);
     const workbook = XLSX.readFile(process.env.PWD + '/server/startup/Spreadsheet Estimator V2.1.xlsx');
     TemplateLibrariesHelper.addProductsFromWorkbook(workbook, cabinetryTemplateLibrary, lookups, templateProduct, workbookMetadata.drawerSlides);
     // TemplateLibrariesHelper.addTemplatesFromSpreadsheet(spreadsheet, cabinetryTemplateLibrary, lookups, templateProduct, spreadsheetMetadata.hinges);

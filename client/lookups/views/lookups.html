@@ -94,6 +94,19 @@
         </isteven-multi-select>
       </div>
       <div class="form-group">
+        <label for="lookup-sub-type">Sub Type</label>
+        <isteven-multi-select directive-id="lookup-sub-type"
+          input-model="lookups.lookupSubTypeOptions"
+          output-model="lookups.lookupSubTypeOptionsSelected"
+          helper-elements=""
+          search-property="name"
+          button-label="icon name"
+          item-label="icon name"
+          tick-property="ticked"
+          selection-mode="single">
+        </isteven-multi-select>
+      </div>
+      <div class="form-group">
         <label for="lookup-key">Lookup Key</label>
         <isteven-multi-select directive-id="lookup-key"
           input-model="lookups.lookupKeyOptions"
@@ -122,11 +135,11 @@
             <div class="row">
               <div class="col-sm-8">
                 <span class="eb-list-group-item-main-a-left">
-                  <!-- <img data-eb-img-product="{{lookups.getImageSource(lookup.lookupType)}}"/> -->
                   <span class="fa-stack">
                     <i class={{lookups.getIconStack2xClass(lookup.lookupType)}}></i>
                     <i class={{lookups.getIconStack1xClass(lookup.lookupType)}}></i>
                   </span>
+                  <em ng-show="lookup.lookupSubType">{{lookup.lookupSubType}}</em>
                   <span class="badge">{{lookup.key}}</span>
                   <strong>{{lookup.name}}</strong>
                 </span>
@@ -135,6 +148,7 @@
                 <span class="eb-price">
                   {{lookup.value | ebunitsfilter:'$'}}
                 </span>
+                <span>{{lookups.getUnits(lookup)}}</span>
                 <div class="pull-right">
                   <span data-toggle="tooltip"
                     title="effective {{lookup.effectiveDate | amDateFormat:'MMMM Do, YYYY' }}"

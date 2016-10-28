@@ -1,7 +1,9 @@
-Meteor.publish("lookups", function(supplierId, templateLibraryId, lookupType, lookupKey, lookupName, options, searchString) {
+Meteor.publish("lookups", function(supplierId, templateLibraryId, lookupType, lookupSubType,
+    lookupKey, lookupName, options, searchString) {
   check(supplierId, Match.OneOf(String, null));
   check(templateLibraryId, Match.OneOf(String, null));
   check(lookupType, Match.OneOf(String, null));
+  check(lookupSubType, Match.OneOf(String, null));
   check(lookupKey, Match.OneOf(String, null));
   check(lookupName, Match.OneOf(String, null));
   check(options, Match.Any);
@@ -68,6 +70,9 @@ Meteor.publish("lookups", function(supplierId, templateLibraryId, lookupType, lo
   }
   if (lookupType) {
     selectorAndList.push({lookupType});
+  }
+  if (lookupSubType) {
+    selectorAndList.push({lookupSubType});
   }
   if (lookupKey) {
     selectorAndList.push({key: lookupKey});

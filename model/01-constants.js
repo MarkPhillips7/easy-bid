@@ -9,16 +9,35 @@ Constants.dependency = {
   optionalOverride:"OptionalOverride"//Assumes the same setting has a default set by a parent
 };
 
+Constants.hierarchyRoot = "-";
+
 Constants.lookupSettingKeys = {
   hardwareMaterial:"HardwareMaterial",
+  iconType:"IconType",
+  iconStack1xClass:"IconStack1xClass",
+  iconStack2xClass:"IconStack2xClass",
   size:"Size",
   unitsText:"UnitsText",
 };
 
 Constants.lookupTypes = {
+  hierarchical:"Hierarchical",
   label:"Label",
   price:"Price",
   standard:"Standard",
+};
+
+Constants.lookupSubTypes = {
+  lookupKey: "Lookup Key",
+  lookupType: "Lookup Type",
+  lookupSubType: "Sub Type", // lookupType should be standard, lookupSubType should be this, key should be the lookupType the subtype is under
+  option: "Option",
+  product: "Product",
+};
+
+Constants.lookupKeys = {
+  // lookupType: "Lookup Type",
+  root: Constants.hierarchyRoot,
 };
 
 Constants.noEmailYet = "noemailyet";

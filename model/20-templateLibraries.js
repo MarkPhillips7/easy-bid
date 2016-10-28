@@ -1794,41 +1794,6 @@ const getCellValue = (rowStartCellAddress, worksheet, columnOffset) => {
   return worksheet[columnCell] && worksheet[columnCell].v;
 }
 
-const addProductSkuLookup = (templateLibrary, lookups, generalProductName, productSku, productName) => {
-  const lookupKey = LookupsHelper.getLookupKey(generalProductName);
-  // it is expected to have multiple lookups with the same key
-  lookups.push({
-    lookupType: Constants.lookupTypes.standard,
-    templateLibraryId: templateLibrary._id,
-    // supplierId,
-    key: lookupKey,
-    name: productName,
-    value: LookupsHelper.getLookupKey(productSku),
-    effectiveDate: new Date(),
-  });
-}
-
-const addPriceLookup = (templateLibrary, lookups, productSku, productName, price, unitsText) => {
-  const lookupKey = LookupsHelper.getLookupKey(productSku);
-  // should not have multiple lookups with the same key
-  if (!_.some(lookups, (lookup) => lookup.key === lookupKey)) {
-    lookups.push({
-      lookupType: Constants.lookupTypes.price,
-      templateLibraryId: templateLibrary._id,
-      // supplierId,
-      key: lookupKey,
-      name: productName,
-      value: price,
-      effectiveDate: new Date(),
-      lookupSettings: [{
-        id: Random.id(),
-        key: Constants.lookupSettingKeys.unitsText,
-        value: unitsText,
-      }],
-    });
-  }
-}
-
 const getColumnValue = (column, rowStartCellAddress, worksheet) => {
   // 'if (column.columnOffset)' did not work because '(0)' is falsy
   if (typeof column.columnOffset === 'number') {
@@ -1893,7 +1858,7 @@ const addProductsFromWorkbook = (workbook, templateLibrary, lookups, parentTempl
       continue;
     }
 
-    addProductSkuLookup(templateLibrary, lookups, newTemplate.name, itemName, itemName);
+    LookupsHelper.addProductSkuLookup(templateLibrary, lookups, newTemplate.name, itemName, itemName);
 
     _.each(workbookMappings.columns, (column) => {
       const columnValue = getColumnValue(column, rowStartCellAddress, worksheet);
@@ -1913,7 +1878,7 @@ const addProductsFromWorkbook = (workbook, templateLibrary, lookups, parentTempl
               if (!unitsText) {
                 throw `a unit customProperty must be defined before a price customProperty`;
               }
-              addPriceLookup(templateLibrary, lookups, itemName, itemName, columnValue, unitsText);
+              LookupsHelper.addPriceLookup(templateLibrary, lookups, newTemplate.name, itemName, itemName, columnValue, unitsText);
               break;
             default:
               throw `'${column.header.customProperty}' is not a valid customProperty`;

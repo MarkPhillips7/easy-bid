@@ -26,6 +26,7 @@ class lookups {
           'templateLibraryId': 1,
           'supplierId': 1,
           'lookupType': 1,
+          'lookupSubType': 1,
           'key': 1,
           'name': 1,
           'value': 1,
@@ -37,6 +38,7 @@ class lookups {
           'templateLibraryId': 1,
           'supplierId': 1,
           'lookupType': 1,
+          'lookupSubType': 1,
           'key': 1,
           'name': 1,
           'value': 1,
@@ -48,6 +50,7 @@ class lookups {
           'templateLibraryId': 1,
           'supplierId': 1,
           'lookupType': 1,
+          'lookupSubType': 1,
           'key': 1,
           'name': 1,
           'value': 1,
@@ -58,19 +61,24 @@ class lookups {
     this.supplierId = null;
     this.lookupKey = null;
     this.lookupName = null;
-    this.lookupTypeOptions = LookupsHelper.getLookupTypeOptions();
     this.subscriptionsReady = 0;
+    this.lookupTypeOptions = null; // LookupsHelper.getLookupTypeOptions();
     this.lookupTypeOptionSelected = null;
     this.lookupTypeOptionsSelected = [];
+    // this.lookupSubTypeOptions = LookupsHelper.getLookupSubTypeOptions();
+    this.lookupSubTypeOptionSelected = null;
+    this.lookupSubTypeOptionsSelected = [];
     this.templateLibraryOptions = [];
     this.templateLibraryOptionsSelected = [];
-    this.lookupKeyOptions = [];
     this.lookupKeyOptionsSelected = [];
+    this.lookupData = null;
 
     this.helpers({
       areAnyItemsSelected: this._areAnyItemsSelected,
       lookups: this._lookupsCollection,
       lookupsCount: this._lookupsCount,
+      lookupKeyOptions: this._lookupKeyOptions,
+      lookupSubTypeOptions: this._lookupSubTypeOptions,
       templateLibraries: this._templateLibrariesCollection,
       currentUserId: this._currentUserId,
       isLoggedIn: this._isLoggedIn,
@@ -106,6 +114,10 @@ class lookups {
     return LookupsHelper.getIconStack1xClass(lookupType);
   }
 
+  getUnits(lookup) {
+    return LookupsHelper.getSettingValue(lookup, Constants.lookupSettingKeys.unitsText);
+  }
+
   // getImageSource(lookupType) {
   //   switch (lookupType) {
   //     case Constants.lookupTypes.label:
@@ -118,15 +130,53 @@ class lookups {
   //   }
   // }
 
+  _lookupSubTypeOptions() {
+    return this.getReactively('lookupData') &&
+      LookupsHelper.getLookupSubTypeOptions(this.getReactively('lookupData'),
+        this.getReactively('lookupTypeOptionsSelected[0].lookupType'),
+        this.getReactively('lookupSubTypeOptionsSelected[0].lookupSubType'));
+  }
+
+  _lookupKeyOptions() {
+    return this.getReactively('lookupData') &&
+      LookupsHelper.getLookupKeyOptions(this.getReactively('lookupData'),
+        this.getReactively('lookupTypeOptionsSelected[0].lookupType'),
+        this.getReactively('lookupSubTypeOptionsSelected[0].lookupSubType'),
+        this.getReactively('lookupKeyOptionsSelected[0].lookupKey'));
+  }
+
+  updateLookupTypes() {
+    this.lookupTypeOptions = LookupsHelper.getLookupTypeOptions(this.lookupData,
+      this.lookupTypeOptionsSelected.length && this.lookupTypeOptionsSelected[0].lookupType);
+    // this.lookupSubTypeOptions = LookupsHelper.getLookupSubTypeOptions(this.lookupData,
+    //   this.lookupTypeOptionsSelected.length && this.lookupTypeOptionsSelected[0].lookupType,
+    //   this.lookupSubTypeOptionsSelected.length && this.lookupSubTypeOptionsSelected[0].lookupSubType);
+    // this.lookupKeyOptions = LookupsHelper.getLookupKeyOptions(this.lookupData,
+    //   this.lookupTypeOptionsSelected.length && this.lookupTypeOptionsSelected[0].lookupType,
+    //   this.lookupSubTypeOptionsSelected.length && this.lookupSubTypeOptionsSelected[0].lookupSubType,
+    //   this.lookupKeyOptionsSelected.length && this.lookupKeenOptionsSelected[0].lookupKey);
+  }
+
   handleTemplateLibraryOptionsSelected(templateLibraryOptionsSelected) {
     if (!this.templateLibraryOptionsSelected[0] ||
-      (templateLibraryOptionsSelected && templateLibraryOptionsSelected[0] &&
-      this.templateLibraryOptionsSelected && this.templateLibraryOptionsSelected[0] &&
-      templateLibraryOptionsSelected[0]._id !== this.templateLibraryOptionsSelected[0]._id)) {
-        this.templateLibraryOptionsSelected = templateLibraryOptionsSelected;
-        const templateLibrarySelected = _.find(this.templateLibraries, (templateLibrary) => templateLibrary._id === templateLibraryOptionsSelected[0]._id);
-        this.lookupKeyOptions = LookupsHelper.getLookupKeyOptions(templateLibrarySelected, this.lookupTypeOptionsSelected[0].lookupType);
+        (templateLibraryOptionsSelected && templateLibraryOptionsSelected[0] &&
+        this.templateLibraryOptionsSelected && this.templateLibraryOptionsSelected[0] &&
+        templateLibraryOptionsSelected[0]._id !== this.templateLibraryOptionsSelected[0]._id)) {
+      this.templateLibraryOptionsSelected = templateLibraryOptionsSelected;
+      const templateLibrarySelected = _.find(this.templateLibraries, (templateLibrary) => templateLibrary._id === templateLibraryOptionsSelected[0]._id);
+      if (templateLibrarySelected) {
+        // load all the lookup data for the selected template library
+        Meteor.call('loadLookupData', [templateLibrarySelected], (err, result) => {
+          if (err) {
+            console.log('failed to loadLookupData', err);
+          } else {
+            // console.log('success getting companyIdsRelatedToUser', result);
+            this.lookupData = result;
+            this.updateLookupTypes();
+          }
+        });
       }
+    }
   }
 
   // update pretty much all state dependent on subscriptions
@@ -201,6 +251,7 @@ class lookups {
       this.getReactively('supplierId'),
       this.getReactively('templateLibraryOptionsSelected[0]._id'),
       this.getReactively('lookupTypeOptionsSelected[0].lookupType'),
+      this.getReactively('lookupSubTypeOptionsSelected[0].lookupSubType'),
       this.getReactively('lookupKeyOptionsSelected[0].lookupKey'),
       this.getReactively('lookupName'),
       {
