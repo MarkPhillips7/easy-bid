@@ -118,6 +118,22 @@ class lookups {
     return LookupsHelper.getSettingValue(lookup, Constants.lookupSettingKeys.unitsText);
   }
 
+  getDateStatusIconClass(lookup) {
+    return LookupsHelper.getDateStatusIconClass(lookup);
+  }
+
+  getDateStatus(lookup) {
+    return LookupsHelper.getDateStatus(lookup);
+  }
+
+  getDateStatusTooltip(lookup) {
+    return LookupsHelper.getDateStatusTooltip(lookup, this.$filter);
+  }
+
+  getDateStatusText(lookup) {
+    return LookupsHelper.getDateStatusText(lookup, this.$filter);
+  }
+
   // getImageSource(lookupType) {
   //   switch (lookupType) {
   //     case Constants.lookupTypes.label:

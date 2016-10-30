@@ -511,6 +511,24 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
       Constants.lookupSubTypes.lookupSubType, `${Constants.hierarchyRoot}${Constants.lookupTypes.hierarchical}.${Constants.lookupSubTypes.lookupType}`,
       Constants.lookupSubTypes.lookupSubType, Constants.lookupSubTypes.lookupSubType);
+
+    // Create lookup records with varying effectiveDate and expirationDate values
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
+      'Tea', `InChina`, `Earl Grey`, 3.12, undefined,
+      moment().startOf('day').add(-10, 'days').toDate(), moment().startOf('day').add(-1, 'days').toDate());
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
+      'Tea', `InChina`, `Earl Grey`, 3.18, undefined,
+      moment().startOf('day').add(-1, 'days').toDate(), moment().startOf('day').add(2, 'days').toDate());
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
+      'Tea', `InChina`, `Earl Grey`, 3.28, undefined,
+      moment().startOf('day').add(2, 'days').toDate(), moment().startOf('day').add(12, 'days').toDate());
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
+      'Tea', `InChina`, `Earl Grey`, 3.33, undefined,
+      moment().startOf('day').add(12, 'days').toDate());
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
+      'Tea', `InChina`, `Earl Purple`, 3.99, undefined,
+      moment().startOf('day').add(-10, 'days').toDate());
+
     const workbook = XLSX.readFile(process.env.PWD + '/server/startup/Spreadsheet Estimator V2.1.xlsx');
     TemplateLibrariesHelper.addProductsFromWorkbook(workbook, cabinetryTemplateLibrary, lookups, templateProduct, workbookMetadata.drawerSlides);
     // TemplateLibrariesHelper.addTemplatesFromSpreadsheet(spreadsheet, cabinetryTemplateLibrary, lookups, templateProduct, spreadsheetMetadata.hinges);

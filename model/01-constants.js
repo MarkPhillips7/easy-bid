@@ -2,6 +2,15 @@ Constants.conditionTypes = {
   switch:"Switch",
 }
 
+Constants.dateStatuses = {
+  neverEffective: "NeverEffective",
+  effectiveInPastNoExpiration: "EffectiveInPastNoExpiration",
+  expired: "Expired",
+  effectiveInPastWillExpire: "EffectiveInPastWillExpire",
+  effectiveInFutureNoExpiration: "EffectiveInFutureNoExpiration",
+  effectiveInFutureWillExpire: "EffectiveInFutureWillExpire",
+};
+
 Constants.dependency = {
   required:"Required",
   optionalAutomatic:"OptionalAutomatic",//Automatically selected

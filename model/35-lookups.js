@@ -236,7 +236,7 @@ const getLookupKeyOptions = (lookupData, lookupType, lookupSubType, selectedLook
   ];
 }
 
-const addLookup = (templateLibrary, lookups, lookupType, lookupSubType, key, name, value, lookupSettings) => {
+const addLookup = (templateLibrary, lookups, lookupType, lookupSubType, key, name, value, lookupSettings, effectiveDate, expirationDate) => {
   // should not have multiple lookups with the same key and value
   if (!_.some(lookups, (lookup) => lookup.templateLibraryId === templateLibrary._id && lookup.lookupType === lookupType &&
       lookup.lookupSubType === lookupSubType && lookup.key === key && lookup.value === value)) {
@@ -248,8 +248,9 @@ const addLookup = (templateLibrary, lookups, lookupType, lookupSubType, key, nam
       key,
       name,
       value,
-      effectiveDate: new Date(),
       lookupSettings,
+      effectiveDate: effectiveDate || new Date(),
+      expirationDate,
     });
   }
 }
@@ -303,10 +304,81 @@ const addProductSkuLookup = (templateLibrary, lookups, generalProductName, produ
   });
 }
 
+const getDateStatus = (lookup) => {
+  if (!lookup.effectiveDate) {
+    return Constants.dateStatuses.neverEffective;
+  } else if (moment().isAfter(lookup.effectiveDate)) {
+    if (!lookup.expirationDate) {
+      return Constants.dateStatuses.effectiveInPastNoExpiration;
+    } else if (moment().isAfter(lookup.expirationDate)) {
+      return Constants.dateStatuses.expired;
+    }
+    return Constants.dateStatuses.effectiveInPastWillExpire;
+  }
+  if (!lookup.expirationDate) {
+    return Constants.dateStatuses.effectiveInFutureNoExpiration;
+  }
+  return Constants.dateStatuses.effectiveInFutureWillExpire;
+};
+
+const getDateStatusIconClass = (lookup) => {
+  const dateStatus = getDateStatus(lookup);
+  switch (dateStatus) {
+    case Constants.dateStatuses.effectiveInPastNoExpiration:
+      return "fa fa-calendar-check-o eb-bold-success";
+    case Constants.dateStatuses.expired:
+      return "fa fa-calendar-minus-o eb-bold-danger";
+    case Constants.dateStatuses.effectiveInPastWillExpire:
+      return "fa fa-calendar-check-o eb-bold-success";
+    case Constants.dateStatuses.effectiveInFutureNoExpiration:
+      return "fa fa-calendar-plus-o eb-bold-warning";
+    case Constants.dateStatuses.effectiveInFutureWillExpire:
+      return "fa fa-calendar-plus-o eb-bold-warning";
+  }
+};
+
+const getDateStatusTooltip = (lookup, $filter) => {
+  const dateStatus = getDateStatus(lookup);
+  switch (dateStatus) {
+    case Constants.dateStatuses.effectiveInPastNoExpiration:
+      return `effective ${$filter('amDateFormat')(lookup.effectiveDate, 'MMMM Do, YYYY')}`;
+    case Constants.dateStatuses.expired:
+      return `expired ${$filter('amDateFormat')(lookup.expirationDate, 'MMMM Do, YYYY')}`;
+    case Constants.dateStatuses.effectiveInPastWillExpire:
+      return `effective ${$filter('amDateFormat')(lookup.effectiveDate, 'MMMM Do, YYYY')}, expires ${$filter('amDateFormat')(lookup.expirationDate, 'MMMM Do, YYYY')}`;
+    case Constants.dateStatuses.effectiveInFutureNoExpiration:
+      return `effective ${$filter('amDateFormat')(lookup.effectiveDate, 'MMMM Do, YYYY')}`;
+    case Constants.dateStatuses.effectiveInFutureWillExpire:
+      return `effective ${$filter('amDateFormat')(lookup.effectiveDate, 'MMMM Do, YYYY')}, expires ${$filter('amDateFormat')(lookup.expirationDate, 'MMMM Do, YYYY')}`;
+  }
+  return `?`;
+}
+
+const getDateStatusText = (lookup, $filter) => {
+  const dateStatus = getDateStatus(lookup);
+  switch (dateStatus) {
+    case Constants.dateStatuses.effectiveInPastNoExpiration:
+      return `effective ${$filter('amTimeAgo')(lookup.effectiveDate)}`;
+    case Constants.dateStatuses.expired:
+      return `expired ${$filter('amTimeAgo')(lookup.expirationDate)}`;
+    case Constants.dateStatuses.effectiveInPastWillExpire:
+      return `expires ${$filter('amTimeAgo')(lookup.expirationDate)}`;
+    case Constants.dateStatuses.effectiveInFutureNoExpiration:
+      return `effective ${$filter('amTimeAgo')(lookup.effectiveDate)}`;
+    case Constants.dateStatuses.effectiveInFutureWillExpire:
+      return `effective ${$filter('amTimeAgo')(lookup.effectiveDate)}`;
+  }
+  return `?`;
+}
+
 LookupsHelper = {
   addLookup,
   addPriceLookup,
   addProductSkuLookup,
+  getDateStatus,
+  getDateStatusIconClass,
+  getDateStatusText,
+  getDateStatusTooltip,
   getIconStack1xClass,
   getIconStack2xClass,
   getLookupKey,

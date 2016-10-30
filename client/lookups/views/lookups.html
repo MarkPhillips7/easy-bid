@@ -133,7 +133,7 @@
           </div>
           <a href="/lookups/{{lookup._id}}" class="eb-list-group-item-main-a">
             <div class="row">
-              <div class="col-sm-8">
+              <div class="col-sm-7">
                 <span class="eb-list-group-item-main-a-left">
                   <span class="fa-stack">
                     <i class={{lookups.getIconStack2xClass(lookup.lookupType)}}></i>
@@ -141,18 +141,24 @@
                   </span>
                   <em ng-show="lookup.lookupSubType">{{lookup.lookupSubType}}</em>
                   <span class="badge">{{lookup.key}}</span>
-                  <strong>{{lookup.name}}</strong>
+                  <strong data-ng-show="lookup.name !== lookup.value">{{lookup.name}}</strong>
                 </span>
               </div>
-              <div class="col-sm-4">
-                <span class="eb-price">
+              <div class="col-sm-5">
+                <span class="eb-price" data-ng-show="lookup.lookupType === 'Price'">
                   {{lookup.value | ebunitsfilter:'$'}}
                 </span>
-                <span>{{lookups.getUnits(lookup)}}</span>
+                <span data-ng-show="lookup.lookupType === 'Price'">{{lookups.getUnits(lookup)}}</span>
+                <span class="eb-item-title"
+                  data-ng-show="lookup.lookupType !== 'Price'">{{lookup.value}}</span>
                 <div class="pull-right">
-                  <span data-toggle="tooltip"
-                    title="effective {{lookup.effectiveDate | amDateFormat:'MMMM Do, YYYY' }}"
-                    am-time-ago="lookup.effectiveDate"></span>
+                  <span>
+                    <span data-toggle="tooltip"
+                          title="{{lookups.getDateStatusTooltip(lookup)}}">
+                      {{lookups.getDateStatusText(lookup)}}
+                    </span>
+                    <i class={{lookups.getDateStatusIconClass(lookup)}}></i>
+                  </span>
                 </div>
               </div>
             </div>
