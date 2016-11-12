@@ -43,13 +43,13 @@
           <button type="button" class="btn btn-default btn-sm"
                   data-ng-show="companies.areAnyItemsSelected"
                   data-ng-click="companies.editSelected()"
-                  tooltip="Edit">
+                  uib-tooltip="Edit">
             <i class="fa fa-edit"></i> Edit
           </button>
           <button type="button" class="btn btn-default btn-sm"
                   data-ng-show="companies.areAnyItemsSelected"
                   data-ng-click="companies.deleteSelected(companies.selectedTemplate)"
-                  tooltip="Delete">
+                  uib-tooltip="Delete">
             <i class="fa fa-times"></i> Delete
           </button>
         </div>
@@ -57,7 +57,7 @@
           <a type="button" class="btn btn-default btn-sm"
                   data-ng-show="companies.isLoggedIn"
                   href="/companies/new"
-                  tooltip="Add">
+                  uib-tooltip="Add">
             <i class="fa fa-plus"></i> Add
           </a>
         </div>

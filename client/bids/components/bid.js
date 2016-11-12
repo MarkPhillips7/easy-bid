@@ -10,11 +10,11 @@ SetModule('app');
 @View({
   templateUrl: () => 'client/bids/views/bid.html'
 })
-@Inject('$modal', '$scope', '$state', '$stateParams', '$timeout', 'bootstrap.dialog', 'toastr')
+@Inject('$uibModal', '$scope', '$state', '$stateParams', '$timeout', 'bootstrap.dialog', 'toastr')
 @MeteorReactive
 @LocalInjectables
 class bid {
-  constructor($modal, $scope, $state, $stateParams, $timeout, bootstrapDialog, toastr) {
+  constructor($uibModal, $scope, $state, $stateParams, $timeout, bootstrapDialog, toastr) {
     this.itemIdsSelected = [];
     this.perPage = 50;
     this.page = 1;
@@ -887,7 +887,7 @@ class bid {
   editBidDetails(event) {
     const pendingChanges = this.getPendingChanges();
     const {job, metadata, selections, selectionRelationships} = pendingChanges;
-    const modalInstance = this.$modal.open({
+    const modalInstance = this.$uibModal.open({
       templateUrl: 'client/bids/views/bid-details-edit.html',
       controller: 'bidDetails',
       size: 'lg',
@@ -1045,7 +1045,7 @@ class bid {
     }
     this.selectedProductSelectionId = productSelectionId;
     this.setTabs(pendingChanges, productSelectionId);
-    const modalInstance = this.$modal.open({
+    const modalInstance = this.$uibModal.open({
       templateUrl: 'client/product-selections/views/product-selection-edit.html',
       controller: 'productSelection',
       // size: 'lg',

@@ -21,7 +21,7 @@
   <!--<button type="button" class="btn btn-default btn-xs"-->
           <!--data-ng-enabled="vm.showModeOption($root.Constants.usageModes.browse)"-->
           <!--data-ng-click="vm.setUsageMode($root.Constants.usageModes.browse)"-->
-          <!--tooltip="Browse Mode">-->
+          <!--uib-tooltip="Browse Mode">-->
             <!--<span class="fa-stack">-->
               <!--<i class="fa fa-save fa-stack-1x"></i>-->
               <!--<i class="fa fa-ban fa-stack-2x text-danger"></i>-->
@@ -30,7 +30,7 @@
   <!--<button type="button" class="btn btn-default btn-xs"-->
           <!--data-ng-enabled="vm.showModeOption($root.Constants.usageModes.autoSave)"-->
           <!--data-ng-click="vm.setUsageMode($root.Constants.usageModes.autoSave)"-->
-          <!--tooltip="Auto Save">-->
+          <!--uib-tooltip="Auto Save">-->
             <!--<span class="fa-stack">-->
               <!--<i class="fa fa-save fa-stack-1x"></i>-->
               <!--<i class="fa fa-rotate-right fa-stack-2x text-success"></i>-->
@@ -39,7 +39,7 @@
   <!--<button type="button" class="btn btn-default btn-xs"-->
           <!--data-ng-enabled="vm.showModeOption($root.Constants.usageModes.classicEdit)"-->
           <!--data-ng-click="vm.setUsageMode($root.Constants.usageModes.classicEdit)"-->
-          <!--tooltip="Classic Edit (must click Save before changes take effect)">-->
+          <!--uib-tooltip="Classic Edit (must click Save before changes take effect)">-->
             <!--<span class="fa-stack">-->
               <!--<i class="fa fa-save fa-stack-1x"></i>-->
               <!--<i class="fa fa-mouse-pointer fa-stack-2x text-info"></i>-->
@@ -51,37 +51,37 @@
     <!--<button type="button" class="btn btn-default btn-xs"-->
             <!--data-ng-show="vm.showOption($root.Constants.recordActions.add)"-->
             <!--data-ng-click="vm.addTemplateAndEditDetails()"-->
-            <!--tooltip="Add">-->
+            <!--uib-tooltip="Add">-->
       <!--<i class="fa fa-plus"></i> Add-->
     <!--</button>-->
     <!--<button type="button" class="btn btn-default btn-xs"-->
             <!--data-ng-show="vm.showOption($root.Constants.recordActions.copy, vm.selectedTemplate)"-->
             <!--data-ng-click="vm.copyTemplateAndEditDetails(vm.selectedTemplate)"-->
-            <!--tooltip="Copy">-->
+            <!--uib-tooltip="Copy">-->
       <!--<i class="fa fa-copy"></i> Copy-->
     <!--</button>-->
     <button type="button" class="btn btn-default btn-xs"
             data-ng-show="vm.showOption($root.Constants.recordActions.edit, vm.selectedTemplate)"
             data-ng-click="vm.editTemplateDetails(vm.selectedTemplate)"
-            tooltip="Edit">
+            uib-tooltip="Edit">
       <i class="fa fa-edit"></i> Edit
     </button>
     <!--<button type="button" class="btn btn-default btn-xs"-->
             <!--data-ng-show="vm.showOption($root.Constants.recordActions.delete, vm.selectedTemplate)"-->
             <!--data-ng-click="vm.deleteTemplate(vm.selectedTemplate)"-->
-            <!--tooltip="Delete">-->
+            <!--uib-tooltip="Delete">-->
       <!--<i class="fa fa-times"></i> Delete-->
     <!--</button>-->
     <button type="button" class="btn btn-default btn-xs"
             data-ng-show="vm.showOption($root.Constants.recordActions.save, vm.selectedTemplate)"
             data-ng-click="vm.save()"
-            tooltip="Save">
+            uib-tooltip="Save">
       <i class="fa fa-save"></i> Save
     </button>
     <button type="button" class="btn btn-default btn-xs"
             data-ng-show="vm.showOption($root.Constants.recordActions.cancel, vm.selectedTemplate)"
             data-ng-click="vm.cancel()"
-            tooltip="Cancel">
+            uib-tooltip="Cancel">
       <i class="fa fa-cancel"></i> Cancel
     </button>
   </div>

@@ -10,8 +10,8 @@
           <data-eb-edit-selector data-bid="bid" data-input-selection-item="selectionItem"></data-eb-edit-selector>
       </div>
   </form>-->
-  <tabset>
-    <tab ng-repeat="tab in bid.tabs" heading="{{tab.title}}" active="tab.active" disabled="tab.disabled">
+  <uib-tabset>
+    <uib-tab ng-repeat="tab in bid.tabs" heading="{{tab.title}}" active="tab.active" disabled="tab.disabled">
       <form class="form-horizontal" role="form">
         <div class="form-group col-sm-12"
             data-ng-repeat="item in tab.inputSelectionItems">
@@ -21,8 +21,8 @@
               data-input-selection-item="item"></data-eb-tab-selector>
         </div>
       </form>
-    </tab>
-  </tabset>
+    </uib-tab>
+  </uib-tabset>
   <div class="clearfix"></div>
 </div>
 <div class="modal-footer">

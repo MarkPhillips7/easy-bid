@@ -11,7 +11,7 @@ import 'angular-tree-control/css/tree-control.css';
 import ngSanitize from 'angular-sanitize';
 import toastr from 'angular-toastr';
 import uiRouter from 'angular-ui-router';
-import 'angular-ui-bootstrap/ui-bootstrap-tpls';
+import 'angular-ui-bootstrap';
 import 'bootstrap-ui-datetime-picker/datetime-picker';
 import 'isteven-angular-multiselect/isteven-multi-select';
 import 'isteven-angular-multiselect/isteven-multi-select.css';

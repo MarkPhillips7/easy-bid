@@ -2,9 +2,9 @@
   'use strict';
   var controllerId = 'productSelection';
   angular.module('app').controller(controllerId,
-    ['$modalInstance', '$scope', 'bid', 'pendingChanges', productSelection]);
+    ['$uibModalInstance', '$scope', 'bid', 'pendingChanges', productSelection]);
 
-  function productSelection($modalInstance, $scope, bid, pendingChanges) {
+  function productSelection($uibModalInstance, $scope, bid, pendingChanges) {
     $scope.cancel = cancel;
     $scope.save = save;
     $scope.bid = bid;
@@ -12,11 +12,11 @@
     $scope.getSelectionSummary = getSelectionSummary;
 
     function cancel() {
-      $modalInstance.dismiss('cancel');
+      $uibModalInstance.dismiss('cancel');
     }
 
     function save() {
-      $modalInstance.close();
+      $uibModalInstance.close();
     }
 
     function getSelectionSummary() {

@@ -3,9 +3,9 @@
 
   var bootstrapModule = angular.module('common.bootstrap', ['ui.bootstrap']);
 
-  bootstrapModule.factory('bootstrap.dialog', ['$modal', '$templateCache', modalDialog]);
+  bootstrapModule.factory('bootstrap.dialog', ['$uibModal', '$templateCache', modalDialog]);
 
-  function modalDialog($modal, $templateCache) {
+  function modalDialog($uibModal, $templateCache) {
     var service = {
       deleteDialog: deleteDialog,
       confirmationDialog: confirmationDialog,
@@ -72,7 +72,7 @@
         }
       };
 
-      return $modal.open(modalOptions).result;
+      return $uibModal.open(modalOptions).result;
     }
 
     function confirmationDialog(title, msg, okText, cancelText) {
@@ -93,18 +93,18 @@
         }
       };
 
-      return $modal.open(modalOptions).result;
+      return $uibModal.open(modalOptions).result;
     }
   }
 
-  var ModalInstance = ['$scope', '$modalInstance', 'options',
-    function ($scope, $modalInstance, options) {
+  var ModalInstance = ['$scope', '$uibModalInstance', 'options',
+    function ($scope, $uibModalInstance, options) {
       $scope.title = options.title || 'Title';
       $scope.message = options.message || '';
       $scope.list = options.list || [];
       $scope.okText = options.okText || 'OK';
       $scope.cancelText = options.cancelText || 'Cancel';
-      $scope.ok = function () { $modalInstance.close('ok'); };
-      $scope.cancel = function () { $modalInstance.dismiss('cancel'); };
+      $scope.ok = function () { $uibModalInstance.close('ok'); };
+      $scope.cancel = function () { $uibModalInstance.dismiss('cancel'); };
     }];
 })();

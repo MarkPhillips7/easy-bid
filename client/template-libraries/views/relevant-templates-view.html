@@ -6,17 +6,17 @@
       <div class="btn-group pull-right">
         <button type="button" class="btn btn-default btn-xs"
                 data-ng-click="vm.addTemplateAndEditDetails(relevantTemplateTypeWithTemplates.templateType, template)"
-                tooltip="Add {{relevantTemplateTypeWithTemplates.name}}">
+                uib-tooltip="Add {{relevantTemplateTypeWithTemplates.name}}">
           <i class="fa fa-plus"></i>
         </button>
         <button type="button" class="btn btn-default btn-xs"
                 data-ng-click="vm.editTemplateDetails(relevantTemplateTypeWithTemplates.selectedTemplate)"
-                tooltip="Edit selected {{relevantTemplateTypeWithTemplates.name}}">
+                uib-tooltip="Edit selected {{relevantTemplateTypeWithTemplates.name}}">
           <i class="fa fa-edit"></i>
         </button>
         <button type="button" class="btn btn-default btn-xs"
                 data-ng-click="vm.deleteTemplate(relevantTemplateTypeWithTemplates.selectedTemplate)"
-                tooltip="Delete selected {{relevantTemplateTypeWithTemplates.name}}">
+                uib-tooltip="Delete selected {{relevantTemplateTypeWithTemplates.name}}">
           <i class="fa fa-times"></i>
         </button>
       </div>

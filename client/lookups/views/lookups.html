@@ -43,13 +43,13 @@
           <button type="button" class="btn btn-default btn-sm"
                   data-ng-show="lookups.areAnyItemsSelected"
                   data-ng-click="lookups.editSelected()"
-                  tooltip="Edit">
+                  uib-tooltip="Edit">
             <i class="fa fa-edit"></i> Edit
           </button>
           <button type="button" class="btn btn-default btn-sm"
                   data-ng-show="lookups.areAnyItemsSelected"
                   data-ng-click="lookups.deleteSelected(lookups.selectedTemplate)"
-                  tooltip="Delete">
+                  uib-tooltip="Delete">
             <i class="fa fa-times"></i> Delete
           </button>
         </div>
@@ -58,7 +58,7 @@
                   data-ng-show="lookups.isLoggedIn"
                   data-ng-click="lookups.newLookUp()"
                   href=""
-                  tooltip="Add">
+                  uib-tooltip="Add">
             <i class="fa fa-plus"></i> Add
           </a>
         </div>

@@ -2,9 +2,9 @@
   'use strict';
   var controllerId = 'bidDetails';
   angular.module('app').controller(controllerId,
-      ['$modalInstance', '$reactive', '$scope', 'bid', 'job', bidDetails]);
+      ['$uibModalInstance', '$reactive', '$scope', 'bid', 'job', bidDetails]);
 
-  function bidDetails($modalInstance, $reactive, $scope, bid, job) {
+  function bidDetails($uibModalInstance, $reactive, $scope, bid, job) {
     $reactive(this).attach($scope);
 
     $scope.bid = bid;
@@ -51,11 +51,11 @@
     $scope.coworkers = this.coworkers;
 
     function cancel() {
-      $modalInstance.dismiss('cancel');
+      $uibModalInstance.dismiss('cancel');
     }
 
     function save() {
-      $modalInstance.close();
+      $uibModalInstance.close();
     }
 
     function getSummary() {

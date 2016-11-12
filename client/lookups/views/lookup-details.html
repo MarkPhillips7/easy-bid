@@ -55,7 +55,7 @@
           <input type="text"
                  id="lookup-key"
                  ng-model="lookup.lookup.key"
-                 typeahead="lookupKeyOption.name for lookupKeyOption in lookup.lookupKeyOptions | filter:$viewValue"
+                 uib-typeahead="lookupKeyOption.name for lookupKeyOption in lookup.lookupKeyOptions | filter:$viewValue"
                  typeahead-editable="true"
                  class="form-control"
                  placeholder=""/>
@@ -77,7 +77,7 @@
         <label class="col-sm-3 control-label" for="EffectiveDate">Effective Date</label>
         <div class="col-sm-9">
           <input type="text" class="form-control" id="EffectiveDate"
-              datepicker-popup="yyyy-MM-dd" is-open="data.isOpen" ng-click="data.isOpen = true"
+              uib-datepicker-popup="yyyy-MM-dd" is-open="data.isOpen" ng-click="data.isOpen = true"
               show-weeks="false" ng-model="lookup.lookup.effectiveDate" />
         </div>
       </div>
@@ -86,7 +86,7 @@
         <div class="col-sm-9">
           <input type="text" class="form-control" id="ExpirationDate"
               placeholder="no expiration date"
-              datepicker-popup="yyyy-MM-dd" is-open="data2.isOpen" ng-click="data2.isOpen = true"
+              uib-datepicker-popup="yyyy-MM-dd" is-open="data2.isOpen" ng-click="data2.isOpen = true"
               show-weeks="false" ng-model="lookup.lookup.expirationDate" />
         </div>
       </div>

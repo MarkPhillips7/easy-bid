@@ -15,7 +15,7 @@
                 <button type="button"
                         class="btn btn-default btn-xs"
                         data-ng-click="bid.deleteArea($event)"
-                        tooltip="Delete area">
+                        uib-tooltip="Delete area">
                     <i class="fa fa-times"></i>
                 </button>
 
@@ -42,7 +42,7 @@
                 <button type="submit"
                         class="btn btn-default btn-xs"
                         data-ng-click="bid.addArea($event)"
-                        tooltip="Add area">
+                        uib-tooltip="Add area">
                     <i class="fa fa-plus"></i>
                 </button>
 
@@ -52,7 +52,7 @@
                 <button type="button"
                         class="btn btn-default btn-xs"
                         data-ng-click="bid.addChildArea($event)"
-                        tooltip="Add child area">
+                        uib-tooltip="Add child area">
                     <i class="fa fa-level-down"></i>
                 </button>
             </div>
@@ -97,7 +97,7 @@
             <div class="btn-group pull-right">
                 <button type="button" class="btn btn-default btn-xs"
                         data-ng-click="bid.editSpecificationGroups($event)"
-                        tooltip="Edit specification groups">
+                        uib-tooltip="Edit specification groups">
                     <i class="fa fa-edit"></i>
                 </button>
             </div>
@@ -164,7 +164,7 @@
             <div class="btn-group pull-right">
                 <button type="button" class="btn btn-default btn-xs"
                         data-ng-click="bid.editBidDetails($event)"
-                        tooltip="Edit job details">
+                        uib-tooltip="Edit job details">
                     <i class="fa fa-edit"></i>
                 </button>
             </div>
@@ -227,15 +227,15 @@
       <div class="eb-top-buffer">
         <input type="text"
                ng-model="bid.productTypeaheadText"
-               typeahead="option.name for option in bid.productOptions | filter:$viewValue"
+               uib-typeahead="option.name for option in bid.productOptions | filter:$viewValue"
                typeahead-editable="false"
                typeahead-on-select="bid.addProductSelectionOptionFromInput($item)"
                class="form-control"
                placeholder="Enter product to add or click one below"/>
       </div>
       <div class="eb-top-buffer">
-        <tabset>
-          <tab data-ng-repeat="tabPage in bid.metadata.tabPages" heading="{{tabPage.name}}">
+        <uib-tabset>
+          <uib-tab data-ng-repeat="tabPage in bid.metadata.tabPages" heading="{{tabPage.name}}">
             <div class="list-group">
               <a href="" data-ng-repeat="option in bid.getProductOptions(tabPage.name)"
                  class="list-group-item" ng-click="bid.addProductSelectionOption(option)">
@@ -244,8 +244,8 @@
                 </p>
               </a>
             </div>
-          </tab>
-        </tabset>
+          </uib-tab>
+        </uib-tabset>
       </div>
       <div class="clearfix"></div>
     </div>
@@ -269,13 +269,13 @@
             <button type="button" class="btn btn-default btn-xs"
                     data-ng-show="bid.areAnyItemsSelected"
                     data-ng-click="bid.editSelected()"
-                    tooltip="Edit">
+                    uib-tooltip="Edit">
               <i class="fa fa-edit"></i> Edit
             </button>
             <button type="button" class="btn btn-default btn-xs"
                     data-ng-show="bid.areAnyItemsSelected"
                     data-ng-click="bid.deleteSelected()"
-                    tooltip="Delete">
+                    uib-tooltip="Delete">
               <i class="fa fa-times"></i> Delete
             </button>
           </div>
@@ -283,7 +283,7 @@
             <a type="button" class="btn btn-default btn-xs"
                     data-ng-show="bid.isLoggedIn"
                     href="/bids/new?c={{bid.company._id}}"
-                    tooltip="Add">
+                    uib-tooltip="Add">
               <i class="fa fa-plus"></i> Add
             </a>
           </div>

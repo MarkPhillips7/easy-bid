@@ -41,13 +41,13 @@
           <button type="button" class="btn btn-default btn-sm"
                   data-ng-show="bids.areAnyItemsSelected"
                   data-ng-click="vm.editSelected()"
-                  tooltip="Edit">
+                  uib-tooltip="Edit">
             <i class="fa fa-edit"></i> Edit
           </button>
           <button type="button" class="btn btn-default btn-sm"
                   data-ng-show="bids.areAnyItemsSelected"
                   data-ng-click="vm.deleteSelected()"
-                  tooltip="Delete">
+                  uib-tooltip="Delete">
             <i class="fa fa-times"></i> Delete
           </button>
         </div>
@@ -55,7 +55,7 @@
           <a type="button" class="btn btn-default btn-sm"
                   data-ng-show="bids.isLoggedIn"
                   href="/bids/new?c={{bids.company._id}}"
-                  tooltip="Add">
+                  uib-tooltip="Add">
             <i class="fa fa-plus"></i> Add
           </a>
         </div>

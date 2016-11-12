@@ -34,7 +34,7 @@
               data-container="body"
               data-ng-click="deleteTemplateSetting(templateSetting)"
               data-ng-show="templateSettingInfo.minCount < templateSettings.length"
-              tooltip="Delete setting">
+              uib-tooltip="Delete setting">
         <i class="fa fa-times"></i>
       </button>
   </span>
@@ -61,7 +61,7 @@
               data-container="body"
               data-ng-click="addTemplateSetting(templateSettingInfo.templateSettingKey, '', 2)"
               data-ng-show="templateSettingInfo.maxCount === -1 || templateSettingInfo.maxCount > templateSettings.length"
-              tooltip="Add setting">
+              uib-tooltip="Add setting">
         <i class="fa fa-plus"></i>
       </button>
   </span>
