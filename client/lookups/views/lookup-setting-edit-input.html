@@ -1,0 +1,22 @@
+<label class="control-label col-sm-3"
+       for="TemplateSetting{{lookupSetting.key}}">
+  {{lookupSetting.key}}
+</label>
+
+<div class="col-sm-9">
+  <div class="input-group">
+    <input class="form-control"
+           type="text"
+           id="TemplateSetting{{lookupSetting.key}}"
+           ng-model="lookupSetting.value"/>
+    <span class="input-group-btn">
+        <button type="button"
+                class="btn btn-default"
+                data-container="body"
+                data-ng-click="deleteLookupSetting(lookupSetting)"
+                tooltip="Delete setting">
+          <i class="fa fa-times"></i>
+        </button>
+    </span>
+  </div>
+</div>

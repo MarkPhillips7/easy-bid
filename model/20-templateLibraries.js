@@ -1912,7 +1912,7 @@ const addProductsFromWorkbook = (workbook, templateLibrary, lookups, parentTempl
 //     </span>`;
 // };
 
-const getTemplateLibraryOptions = (templateLibraries, $filter) => {
+const getTemplateLibraryOptions = (templateLibraries, $filter, selectedTemplateLibraryId) => {
   return _.chain(templateLibraries)
     .sortBy((templateLibrary) => templateLibrary.createdAt)
     .reverse()
@@ -1922,7 +1922,8 @@ const getTemplateLibraryOptions = (templateLibraries, $filter) => {
         _id: templateLibrary._id,
         icon: "<span></span>",
         name: `${templateLibrary.name} - ${createdAt}`,
-        ticked: index === 0
+        ticked: (selectedTemplateLibraryId && templateLibrary._id === selectedTemplateLibraryId) ||
+          (!selectedTemplateLibraryId && index === 0)
       };
     })
     .value();

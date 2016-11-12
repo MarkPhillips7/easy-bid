@@ -72,6 +72,7 @@ class lookups {
     this.templateLibraryOptionsSelected = [];
     this.lookupKeyOptionsSelected = [];
     this.lookupData = null;
+    this.lookupDataTemplateLibraryId = null;
 
     this.helpers({
       areAnyItemsSelected: this._areAnyItemsSelected,
@@ -134,23 +135,23 @@ class lookups {
     return LookupsHelper.getDateStatusText(lookup, this.$filter);
   }
 
-  // getImageSource(lookupType) {
-  //   switch (lookupType) {
-  //     case Constants.lookupTypes.label:
-  //       return "icon.png";
-  //     case Constants.lookupTypes.price:
-  //       return "Dollars.png";
-  //     case Constants.lookupTypes.standard:
-  //     default:
-  //       return "icon.png";
-  //   }
-  // }
+  newLookUp() {
+    this.$state.go('lookupDetails', {
+      lookupId: 'new',
+      tl: this.templateLibraryOptionsSelected[0] && this.templateLibraryOptionsSelected[0]._id,
+      lt: this.lookupTypeOptionsSelected[0] && this.lookupTypeOptionsSelected[0].lookupType,
+      ls: this.lookupSubTypeOptionsSelected[0] && this.lookupSubTypeOptionsSelected[0].lookupSubType,
+      lk: this.lookupKeyOptionsSelected[0] && this.lookupKeyOptionsSelected[0].lookupKey,
+    });
+  }
 
   _lookupSubTypeOptions() {
-    return this.getReactively('lookupData') &&
+    const lookupSubTypeOptions = this.getReactively('lookupData') &&
       LookupsHelper.getLookupSubTypeOptions(this.getReactively('lookupData'),
         this.getReactively('lookupTypeOptionsSelected[0].lookupType'),
-        this.getReactively('lookupSubTypeOptionsSelected[0].lookupSubType'));
+        this.getReactively('lookupSubTypeOptionsSelected[0].lookupSubType'), 'Any');
+    // this.$scope.$apply();
+    return lookupSubTypeOptions;
   }
 
   _lookupKeyOptions() {
@@ -158,30 +159,21 @@ class lookups {
       LookupsHelper.getLookupKeyOptions(this.getReactively('lookupData'),
         this.getReactively('lookupTypeOptionsSelected[0].lookupType'),
         this.getReactively('lookupSubTypeOptionsSelected[0].lookupSubType'),
-        this.getReactively('lookupKeyOptionsSelected[0].lookupKey'));
+        this.getReactively('lookupKeyOptionsSelected[0].lookupKey'), 'Any');
   }
 
   updateLookupTypes() {
     this.lookupTypeOptions = LookupsHelper.getLookupTypeOptions(this.lookupData,
-      this.lookupTypeOptionsSelected.length && this.lookupTypeOptionsSelected[0].lookupType);
-    // this.lookupSubTypeOptions = LookupsHelper.getLookupSubTypeOptions(this.lookupData,
-    //   this.lookupTypeOptionsSelected.length && this.lookupTypeOptionsSelected[0].lookupType,
-    //   this.lookupSubTypeOptionsSelected.length && this.lookupSubTypeOptionsSelected[0].lookupSubType);
-    // this.lookupKeyOptions = LookupsHelper.getLookupKeyOptions(this.lookupData,
-    //   this.lookupTypeOptionsSelected.length && this.lookupTypeOptionsSelected[0].lookupType,
-    //   this.lookupSubTypeOptionsSelected.length && this.lookupSubTypeOptionsSelected[0].lookupSubType,
-    //   this.lookupKeyOptionsSelected.length && this.lookupKeenOptionsSelected[0].lookupKey);
+      this.lookupTypeOptionsSelected.length && this.lookupTypeOptionsSelected[0].lookupType, 'Any');
+    // this.$scope.$apply();
   }
 
-  handleTemplateLibraryOptionsSelected(templateLibraryOptionsSelected) {
-    if (!this.templateLibraryOptionsSelected[0] ||
-        (templateLibraryOptionsSelected && templateLibraryOptionsSelected[0] &&
-        this.templateLibraryOptionsSelected && this.templateLibraryOptionsSelected[0] &&
-        templateLibraryOptionsSelected[0]._id !== this.templateLibraryOptionsSelected[0]._id)) {
-      this.templateLibraryOptionsSelected = templateLibraryOptionsSelected;
-      const templateLibrarySelected = _.find(this.templateLibraries, (templateLibrary) => templateLibrary._id === templateLibraryOptionsSelected[0]._id);
+  handleTemplateLibraryOptionsSelected() {
+    if (this.templateLibraryOptionsSelected && this.templateLibraryOptionsSelected[0]) {
+      const templateLibrarySelected = _.find(this.templateLibraries, (templateLibrary) => templateLibrary._id === this.templateLibraryOptionsSelected[0]._id);
       if (templateLibrarySelected) {
         // load all the lookup data for the selected template library
+        this.lookupDataTemplateLibraryId = templateLibrarySelected._id;
         Meteor.call('loadLookupData', [templateLibrarySelected], (err, result) => {
           if (err) {
             console.log('failed to loadLookupData', err);
@@ -197,16 +189,17 @@ class lookups {
 
   // update pretty much all state dependent on subscriptions
   _updateDependencies() {
-    console.log(`maybe updating dependencies ${this.getReactively('subscriptionsReady')}`);
-    if (this.getReactively('subscriptionsReady') < 2) {
-      return;
-    }
     if (!this.templateLibrarySelected && this.templateLibraries && this.templateLibraries[0]) {
       this.templateLibrarySelected = this.templateLibraries[0];
     }
-    if (this.getReactively('templateLibraries', true) && this.templateLibraries.length !== this.templateLibraryOptions.length) {
-      this.templateLibraryOptions = TemplateLibrariesHelper.getTemplateLibraryOptions(this.templateLibraries, this.$filter);
-      this.handleTemplateLibraryOptionsSelected(this.templateLibraryOptions);
+    if (this.getReactively('templateLibraries', true) &&
+        this.templateLibraries.length !== this.templateLibraryOptions.length &&
+        this.templateLibrarySelected) {
+      this.templateLibraryOptions = TemplateLibrariesHelper.getTemplateLibraryOptions(this.templateLibraries, this.$filter, this.templateLibrarySelected._id);
+    }
+    if (this.getReactively('this.templateLibraryOptionsSelected[0]') &&
+        this.lookupDataTemplateLibraryId !== this.templateLibraryOptionsSelected[0]._id) {
+      this.handleTemplateLibraryOptionsSelected();
     }
   }
 

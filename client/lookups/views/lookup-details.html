@@ -1,0 +1,125 @@
+<div class="container">
+  <div class="row">
+    <legend>
+      Lookup Details
+    </legend>
+    <form class="form-horizontal" role="form">
+      <div class="form-group">
+        <label class="col-sm-3 control-label" for="product-library">Product Library</label>
+        <div class="col-sm-9">
+          <isteven-multi-select directive-id="product-library"
+            input-model="lookup.templateLibraryOptions"
+            output-model="lookup.templateLibraryOptionsSelected"
+            helper-elements=""
+            search-property="name"
+            button-label="icon name"
+            item-label="icon name"
+            tick-property="ticked"
+            selection-mode="single">
+          </isteven-multi-select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label" for="lookup-type">Lookup Type</label>
+        <div class="col-sm-9">
+          <isteven-multi-select directive-id="lookup-type"
+            input-model="lookup.lookupTypeOptions"
+            output-model="lookup.lookupTypeOptionsSelected"
+            helper-elements=""
+            search-property="name"
+            button-label="icon name"
+            item-label="icon name"
+            tick-property="ticked"
+            selection-mode="single">
+          </isteven-multi-select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label" for="lookup-sub-type">Sub Type</label>
+        <div class="col-sm-9">
+          <isteven-multi-select directive-id="lookup-sub-type"
+            input-model="lookup.lookupSubTypeOptions"
+            output-model="lookup.lookupSubTypeOptionsSelected"
+            helper-elements=""
+            search-property="name"
+            button-label="icon name"
+            item-label="icon name"
+            tick-property="ticked"
+            selection-mode="single">
+          </isteven-multi-select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label" for="lookup-key">Lookup Key</label>
+        <div class="col-sm-9">
+          <input type="text"
+                 id="lookup-key"
+                 ng-model="lookup.lookup.key"
+                 typeahead="lookupKeyOption.name for lookupKeyOption in lookup.lookupKeyOptions | filter:$viewValue"
+                 typeahead-editable="true"
+                 class="form-control"
+                 placeholder=""/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label" for="Name">Name</label>
+        <div class="col-sm-9">
+          <input class="form-control" type="text" id="Name" ng-model="lookup.lookup.name" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label" for="LookupValue">Value</label>
+        <div class="col-sm-9">
+          <input class="form-control" type="text" id="LookupValue" ng-model="lookup.lookup.value" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label" for="EffectiveDate">Effective Date</label>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" id="EffectiveDate"
+              datepicker-popup="yyyy-MM-dd" is-open="data.isOpen" ng-click="data.isOpen = true"
+              show-weeks="false" ng-model="lookup.lookup.effectiveDate" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label" for="ExpirationDate">Expiration Date</label>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" id="ExpirationDate"
+              placeholder="no expiration date"
+              datepicker-popup="yyyy-MM-dd" is-open="data2.isOpen" ng-click="data2.isOpen = true"
+              show-weeks="false" ng-model="lookup.lookup.expirationDate" />
+        </div>
+      </div>
+      <div class="form-group" ng-repeat="lookupSetting in lookup.lookup.lookupSettings track by $index">
+        <eb-lookup-setting-edit
+            data-lookup-settings="lookup.lookup.lookupSettings"
+            data-lookup-setting="lookupSetting">
+        </eb-lookup-setting-edit>
+      </div>
+      <div class="form-group">
+        <eb-lookup-settings-select-new
+           data-lookup-settings="lookup.lookup.lookupSettings">
+        </eb-lookup-settings-select-new>
+      </div>
+      <div class="form-group">
+        <input type="button" class="btn btn-primary"
+               ng-click="lookup.createNewLookup(true)"
+               ng-disabled="!lookup.isDirty() || lookup.saving"
+               value="{{lookup.isNew ? 'Create New Effective Now' : 'Create New Effective Now (Expire Existing)'}}">
+        <input type="button" class="btn btn-primary"
+               ng-click="lookup.createNewLookup(false)"
+               ng-disabled="!lookup.isDirty() || !lookup.isEffectiveDateDirty() || lookup.saving"
+               value="{{lookup.isNew ? 'Create New' : 'Create New (Expire Existing)'}}">
+        <input type="button" class="btn btn-primary"
+               ng-if="!lookup.isNew"
+               ng-click="lookup.saveExistingLookup()"
+               ng-disabled="!lookup.isDirty() || lookup.saving"
+               value="Update Existing">
+        <input type="button" class="btn btn-danger"
+               ng-click="lookup.cancelSave()"
+               ng-disabled="lookup.saving"
+               value="Cancel">
+      </div>
+    </form>
+  </div>
+</div>

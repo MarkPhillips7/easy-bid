@@ -91,7 +91,7 @@ class customer {
         this.savedCustomer = null
       }
     }
-    return this.savedCustomer && Object.assign({}, this.savedCustomer);
+    return this.savedCustomer && {...this.savedCustomer};
   }
 
   cancelSave() {

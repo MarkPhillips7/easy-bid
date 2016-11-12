@@ -37,6 +37,65 @@ angular.module('app')
     }
   }])
 
+  .directive('ebLookupSettingEdit', [function () {
+    // Description:
+    //  Provides way to edit lookup setting key/value combination
+    // Usage:
+    //<eb-lookup-setting-edit
+    //     data-lookup-setting="lookupSetting"
+    //     data-lookup-settings="lookupSettings">
+    // </eb-lookup-setting-edit>
+    var directive = {
+      link: link,
+      restrict: 'E',
+      scope: {
+        lookupSetting: "=",
+        lookupSettings: "=",
+      },
+      templateUrl: 'client/lookups/views/lookup-setting-edit-input.html'
+    };
+    return directive;
+
+    function link(scope, element, attrs) {
+      scope.deleteLookupSetting = function(lookupSetting) {
+        var indexOfLookupSetting = scope.lookupSettings.indexOf(lookupSetting);
+        if (indexOfLookupSetting > -1) {
+          scope.lookupSettings.splice(indexOfLookupSetting, 1);
+        }
+      };
+    }
+  }])
+
+  .directive('ebLookupSettingsSelectNew', [function () {
+    // Description:
+    //  Provides select of available lookup setting keys to add
+    // Usage:
+    //<eb-lookup-settings-select-new
+    //     data-lookup-settings="lookupSettings">
+    // </eb-lookup-settings-select-new>
+    var directive = {
+      link: link,
+      restrict: 'E',
+      scope: {
+        lookupSettings: "=",
+      },
+      templateUrl: 'client/lookups/views/lookup-settings-select-new.html'
+    };
+    return directive;
+
+    function link(scope, element, attrs) {
+      scope.lookupSettingOptions = [
+        "Choose setting to add",
+        ..._.values(Constants.lookupSettingKeys)
+      ];
+      scope.lookupSettingKeyToAdd = scope.lookupSettingOptions[0];
+      scope.addLookupSetting = function() {
+        scope.lookupSettings.push({key: scope.lookupSettingKeyToAdd});
+        scope.lookupSettingKeyToAdd = scope.lookupSettingOptions[0];
+      };
+    }
+  }])
+
   .directive('ebRelevantTemplateTypeView', [function () {
     // Description:
     //  grid displaying template children based on child template type

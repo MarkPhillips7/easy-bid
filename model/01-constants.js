@@ -22,6 +22,7 @@ Constants.hierarchyRoot = "-";
 
 Constants.lookupSettingKeys = {
   hardwareMaterial:"HardwareMaterial",
+  iconHtml:"IconHtml",
   iconType:"IconType",
   iconStack1xClass:"IconStack1xClass",
   iconStack2xClass:"IconStack2xClass",

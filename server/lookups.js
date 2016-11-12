@@ -1,3 +1,8 @@
+Meteor.publish("lookup", function (lookupId) {
+  check(lookupId, Match.OneOf(String, null));
+  return lookupId && Lookups.find({ _id: lookupId });
+});
+
 Meteor.publish("lookups", function(supplierId, templateLibraryId, lookupType, lookupSubType,
     lookupKey, lookupName, options, searchString) {
   check(supplierId, Match.OneOf(String, null));

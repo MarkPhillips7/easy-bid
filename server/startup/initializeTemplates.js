@@ -488,46 +488,46 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Hierarchical', Constants.lookupTypes.hierarchical, [
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-sitemap fa-stack-1x'},
-      ]);
+      ], undefined, undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
       Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Label', Constants.lookupTypes.label, [
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-ellipsis-h fa-stack-1x'},
-      ]);
+      ], undefined, undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
       Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Price', Constants.lookupTypes.price, [
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-dollar fa-stack-1x'},
-      ]);
+      ], undefined, undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
       Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Standard', Constants.lookupTypes.standard, [
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-arrow-up fa-stack-1x'},
-      ]);
+      ], undefined, undefined, userInfo.systemAdminUserId);
 
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
       Constants.lookupSubTypes.lookupSubType, `${Constants.hierarchyRoot}${Constants.lookupTypes.hierarchical}`,
-      Constants.lookupSubTypes.lookupType, Constants.lookupSubTypes.lookupType);
+      Constants.lookupSubTypes.lookupType, Constants.lookupSubTypes.lookupType, undefined, undefined, undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
       Constants.lookupSubTypes.lookupSubType, `${Constants.hierarchyRoot}${Constants.lookupTypes.hierarchical}.${Constants.lookupSubTypes.lookupType}`,
-      Constants.lookupSubTypes.lookupSubType, Constants.lookupSubTypes.lookupSubType);
+      Constants.lookupSubTypes.lookupSubType, Constants.lookupSubTypes.lookupSubType, undefined, undefined, undefined, userInfo.systemAdminUserId);
 
     // Create lookup records with varying effectiveDate and expirationDate values
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
       'Tea', `InChina`, `Earl Grey`, 3.12, undefined,
-      moment().startOf('day').add(-10, 'days').toDate(), moment().startOf('day').add(-1, 'days').toDate());
+      moment().startOf('day').add(-10, 'days').toDate(), moment().startOf('day').add(-1, 'days').toDate(), userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
       'Tea', `InChina`, `Earl Grey`, 3.18, undefined,
-      moment().startOf('day').add(-1, 'days').toDate(), moment().startOf('day').add(2, 'days').toDate());
+      moment().startOf('day').add(-1, 'days').toDate(), moment().startOf('day').add(2, 'days').toDate(), userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
       'Tea', `InChina`, `Earl Grey`, 3.28, undefined,
-      moment().startOf('day').add(2, 'days').toDate(), moment().startOf('day').add(12, 'days').toDate());
+      moment().startOf('day').add(2, 'days').toDate(), moment().startOf('day').add(12, 'days').toDate(), userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
       'Tea', `InChina`, `Earl Grey`, 3.33, undefined,
-      moment().startOf('day').add(12, 'days').toDate());
+      moment().startOf('day').add(12, 'days').toDate(), undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
       'Tea', `InChina`, `Earl Purple`, 3.99, undefined,
-      moment().startOf('day').add(-10, 'days').toDate());
+      moment().startOf('day').add(-10, 'days').toDate(), undefined, userInfo.systemAdminUserId);
 
     const workbook = XLSX.readFile(process.env.PWD + '/server/startup/Spreadsheet Estimator V2.1.xlsx');
     TemplateLibrariesHelper.addProductsFromWorkbook(workbook, cabinetryTemplateLibrary, lookups, templateProduct, workbookMetadata.drawerSlides);
