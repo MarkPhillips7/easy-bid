@@ -64,6 +64,8 @@ class lookups {
     this.subscriptionsReady = 0;
     this.lookupTypeOptions = null; // LookupsHelper.getLookupTypeOptions();
     this.lookupTypeOptionSelected = null;
+    this.dateStatusOptions = LookupsHelper.getDateStatusOptions();
+    this.dateStatusOptionsSelected = null;
     this.lookupTypeOptionsSelected = [];
     // this.lookupSubTypeOptions = LookupsHelper.getLookupSubTypeOptions();
     this.lookupSubTypeOptionSelected = null;
@@ -263,6 +265,7 @@ class lookups {
       this.getReactively('lookupSubTypeOptionsSelected[0].lookupSubType'),
       this.getReactively('lookupKeyOptionsSelected[0].lookupKey'),
       this.getReactively('lookupName'),
+      this.getReactively('dateStatusOptionsSelected[0].dateStatusOption'),
       {
         limit: parseInt(this.perPage),
         skip: parseInt((this.getReactively('page') - 1) * this.perPage),

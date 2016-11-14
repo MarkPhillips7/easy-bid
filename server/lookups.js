@@ -4,13 +4,14 @@ Meteor.publish("lookup", function (lookupId) {
 });
 
 Meteor.publish("lookups", function(supplierId, templateLibraryId, lookupType, lookupSubType,
-    lookupKey, lookupName, options, searchString) {
+    lookupKey, lookupName, dateStatusOption, options, searchString) {
   check(supplierId, Match.OneOf(String, null));
   check(templateLibraryId, Match.OneOf(String, null));
   check(lookupType, Match.OneOf(String, null));
   check(lookupSubType, Match.OneOf(String, null));
   check(lookupKey, Match.OneOf(String, null));
   check(lookupName, Match.OneOf(String, null));
+  check(dateStatusOption, Match.OneOf(String, null));
   check(options, Match.Any);
   check(searchString, Match.OneOf(String, null));
 
@@ -84,6 +85,26 @@ Meteor.publish("lookups", function(supplierId, templateLibraryId, lookupType, lo
   }
   if (lookupName) {
     selectorAndList.push({name: lookupName});
+  }
+  if (dateStatusOption) {
+    const now = new Date();
+    switch (dateStatusOption) {
+      case Constants.dateStatusOptions.active:
+        selectorAndList.push({effectiveDate: { $lt: now }});
+        selectorAndList.push({
+          $or: [{
+            expirationDate: null
+          }, {
+            expirationDate: { $gt : now }
+          }]});
+        break;
+      case Constants.dateStatusOptions.expired:
+        selectorAndList.push({expirationDate: { $lt: now }});
+        break;
+      case Constants.dateStatusOptions.effectiveInFuture:
+        selectorAndList.push({effectiveDate: { $gt: now }});
+        break;
+    }
   }
 
   const selector = {

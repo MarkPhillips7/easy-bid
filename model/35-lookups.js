@@ -355,8 +355,7 @@ const getDateStatus = (lookup) => {
   return Constants.dateStatuses.effectiveInFutureWillExpire;
 };
 
-const getDateStatusIconClass = (lookup) => {
-  const dateStatus = getDateStatus(lookup);
+const getDateStatusIconClassByStatus = (dateStatus) => {
   switch (dateStatus) {
     case Constants.dateStatuses.effectiveInPastNoExpiration:
       return "fa fa-calendar-check-o eb-bold-success";
@@ -369,6 +368,11 @@ const getDateStatusIconClass = (lookup) => {
     case Constants.dateStatuses.effectiveInFutureWillExpire:
       return "fa fa-calendar-plus-o eb-bold-warning";
   }
+};
+
+const getDateStatusIconClass = (lookup) => {
+  const dateStatus = getDateStatus(lookup);
+  return getDateStatusIconClassByStatus(dateStatus);
 };
 
 const getDateStatusTooltip = (lookup, $filter) => {
@@ -405,6 +409,31 @@ const getDateStatusText = (lookup, $filter) => {
   return `?`;
 }
 
+const getDateStatusOptions = () => {
+  return [
+    {
+      icon: "<span></span>",
+      name: 'Any',
+      ticked: false
+    }, {
+      dateStatusOption: Constants.dateStatusOptions.active,
+      icon: `<i class="${getDateStatusIconClassByStatus(Constants.dateStatuses.effectiveInPastNoExpiration)}"></i>`,
+      name: 'Active',
+      ticked: true
+    }, {
+      dateStatusOption: Constants.dateStatusOptions.expired,
+      icon: `<i class="${getDateStatusIconClassByStatus(Constants.dateStatuses.expired)}"></i>`,
+      name: 'Expired',
+      ticked: false
+    }, {
+      dateStatusOption: Constants.dateStatusOptions.effectiveInFuture,
+      icon: `<i class="${getDateStatusIconClassByStatus(Constants.dateStatuses.effectiveInFutureWillExpire)}"></i>`,
+      name: 'Effective In Future',
+      ticked: false
+    },
+  ];
+}
+
 LookupsHelper = {
   addLookup,
   addPriceLookup,
@@ -420,6 +449,7 @@ LookupsHelper = {
   getLookupValue,
   getLookupSubTypeOptions,
   getLookupTypeOptions,
+  getDateStatusOptions,
   getSettingValue,
   isValidLookup,
 }

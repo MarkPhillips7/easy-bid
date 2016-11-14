@@ -74,20 +74,41 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="col-sm-3 control-label" for="EffectiveDate">Effective Date</label>
+        <label class="col-sm-3 control-label" for="EffectiveDate">Effective</label>
         <div class="col-sm-9">
           <input type="text" class="form-control" id="EffectiveDate"
               uib-datepicker-popup="yyyy-MM-dd" is-open="data.isOpen" ng-click="data.isOpen = true"
               show-weeks="false" ng-model="lookup.lookup.effectiveDate" />
+          <!-- maybe use this instead when angular-meteor 1.3.12 is released: https://github.com/Urigo/angular-meteor/issues/1410
+          <div class="input-group">
+            <input type="text" class="form-control" id="EffectiveDate"
+                datetime-picker="yyyy-MM-dd HH:mm"
+                is-open="data.isOpen" ng-click="data.isOpen = true"
+                show-weeks="false" ng-model="lookup.lookup.effectiveDate" />
+            <span class="input-group-btn">
+              <button type="button" class="btn btn-default" ng-click="data.isOpen = true"><i class="fa fa-calendar"></i></button>
+            </span>
+          </div> -->
         </div>
       </div>
       <div class="form-group">
-        <label class="col-sm-3 control-label" for="ExpirationDate">Expiration Date</label>
+        <label class="col-sm-3 control-label" for="ExpirationDate">Expires</label>
         <div class="col-sm-9">
           <input type="text" class="form-control" id="ExpirationDate"
               placeholder="no expiration date"
               uib-datepicker-popup="yyyy-MM-dd" is-open="data2.isOpen" ng-click="data2.isOpen = true"
               show-weeks="false" ng-model="lookup.lookup.expirationDate" />
+          <!-- maybe use this instead when angular-meteor 1.3.12 is released: https://github.com/Urigo/angular-meteor/issues/1410
+          <div class="input-group">
+            <input type="text" class="form-control" id="ExpirationDate"
+              placeholder="no expiration date"
+              datetime-picker="yyyy-MM-dd HH:mm"
+              is-open="data2.isOpen" ng-click="data2.isOpen = true"
+              show-weeks="false" ng-model="lookup.lookup.expirationDate" />
+            <span class="input-group-btn">
+              <button type="button" class="btn btn-default" ng-click="data2.isOpen = true"><i class="fa fa-calendar"></i></button>
+            </span>
+          </div> -->
         </div>
       </div>
       <div class="form-group" ng-repeat="lookupSetting in lookup.lookup.lookupSettings track by $index">

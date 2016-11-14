@@ -11,6 +11,12 @@ Constants.dateStatuses = {
   effectiveInFutureWillExpire: "EffectiveInFutureWillExpire",
 };
 
+Constants.dateStatusOptions = {
+  active: "Active",
+  expired: "Expired",
+  effectiveInFuture: "EffectiveInFuture",
+};
+
 Constants.dependency = {
   required:"Required",
   optionalAutomatic:"OptionalAutomatic",//Automatically selected

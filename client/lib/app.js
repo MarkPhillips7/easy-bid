@@ -62,7 +62,15 @@ angular.module('app')
       types: ['input'],
       templateUrl: 'client/lib/error-messages.html'
     });
-  });
+  })
+  // .config(['$angularTemplatesSettings', function($angularTemplatesSettings) {
+  //   // Turn off throwing errors
+  //   $angularTemplatesSettings.error = false;
+  //
+  //   // Turn off displaying warnings inside console
+  //   $angularTemplatesSettings.warning = false;
+  // }])
+  ;
 
 function onReady() {
   angular.bootstrap(document, ['app'], {

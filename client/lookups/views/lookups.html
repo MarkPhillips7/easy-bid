@@ -70,6 +70,7 @@
     <div class="col-sm-3">
       <div class="form-group">
         <label for="product-library">Product Library</label>
+        <br/>
         <isteven-multi-select directive-id="product-library"
           input-model="lookups.templateLibraryOptions"
           output-model="lookups.templateLibraryOptionsSelected"
@@ -83,6 +84,7 @@
       </div>
       <div class="form-group">
         <label for="lookup-type">Lookup Type</label>
+        <br/>
         <isteven-multi-select directive-id="lookup-type"
           input-model="lookups.lookupTypeOptions"
           output-model="lookups.lookupTypeOptionsSelected"
@@ -96,6 +98,7 @@
       </div>
       <div class="form-group">
         <label for="lookup-sub-type">Sub Type</label>
+        <br/>
         <isteven-multi-select directive-id="lookup-sub-type"
           input-model="lookups.lookupSubTypeOptions"
           output-model="lookups.lookupSubTypeOptionsSelected"
@@ -109,11 +112,24 @@
       </div>
       <div class="form-group">
         <label for="lookup-key">Lookup Key</label>
+        <br/>
         <isteven-multi-select directive-id="lookup-key"
           input-model="lookups.lookupKeyOptions"
           output-model="lookups.lookupKeyOptionsSelected"
           helper-elements="filter"
           search-property="name"
+          button-label="icon name"
+          item-label="icon name"
+          tick-property="ticked"
+          selection-mode="single">
+        </isteven-multi-select>
+      </div>
+      <div class="form-group">
+        <label for="status">Status</label>
+        <br/>
+        <isteven-multi-select directive-id="status"
+          input-model="lookups.dateStatusOptions"
+          output-model="lookups.dateStatusOptionsSelected"
           button-label="icon name"
           item-label="icon name"
           tick-property="ticked"
