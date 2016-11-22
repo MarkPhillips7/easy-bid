@@ -1,26 +1,17 @@
 var nextId = 1;//Used for creating unique ID values for HTML objects
 
-const getSelectionsBySelectionParentAndTemplate = (templateLibraries, allSelections, selectionRelationships, template, productSelectionId) => {
-  let selections = [];
-  _.each(templateLibraries, (templateLibrary) => {
-    selections = selections.concat(SelectionsHelper.getSelectionsBySelectionParentAndTemplate(
-      templateLibrary, allSelections, selectionRelationships, productSelectionId, template));
-  });
-  return selections;
-};
-
-InputSelectionItem = function (templateLibraries, pendingChanges, template, productSelectionId, lookupData) {
+InputSelectionItem = function (bidControllerData, template, productSelectionId) {
   var inputSelectionItem = this;
   inputSelectionItem.id = nextId++;
   inputSelectionItem.template = template;
   inputSelectionItem.parentSelectionId = productSelectionId;
   inputSelectionItem.isDefinedAtThisLevel = false;
-  const {job, metadata, selections: allSelections, selectionRelationships} = pendingChanges;
+  const {selections} = bidControllerData;
 
   inputSelectionItem.getSelection = function () {
-    var selections = getSelectionsBySelectionParentAndTemplate(templateLibraries, allSelections, selectionRelationships, template, productSelectionId);
-    if (selections && selections.length > 0) {
-      return selections[0];
+    const selectionCandidates = SelectionsHelper.getSelectionsBySelectionParentAndTemplate(bidControllerData, productSelectionId, template);
+    if (selectionCandidates && selectionCandidates.length > 0) {
+      return selectionCandidates[0];
     }
     return null;
   }
@@ -33,9 +24,8 @@ InputSelectionItem = function (templateLibraries, pendingChanges, template, prod
     }
     const jsonVariableName = ItemTemplatesHelper.getJsonVariableName(template);
     if (jsonVariableName) {
-      const productSelection = _.find(allSelections, (_selection) => _selection._id === productSelectionId);
-      return SelectionsHelper.getJsonVariableValue(templateLibraries, allSelections, selectionRelationships, metadata,
-        productSelection, jsonVariableName);
+      const productSelection = _.find(selections, (_selection) => _selection._id === productSelectionId);
+      return SelectionsHelper.getJsonVariableValue(bidControllerData, productSelection, jsonVariableName);
     }
     return null;
   }
@@ -46,25 +36,18 @@ InputSelectionItem = function (templateLibraries, pendingChanges, template, prod
       const selection = inputSelectionItem.getSelection();
       if (selection) {
         if (template.templateType === Constants.templateTypes.specificationGroup) {
-          SelectionsHelper.updateSpecificationGroupSelectionAndChildren(templateLibraries,
-            pendingChanges, lookupData, selection, template, newValue, 0);
+          SelectionsHelper.updateSpecificationGroupSelectionAndChildren(bidControllerData, selection, template, newValue, 0);
         } else {
-          SelectionsHelper.setSelectionValue(templateLibraries, allSelections,
-            selectionRelationships, metadata, lookupData, selection, newValue, selection.value,
+          SelectionsHelper.setSelectionValue(bidControllerData, selection, newValue, selection.value,
             selection.valueSource, Constants.valueSources.userEntry);
         }
       } else {
         if (template.templateType === Constants.templateTypes.specificationGroup) {
-          const parentSelection = _.find(allSelections, (_selection) => _selection._id === inputSelectionItem.parentSelectionId);
-          SelectionsHelper.addSpecificationGroupSelectionAndChildren(templateLibraries,
-            pendingChanges, lookupData, parentSelection, template, newValue, 0);
+          const parentSelection = _.find(selections, (_selection) => _selection._id === inputSelectionItem.parentSelectionId);
+          SelectionsHelper.addSpecificationGroupSelectionAndChildren(bidControllerData, parentSelection, template, newValue, 0);
         } else {
           // maybe should just implement additional cases as they arise
-          const templateLibrary = _.find(templateLibraries, (templateLibrary) =>
-            _.some(templateLibrary.templates, (_template) => _template.id === template.id));
-          SelectionsHelper.addSelectionForTemplate(templateLibrary, allSelections,
-            selectionRelationships, metadata, job._id,
-            template, newValue, inputSelectionItem.parentSelectionId, 0, lookupData);
+          SelectionsHelper.addSelectionForTemplate(bidControllerData, template, newValue, inputSelectionItem.parentSelectionId, 0);
         }
       }
     }
@@ -84,10 +67,10 @@ InputSelectionItem = function (templateLibraries, pendingChanges, template, prod
   inputSelectionItem.value;
 };
 
-TabSection = function (title, templateLibraries, pendingChanges, template, productSelectionId, lookupData) {
+TabSection = function (title, bidControllerData, template, productSelectionId) {
   var tab = this;
   tab.title = title;
   tab.active = false;
   tab.disabled = false;
-  tab.inputSelectionItems = [new InputSelectionItem(templateLibraries, pendingChanges, template, productSelectionId, lookupData)];
+  tab.inputSelectionItems = [new InputSelectionItem(bidControllerData, template, productSelectionId)];
 };

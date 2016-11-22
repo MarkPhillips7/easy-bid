@@ -36,7 +36,7 @@ Meteor.methods({
     const templateLibrary = TemplateLibraries.findOne(lookup.templateLibraryId);
     if (isInsert) {
       const now = new Date();
-      const selector = {
+      const existingLookupSelector = {
         templateLibraryId: lookup.templateLibraryId,
         lookupType: lookup.lookupType,
         lookupSubType: lookup.lookupSubType,
@@ -51,9 +51,9 @@ Meteor.methods({
       };
       // name is not a key identifier for price but it is for the other lookup types
       if (lookup.lookupType !== Constants.lookupTypes.price) {
-        selector.name = lookup.name;
+        existingLookupSelector.name = lookup.name;
       }
-      const existingLookup = Lookups.findOne(selector);
+      const existingLookup = Lookups.findOne(existingLookupSelector);
       // if the lookup being inserted is replacing an existing active lookup then
       // update existing lookup's expiration date to be new lookup's effective date
       if (existingLookup) {

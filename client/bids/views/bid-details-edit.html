@@ -41,6 +41,14 @@
           </div>
         </div>
         <div class="form-group">
+          <label class="col-sm-3 control-label" for="BidPricingAt">Pricing From</label>
+          <div class="col-sm-9">
+            <input type="text" class="form-control" id="BidPricingAt"
+                uib-datepicker-popup="yyyy-MM-dd" is-open="data2.isOpen" ng-click="data2.isOpen = true"
+                show-weeks="false" ng-model="job.pricingAt" />
+          </div>
+        </div>
+        <div class="form-group">
           <label class="col-sm-3 control-label" for="BidEstimator">Estimator</label>
           <div class="col-sm-9">
             <select class="form-control" ng-model="job.estimatorId" id="BidEstimator" ng-change="changeEstimator()"

@@ -20,45 +20,45 @@ import {diff} from 'rus-diff';
 // }
 
 // See also SelectionsHelper.addSelectionForTemplate
-const addSelectionForTemplate = (templateLibrary, jobId, template,
-    selectionValue, parentSelectionId, childOrder) => {
-  check(templateLibrary, Match.Any);// Schema.TemplateLibrary);
-  check(jobId, Match.Any);// String);
-  check(template, Match.Any);// Schema.ItemTemplate);
-  check(selectionValue, Match.Any);// Match.OneOf(String, null));
-  check(parentSelectionId, Match.Any);// Schema.Selection);
-  check(childOrder, Match.Any);// Match.OneOf(Number, null));
-
-  let selection = {
-    jobId: jobId,
-    templateLibraryId: templateLibrary._id,
-    templateId: template.id,
-    value: selectionValue || ''
-  };
-
-  const selectionId = Selections.insert(selection);
-  selection._id = selectionId;
-
-  if (parentSelectionId) {
-    let selectionRelationship = {
-      jobId: jobId,
-      parentSelectionId: parentSelectionId,
-      childSelectionId: selectionId,
-      order: childOrder
-    }
-    SelectionRelationships.insert(selectionRelationship);
-  }
+// const addSelectionForTemplate = (templateLibrary, jobId, template,
+//     selectionValue, parentSelectionId, childOrder) => {
+//   check(templateLibrary, Match.Any);// Schema.TemplateLibrary);
+//   check(jobId, Match.Any);// String);
+//   check(template, Match.Any);// Schema.ItemTemplate);
+//   check(selectionValue, Match.Any);// Match.OneOf(String, null));
+//   check(parentSelectionId, Match.Any);// Schema.Selection);
+//   check(childOrder, Match.Any);// Match.OneOf(Number, null));
+//
+//   let selection = {
+//     jobId: jobId,
+//     templateLibraryId: templateLibrary._id,
+//     templateId: template.id,
+//     value: selectionValue || ''
+//   };
+//
+//   const selectionId = Selections.insert(selection);
+//   selection._id = selectionId;
+//
+//   if (parentSelectionId) {
+//     let selectionRelationship = {
+//       jobId: jobId,
+//       parentSelectionId: parentSelectionId,
+//       childSelectionId: selectionId,
+//       order: childOrder
+//     }
+//     SelectionRelationships.insert(selectionRelationship);
+//   }
 
   // ToDo: add selection settings?
   // SelectionsHelper.setSelectionValue(templateLibraries, selections,
   //   selectionRelationships, metadata, selection, newValue, oldValue,
   //   selection.valueSource, Constants.valueSources.userEntry);
-
-  return selection;
-};
+// 
+//   return selection;
+// };
 
 Meteor.methods({
-  addSelectionForTemplate,
+  // addSelectionForTemplate,
   // Actually deletes selection, parent selection relationships (but not parent selection), child selection relationships,
   // and all descendent selections (children, grandchildren, etc.)
   // deleteSelectionAndRelated: function (selection) {
@@ -180,7 +180,15 @@ Meteor.methods({
       });
       let metadata = {};
       SelectionsHelper.initializeMetadata(metadata, true);
-      SelectionsHelper.initializeSelectionVariables(templateLibraries, selectionsWithUpdates, selectionRelationshipsWithUpdates, metadata, lookupData);
+      const pendingChanges = {
+        job: jobToSave,
+        lookupData,
+        metadata,
+        selections: selectionsWithUpdates,
+        selectionRelationships: selectionRelationshipsWithUpdates,
+        templateLibraries,
+      }
+      SelectionsHelper.initializeSelectionVariables(pendingChanges);
 
       // The existence of pending changes with display messages means the changes are invalid
       const truePendingChanges = _.filter(metadata.pendingSelectionChanges, (pendingChange) => {

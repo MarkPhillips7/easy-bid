@@ -98,7 +98,7 @@ const getLookupKey = (...keyStrings) => {
   }, '');
 }
 
-const getLookupValue = (lookupData, lookupType, lookupKey) => {
+const getLookupValue = (lookupData, lookupType, lookupKey, pricingAt) => {
   if (!lookupData || !lookupType || !lookupKey) {
     return null;
   }
@@ -108,21 +108,21 @@ const getLookupValue = (lookupData, lookupType, lookupKey) => {
     case Constants.lookupTypes.standard:
     default:
       const lookupRecords = lookupData && _.filter(lookupData['standard'], (lookup) => {
-        const now = new Date();
+        const pricingAtToUse = pricingAt || new Date();
         return lookup.lookupType === lookupType
-          && lookup.effectiveDate < now
-          && (!lookup.expirationDate || lookup.expirationDate > now)
+          && lookup.effectiveDate < pricingAtToUse
+          && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse)
           && lookup.key === lookupKey;
       });
       return lookupRecords.length && lookupRecords[0].value;
   }
 }
 
-const isValidLookup = (lookupData, lookupType, lookup) => {
-  const now = new Date();
+const isValidLookup = (lookupData, lookupType, lookup, pricingAt) => {
+  const pricingAtToUse = pricingAt || new Date();
   return lookup.lookupType === lookupType
-    && lookup.effectiveDate < now
-    && !lookup.expirationDate || lookup.expirationDate > now;
+    && lookup.effectiveDate < pricingAtToUse
+    && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse);
 }
 
 const getIconStack2xClass = (lookupType) => {

@@ -137,7 +137,7 @@ class lookup {
     if (this.getReactively('templateLibraries', true) &&
         this.templateLibraries.length !== this.templateLibraryOptions.length) {
       this.templateLibraryOptions = TemplateLibrariesHelper.getTemplateLibraryOptions(
-        this.templateLibraries, this.$filter, this.templateLibraryId);
+        this, this.$filter, this.templateLibraryId);
     }
     if (this.getReactively('this.templateLibraryOptionsSelected[0]') &&
         this.lookupDataTemplateLibraryId !== this.templateLibraryOptionsSelected[0]._id) {

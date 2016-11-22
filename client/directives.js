@@ -315,19 +315,19 @@ angular.module('app')
       var startingOrder;
       var i;
       var matchingOption;
+      const bidControllerData = {templateLibraries: [scope.templateLibrary]};
 
       loadTemplateSettings(scope);
 
       scope.addTemplateSetting = function(templateSettingKey, templateSettingValue, order) {
-        var templateSetting=TemplateLibrariesHelper.addTemplateSetting(scope.templateLibrary, scope.templateId, templateSettingKey, templateSettingValue, order);
+        var templateSetting=TemplateLibrariesHelper.addTemplateSetting(bidControllerData,
+          scope.templateId, templateSettingKey, templateSettingValue, order);
         scope.templateSettings.push(templateSetting);
-        //scope.templateSettings.push(scope.vm.addTemplateSetting(scope.templateId, templateSettingKey, templateSettingValue, order));
       };
 
       scope.deleteTemplateSetting = function(templateSetting) {
         var indexOfTemplateSetting = scope.templateSettings.indexOf(templateSetting);
-        TemplateLibrariesHelper.deleteTemplateSetting(scope.templateLibrary, scope.templateId, templateSetting.id);
-        //scope.vm.deleteTemplateSetting(scope.templateId, templateSetting.id);
+        TemplateLibrariesHelper.deleteTemplateSetting(bidControllerData, scope.templateId, templateSetting.id);
 
         if (indexOfTemplateSetting > -1) {
           scope.templateSettings.splice(indexOfTemplateSetting, 1);
@@ -345,7 +345,7 @@ angular.module('app')
 
         //Add template settings if the minimum number has not been reached
         for (i = 0; i < numberTemplatesToAdd; i += 1) {
-          scope.templateSettings.push(TemplateLibrariesHelper.addTemplateSetting(scope.templateLibrary, scope.templateId,
+          scope.templateSettings.push(TemplateLibrariesHelper.addTemplateSetting(bidControllerData, scope.templateId,
             scope.templateSettingInfo.templateSettingKey,
             scope.templateSettingInfo.templateSettingValue,
             i + startingOrder));
@@ -435,8 +435,7 @@ angular.module('app')
       scope.contentUrl = 'client/layout/views/tab-selector-span.html';
       if (scope.inputSelectionItem && scope.inputSelectionItem.template && scope.thebid && scope.pendingChanges) {
         template = scope.inputSelectionItem.template;
-        selectOptions = TemplateLibrariesHelper.populateSelectOptions(scope.thebid.templateLibraries, template,
-          scope.pendingChanges.metadata, false, scope.thebid.lookupData);
+        selectOptions = TemplateLibrariesHelper.populateSelectOptions(scope.pendingChanges, template, false);
         selection = scope.inputSelectionItem.getSelection();
         // if (selection && selectOptions) {
         //   for (var i = 0; i < selectOptions.length; i++) {
@@ -502,7 +501,7 @@ function templateSettingLink(scope, element, attrs, justOneSettingValue) {
     element.html(ItemTemplatesHelper.getUnitsText(template));
   }
   else if (attrs.ebTemplateSettings === Constants.templateSettingKeys.belongsTo) {
-    var parentTemplate = TemplateLibrariesHelper.getTemplateParent(scope.templateLibrary, template);
+    var parentTemplate = TemplateLibrariesHelper.getTemplateParent({templateLibraries: [scope.templateLibrary]}, template);
     element.text(parentTemplate ? parentTemplate.name : '');
   }
   else {

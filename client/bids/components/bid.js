@@ -178,8 +178,7 @@ class bid {
   }
 
   getTemplatesByTemplateSetting(templateSettingKey, templateSettingValue) {
-    let templates = TemplateLibrariesHelper.getTemplatesByTemplateSetting(
-      this.templateLibraries, templateSettingKey, templateSettingValue);
+    let templates = TemplateLibrariesHelper.getTemplatesByTemplateSetting(this, templateSettingKey, templateSettingValue);
     return _.sortBy(templates, (template) => {
       const displayOrder = TemplateLibrariesHelper.getTemplateSettingByTemplateAndKeyAndIndex(template, 'DisplayOrder', 0);
       return Number(displayOrder);
@@ -200,12 +199,12 @@ class bid {
   }
 
   initializeTemplateVariables() {
-    this.areaTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.area);
-    this.companyTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.company);
-    this.customerTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.customer);
-    this.jobTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.job);
-    this.productSelectionTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.productSelection);
-    this.productTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.baseProduct);
+    this.areaTemplate = TemplateLibrariesHelper.getTemplateByType(this, Constants.templateTypes.area);
+    this.companyTemplate = TemplateLibrariesHelper.getTemplateByType(this, Constants.templateTypes.company);
+    this.customerTemplate = TemplateLibrariesHelper.getTemplateByType(this, Constants.templateTypes.customer);
+    this.jobTemplate = TemplateLibrariesHelper.getTemplateByType(this, Constants.templateTypes.job);
+    this.productSelectionTemplate = TemplateLibrariesHelper.getTemplateByType(this, Constants.templateTypes.productSelection);
+    this.productTemplate = TemplateLibrariesHelper.getTemplateByType(this, Constants.templateTypes.baseProduct);
     this.columnTemplates = this.getTemplatesByTemplateSetting('DisplayCategory', 'PrimaryTableColumn');
     this.productCategories = [
       {
@@ -221,16 +220,16 @@ class bid {
         ticked: false
       }
     ];
-    this.productOptions = TemplateLibrariesHelper.populateSelectOptions(this.templateLibraries, this.productTemplate,
-      this.metadata, false, this.lookupData);
-    TemplateLibrariesHelper.populateTabPages(this.templateLibraries, this.productTemplate, this.metadata);
+    this.productOptions = TemplateLibrariesHelper.populateSelectOptions(this, this.productTemplate, false);
+    TemplateLibrariesHelper.populateTabPages(this, this.productTemplate);
   }
 
   cancel() {
     this.ignoreUpdatesTemporarily = false;
   }
 
-  save(job, selections, selectionRelationships, metadata) {
+  save(pendingChanges) {
+    const {job, metadata, selections, selectionRelationships} = pendingChanges;
     this.ignoreUpdatesTemporarily = false;
     const selectionsToInsertOrUpdate = _.filter(selections, (selection) => metadata.pendingSelectionChanges[selection._id]
         && metadata.pendingSelectionChanges[selection._id].displayMessages
@@ -255,10 +254,9 @@ class bid {
     });
   }
 
-  confirmSaveChanges(job, selections, selectionRelationships, metadata, saveWithoutPrompting = false) {
-    const pendingSelectionChangeMessages = SelectionsHelper.getPendingChangeMessages(this.templateLibraries,
-      selections, selectionRelationships, metadata);
-    const pendingJobChangeMessages = JobsHelper.getPendingChangeMessages(job);
+  confirmSaveChanges(pendingChanges, saveWithoutPrompting = false) {
+    const pendingSelectionChangeMessages = SelectionsHelper.getPendingChangeMessages(pendingChanges);
+    const pendingJobChangeMessages = JobsHelper.getPendingChangeMessages(pendingChanges.job);
     const pendingChangeMessages = [...pendingJobChangeMessages, ...pendingSelectionChangeMessages];
     if (pendingChangeMessages && pendingChangeMessages.length > 0) {
       const cancelSave = (err) => {
@@ -269,11 +267,11 @@ class bid {
       }
 
       const confirmSave = () => {
-        this.save(job, selections, selectionRelationships, metadata);
+        this.save(pendingChanges);
       }
 
       if (saveWithoutPrompting) {
-        this.save(job, selections, selectionRelationships, metadata);
+        this.save(pendingChanges);
       } else {
         this.bootstrapDialog.confirmationListDialog("Pending changes need to be saved",
             `Are you sure you want to apply the following changes?`, pendingChangeMessages)
@@ -282,11 +280,11 @@ class bid {
     }
   }
 
-  getJobSubtotal = (metadata, selections, selectionRelationships) => {
-    const jobSelection = SelectionsHelper.getSelectionByTemplate(selections, this.jobTemplate);
+  getJobSubtotal = (pendingChanges) => {
+    const {metadata} = pendingChanges;
+    const jobSelection = SelectionsHelper.getSelectionByTemplate(pendingChanges, this.jobTemplate);
     const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName('jobSubtotal');
-    const variableCollectorSelection = SelectionsHelper.getVariableCollectorSelection(
-      this.templateLibraries, selections, selectionRelationships, jobSelection);
+    const variableCollectorSelection = SelectionsHelper.getVariableCollectorSelection(pendingChanges, jobSelection);
     if (!variableCollectorSelection) {
       return null;
     }
@@ -295,8 +293,8 @@ class bid {
         metadata.variables[variableCollectorSelection._id][jsonVariableName];
   };
 
-  initializeJobVariables(job, metadata, selections, selectionRelationships) {
-    job.estimateTotal = this.getJobSubtotal(metadata, selections, selectionRelationships);
+  initializeJobVariables(pendingChanges) {
+    pendingChanges.job.estimateTotal = this.getJobSubtotal(pendingChanges);
   }
 
   updateProductSelectionIds() {
@@ -325,15 +323,15 @@ class bid {
   }
 
   initializeSelectionVariables() {
-    this.jobSelection = SelectionsHelper.getSelectionByTemplate(this.selections, this.jobTemplate);
+    this.jobSelection = SelectionsHelper.getSelectionByTemplate(this, this.jobTemplate);
     this.updateProductSelectionIds();
     _.each(this.productSelectionIds, (productSelectionId) => this.setProductSelectionSelections(productSelectionId, this));
-    SelectionsHelper.initializeSelectionVariables(this.templateLibraries, this.selections, this.selectionRelationships, this.metadata, this.lookupData);
-    this.initializeJobVariables(this.job, this.metadata, this.selections, this.selectionRelationships);
+    SelectionsHelper.initializeSelectionVariables(this);
+    this.initializeJobVariables(this);
   }
 
   initializeAfterSelectionVariablesOneTime() {
-    this.confirmSaveChanges(this.job, this.selections, this.selectionRelationships, this.metadata, false);
+    this.confirmSaveChanges(this, false);
 
     //Initialize first selection as selected if none currently selected
     if (this.productSelectionIds.length > 0 && !this.selectedProductSelectionId) {
@@ -349,28 +347,18 @@ class bid {
     this.setFullHierarchyTreeData();
   }
 
-  getSelectionsBySelectionParentAndTemplate(productSelectionId, columnTemplate, {selections, selectionRelationships}) {
-    let _selections = [];
-    _.each(this.templateLibraries, (templateLibrary) => {
-      _selections = _selections.concat(SelectionsHelper.getSelectionsBySelectionParentAndTemplate(
-        templateLibrary, selections, selectionRelationships, productSelectionId, columnTemplate));
-    });
-    return _selections;
-  }
-
-  setProductSelectionSelections(productSelectionId, {selections, selectionRelationships, metadata}) {
+  setProductSelectionSelections(productSelectionId, pendingChanges) {
+    const {selections, selectionRelationships, metadata} = pendingChanges;
     let columnSelectionIds = [];
     metadata.columnSelectionIds[productSelectionId] = columnSelectionIds;
 
     const setColumnSelection = (columnTemplate) => {
-      var productSelections = this.getSelectionsBySelectionParentAndTemplate(productSelectionId, columnTemplate,
-        {selections, selectionRelationships});
+      var productSelections = SelectionsHelper.getSelectionsBySelectionParentAndTemplate(pendingChanges, productSelectionId, columnTemplate);
       let selection;
 
       //If there is no selection then just create a blank one
       if (productSelections && productSelections.length === 0) {
-        selection = SelectionsHelper.addSelectionForTemplate(this.templateLibraries[0], selections, selectionRelationships,
-            metadata, this.jobId, columnTemplate, '', productSelectionId, 0, this.lookupData);
+        selection = SelectionsHelper.addSelectionForTemplate(pendingChanges, columnTemplate, '', productSelectionId, 0);
       }
       // Otherwise there must just be one selection or something went wrong
       else if (productSelections && productSelections.length !== 1) {
@@ -603,23 +591,22 @@ class bid {
     }
 
     if (!this.getReactively('includeChildAreas')) {
-      const selectionTemplate = TemplateLibrariesHelper.getTemplateById(this.templateLibraries, selection.templateId);
+      const selectionTemplate = TemplateLibrariesHelper.getTemplateById(this, selection.templateId);
       if (selectionTemplate.templateType === Constants.templateTypes.area) {
         return false;
       }
     }
 
-    const parentSelection = SelectionsHelper.getParentSelections(selection, this.selections, this.selectionRelationships)[0];
+    const parentSelection = SelectionsHelper.getParentSelections(selection, this)[0];
     return parentSelection && this.inSelectedArea(parentSelection._id);
   }
 
   updateSpecifications(treeItem, pendingChanges) {
     const areaSelection = _.find(this.selections, (selection) => selection._id === treeItem.data.selectionId);
-    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(pendingChanges, this.templateLibraries, areaSelection._id);
+    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(pendingChanges, areaSelection._id);
     const applicableSpecificationGroupTemplates =
       _.filter(templatesForTabs, (template) => template.templateType === Constants.templateTypes.specificationGroup);
-    const specifications = SelectionsHelper.getSpecificationListInfo(this.templateLibraries, pendingChanges,
-      this.lookupData, applicableSpecificationGroupTemplates, areaSelection);
+    const specifications = SelectionsHelper.getSpecificationListInfo(this, applicableSpecificationGroupTemplates, areaSelection);
     treeItem.specifications = specifications;
 
     if (treeItem.children) {
@@ -637,17 +624,10 @@ class bid {
 
   addItemToTreeData(areaTreeDataArray, selection, isJobTreeItem) {
     const areaTemplate = this.areaTemplate;
-    const pendingChanges = {
-      job: this.job,
-      metadata: this.metadata,
-      selections: this.selections,
-      selectionRelationships: this.selectionRelationships
-    };
-    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(pendingChanges, this.templateLibraries, selection._id);
+    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(this, selection._id);
     const applicableSpecificationGroupTemplates =
       _.filter(templatesForTabs, (template) => template.templateType === Constants.templateTypes.specificationGroup);
-    const specifications = SelectionsHelper.getSpecificationListInfo(this.templateLibraries, pendingChanges,
-      this.lookupData, applicableSpecificationGroupTemplates, selection);
+    const specifications = SelectionsHelper.getSpecificationListInfo(this, applicableSpecificationGroupTemplates, selection);
     var i;
     var selectionChildren = [];
     const treeItem = {
@@ -660,7 +640,7 @@ class bid {
     }
     areaTreeDataArray.push(treeItem);
 
-    const childSelections = SelectionsHelper.getChildSelectionsWithTemplateId(selection, areaTemplate.id);
+    const childSelections = SelectionsHelper.getChildSelectionsWithTemplateId(selection, areaTemplate.id, this);
 
     for (i = 0; i < childSelections.length; i += 1) {
       this.addItemToTreeData(selectionChildren, childSelections[i], false);
@@ -773,16 +753,13 @@ class bid {
     let newSelection;
     if (this.areaToAdd) {
       const pendingChanges = this.getPendingChanges();
-      const {job, metadata, selections, selectionRelationships} = pendingChanges;
-      const newAreaSelection = SelectionsHelper.addSelectionForTemplate(this.templateLibraries[0],
-        selections, selectionRelationships, metadata, job._id,
-        this.areaTemplate, this.areaToAdd, parentSelection._id, 0, this.lookupData);
-      SelectionsHelper.addSelectionsForTemplateChildren(this.templateLibraries[0],
-        selections, selectionRelationships, metadata, job._id,
+      const newAreaSelection = SelectionsHelper.addSelectionForTemplate(pendingChanges,
+        this.areaTemplate, this.areaToAdd, parentSelection._id, 0);
+      SelectionsHelper.addSelectionsForTemplateChildren(pendingChanges,
         newAreaSelection, this.areaTemplate, Constants.selectionAddingModes.handleAnything,
-        this.areaTemplate, this.lookupData);
-      SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata, this.lookupData);
-      this.save(job, selections, selectionRelationships, metadata);
+        this.areaTemplate);
+      SelectionsHelper.initializeSelectionVariables(pendingChanges);
+      this.save(pendingChanges);
       // Maybe these things should not happen until the save callback?
       treeItem = this.addItemToTreeData(areaTreeDataArray, newAreaSelection);
       this.selectAreaTreeItem(treeItem);
@@ -804,10 +781,9 @@ class bid {
         var branchToSelect;
 
         const pendingChanges = this.getPendingChanges();
-        SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, this.lookupData, selection);
-        const {job, metadata, selections, selectionRelationships} = pendingChanges;
-        this.initializeJobVariables(job, metadata, selections, selectionRelationships);
-        this.confirmSaveChanges(job, selections, selectionRelationships, metadata, true);
+        SelectionsHelper.deleteSelectionAndRelated(pendingChanges, selection);
+        this.initializeJobVariables(pendingChanges);
+        this.confirmSaveChanges(pendingChanges, true);
         index = parentBranchChildren.indexOf(this.selectedNode);
         if (index > -1) {
           parentBranchChildren.splice(index, 1);
@@ -878,15 +854,13 @@ class bid {
     const selectionsToSum = _.filter(selectionIds, (selectionId) =>
         !onlyIfShouldDisplay || this.selectionShouldDisplay(selectionId));
 
-    const subtotal = SelectionsHelper.sumSelections(this.templateLibraries,
-      this.selections, this.selectionRelationships, this.metadata, this.lookupData, selectionsToSum, 'priceTotal');
+    const subtotal = SelectionsHelper.sumSelections(this, selectionsToSum, 'priceTotal');
 
     return Filters.unitsFilter(subtotal, '$');
   }
 
   editBidDetails(event) {
     const pendingChanges = this.getPendingChanges();
-    const {job, metadata, selections, selectionRelationships} = pendingChanges;
     const modalInstance = this.$uibModal.open({
       templateUrl: 'client/bids/views/bid-details-edit.html',
       controller: 'bidDetails',
@@ -896,7 +870,7 @@ class bid {
           return this;
         },
         'job': () => {
-          return job;
+          return pendingChanges.job;
         },
       }
     });
@@ -904,18 +878,16 @@ class bid {
     modalInstance.result.then((selectedItem) => {
       if (this.isNew) {
         // new job needs a company selection and all of its appropriate children down to but not including an area.
-        const companySelection = SelectionsHelper.addSelectionForTemplate(this.templateLibraries[0],
-          selections, selectionRelationships, metadata, job._id,
-          this.companyTemplate, this.company._id, null, 0, this.lookupData);
-        SelectionsHelper.addSelectionsForTemplateChildren(this.templateLibraries[0],
-          selections, selectionRelationships, metadata, job._id,
+        const companySelection = SelectionsHelper.addSelectionForTemplate(pendingChanges,
+          this.companyTemplate, this.company._id, null, 0);
+        SelectionsHelper.addSelectionsForTemplateChildren(pendingChanges,
           companySelection, this.companyTemplate, Constants.selectionAddingModes.handleAnything,
-          this.areaTemplate, this.lookupData);
-        SelectionsHelper.initializeSelectionVariables(this.templateLibraries, selections, selectionRelationships, metadata, this.lookupData);
-        this.initializeJobVariables(job, metadata, selections, selectionRelationships);
-        job.estimateTotal = this.getJobSubtotal(metadata, selections, selectionRelationships);
+          this.areaTemplate);
+        SelectionsHelper.initializeSelectionVariables(pendingChanges);
+        this.initializeJobVariables(pendingChanges);
+        job.estimateTotal = this.getJobSubtotal(pendingChanges);
       }
-      this.save(job, selections, selectionRelationships, metadata);
+      this.save(pendingChanges);
     }, () => {
       console.log('Modal dismissed at: ' + new Date());
       this.cancel();
@@ -930,7 +902,7 @@ class bid {
   };
 
   addProductSelectionOption(option) {
-    this.productToAdd = option && TemplateLibrariesHelper.getTemplateById(this.templateLibraries, option.id);
+    this.productToAdd = option && TemplateLibrariesHelper.getTemplateById(this, option.id);
     this.addProductSelection();
   }
 
@@ -951,6 +923,8 @@ class bid {
       metadata: JSON.parse(JSON.stringify(this.metadata)), //_.clone(this.metadata) not an option as it does not do a deep clone
       selections: JSON.parse(JSON.stringify(this.selections)), //_.map(this.selections, _.clone),
       selectionRelationships: JSON.parse(JSON.stringify(this.selectionRelationships)), //_.map(this.selectionRelationships, _.clone),
+      templateLibraries: this.templateLibraries, // templateLibraries should not be changing
+      lookupData: this.lookupData, // lookupData should not be changing
     };
   }
 
@@ -960,9 +934,8 @@ class bid {
     const parentSelection =  _.find(this.selections, (selection) => selection._id === parentSelectionId);
     const pendingChanges = this.getPendingChanges();
     const newProductSelection = SelectionsHelper.addProductSelectionAndChildren(
-      this.templateLibraries, pendingChanges, this.lookupData, parentSelection,
-      this.productSelectionTemplate, this.productToAdd, 0);
-    const {job, metadata, selections, selectionRelationships} = pendingChanges;
+      pendingChanges, parentSelection, this.productSelectionTemplate, this.productToAdd, 0);
+    const { selections } = pendingChanges;
 
     const productSelectionIds = _.chain(selections)
       .filter((selection) => selection.templateId === this.productSelectionTemplate.id)
@@ -979,10 +952,8 @@ class bid {
     const parentSelection =  _.find(this.selections, (selection) => selection._id === parentSelectionId);
     const pendingChanges = this.getPendingChanges();
     const newSpecificationGroupSelection = SelectionsHelper.addSpecificationGroupSelectionAndChildren(
-      this.templateLibraries, pendingChanges, this.lookupData, parentSelection,
-      specificationGroupTemplate, selectionValue, 0);
-    const {job, metadata, selections, selectionRelationships} = pendingChanges;
-    this.save(job, selections, selectionRelationships, metadata);
+      pendingChanges, parentSelection, specificationGroupTemplate, selectionValue, 0);
+    this.save(pendingChanges);
   }
 
   deleteSelected() {
@@ -997,11 +968,10 @@ class bid {
       const pendingChanges = this.getPendingChanges();
       _.each(this.itemIdsSelected, (productSelectionId) => {
         const selectionToDelete =  _.find(this.selections, (selection) => selection._id === productSelectionId);
-        SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, this.lookupData, selectionToDelete);
+        SelectionsHelper.deleteSelectionAndRelated(pendingChanges, selectionToDelete);
       });
-      const {job, metadata, selections, selectionRelationships} = pendingChanges;
-      this.initializeJobVariables(job, metadata, selections, selectionRelationships);
-      this.confirmSaveChanges(job, selections, selectionRelationships, metadata, true);
+      this.initializeJobVariables(pendingChanges);
+      this.confirmSaveChanges(pendingChanges, true);
       this.itemIdsSelected = [];
     }
 
@@ -1018,10 +988,9 @@ class bid {
     this.ignoreUpdatesTemporarily = true;
     const selectionToDelete =  _.find(this.selections, (selection) => selection._id === productSelectionId);
     const pendingChanges = this.getPendingChanges();
-    SelectionsHelper.deleteSelectionAndRelated(this.templateLibraries, pendingChanges, this.lookupData, selectionToDelete);
-    const {job, metadata, selections, selectionRelationships} = pendingChanges;
-    this.initializeJobVariables(job, metadata, selections, selectionRelationships);
-    this.confirmSaveChanges(job, selections, selectionRelationships, metadata, true);
+    SelectionsHelper.deleteSelectionAndRelated(pendingChanges, selectionToDelete);
+    this.initializeJobVariables(pendingChanges);
+    this.confirmSaveChanges(pendingChanges, true);
   }
 
   editSelected() {
@@ -1043,6 +1012,7 @@ class bid {
     if (!pendingChanges) {
       pendingChanges = this.getPendingChanges();
     }
+    const {job} = pendingChanges;
     this.selectedProductSelectionId = productSelectionId;
     this.setTabs(pendingChanges, productSelectionId);
     const modalInstance = this.$uibModal.open({
@@ -1060,9 +1030,8 @@ class bid {
     });
 
     modalInstance.result.then((selectedItem) => {
-      const {job, metadata, selections, selectionRelationships} = pendingChanges;
-      job.estimateTotal = this.getJobSubtotal(metadata, selections, selectionRelationships);
-      this.save(job, selections, selectionRelationships, metadata);
+      job.estimateTotal = this.getJobSubtotal(pendingChanges);
+      this.save(pendingChanges);
       this.updateSpecificationsForAreaTreeData(pendingChanges);
     }, () => {
       console.log('Modal dismissed at: ' + new Date());
@@ -1080,7 +1049,7 @@ class bid {
   }
 
   getSelectionTemplateName(selection) {
-    const template = TemplateLibrariesHelper.getTemplateById(this.templateLibraries, selection.templateId);
+    const template = TemplateLibrariesHelper.getTemplateById(this, selection.templateId);
     if (template) {
       return `${template.name}`;
     }
@@ -1095,7 +1064,7 @@ class bid {
     const selectedProductSelection = _.find(selections, (selection) => selection._id === this.selectedProductSelectionId);
     const selectedProductSelectionId = selectedProductSelection && selectedProductSelection._id;
     const template = selectedProductSelection &&
-      TemplateLibrariesHelper.getTemplateById(this.templateLibraries, selectedProductSelection.templateId);
+      TemplateLibrariesHelper.getTemplateById(this, selectedProductSelection.templateId);
     if (template) {
       switch (template.templateType) {
         case Constants.templateTypes.productSelection:
@@ -1123,7 +1092,7 @@ class bid {
 
     if (columnSelectionIds && columnSelectionIds.length > 2) {
       const columnSelection = _.find(selections, (selection) => selection._id === columnSelectionIds[0]);
-      return SelectionsHelper.getDisplayValue(this.templateLibraries, selections, columnSelection);
+      return SelectionsHelper.getDisplayValue(pendingChanges, columnSelection);
     }
     return '';
   }
@@ -1136,9 +1105,9 @@ class bid {
     const columnSelectionIds = metadata.columnSelectionIds[productSelectionId];
 
     if (columnSelectionIds && columnSelectionIds.length > 7) {
-      return SelectionsHelper.getDisplayValue(this.templateLibraries, selections, _.find(selections, (selection) => selection._id === columnSelectionIds[5]))
-        + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, selections, _.find(selections, (selection) => selection._id === columnSelectionIds[6]))
-        + ' x ' + SelectionsHelper.getDisplayValue(this.templateLibraries, selections, _.find(selections, (selection) => selection._id === columnSelectionIds[7]));
+      return SelectionsHelper.getDisplayValue(pendingChanges, _.find(selections, (selection) => selection._id === columnSelectionIds[5]))
+        + ' x ' + SelectionsHelper.getDisplayValue(pendingChanges, _.find(selections, (selection) => selection._id === columnSelectionIds[6]))
+        + ' x ' + SelectionsHelper.getDisplayValue(pendingChanges, _.find(selections, (selection) => selection._id === columnSelectionIds[7]));
     }
     return '';
   }
@@ -1151,7 +1120,7 @@ class bid {
     const columnSelectionIds = metadata.columnSelectionIds[productSelectionId];
 
     if (columnSelectionIds && columnSelectionIds.length > 2) {
-      return SelectionsHelper.getDisplayValue(this.templateLibraries, selections, _.find(selections, (selection) => selection._id === columnSelectionIds[2]));
+      return SelectionsHelper.getDisplayValue(pendingChanges, _.find(selections, (selection) => selection._id === columnSelectionIds[2]));
     }
     return '';
   }
@@ -1164,7 +1133,7 @@ class bid {
     const columnSelectionIds = metadata.columnSelectionIds[productSelectionId];
 
     if (columnSelectionIds && columnSelectionIds.length > 2) {
-      return SelectionsHelper.getDisplayValue(this.templateLibraries, selections, _.find(selections, (selection) => selection._id === columnSelectionIds[1]));
+      return SelectionsHelper.getDisplayValue(pendingChanges, _.find(selections, (selection) => selection._id === columnSelectionIds[1]));
     }
     return '';
   }
@@ -1193,7 +1162,7 @@ class bid {
     if (columnSelectionIds && columnSelectionIds.length > 0) {
       const columnSelection = _.find(selections, (selection) => selection._id === columnSelectionIds[0]);
       const imageFileSetting = columnSelection && TemplateLibrariesHelper.getTemplateSettingByKeyAndIndex(
-        this.templateLibraries, columnSelection.templateId, Constants.templateSettingKeys.imageSource, 0);
+        this, columnSelection.templateId, Constants.templateSettingKeys.imageSource, 0);
       return imageFileSetting ? imageFileSetting.value : '';
     }
     return '';
@@ -1208,12 +1177,11 @@ class bid {
         _.each(templateSettingsForTabs, (templateSetting) => {
           const tabMatch = _.find(tabs, (tab) => tab.title === templateSetting.value);
           if (tabMatch) {
-            tabMatch.inputSelectionItems.push(new InputSelectionItem(this.templateLibraries,
-              pendingChanges, templateForTab, this.selectedProductSelectionId, this.lookupData));
+            tabMatch.inputSelectionItems.push(
+              new InputSelectionItem(pendingChanges, templateForTab, this.selectedProductSelectionId));
           }
           else {
-            const newTab = new TabSection(templateSetting.value, this.templateLibraries,
-              pendingChanges, templateForTab, this.selectedProductSelectionId, this.lookupData);
+            const newTab = new TabSection(templateSetting.value, pendingChanges, templateForTab, this.selectedProductSelectionId);
               //Ultimately need a better way of ordering tabs, but for now just make Primary the first
             if (templateSetting.value === 'Primary') {
               tabs.unshift(newTab);
@@ -1229,7 +1197,7 @@ class bid {
   };
 
   setTabs(pendingChanges, productSelectionId) {
-    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(pendingChanges, this.templateLibraries, productSelectionId);
+    const templatesForTabs = TemplateLibrariesHelper.getTemplatesForTabs(pendingChanges, productSelectionId);
     this.tabs = this.getTabsFromTemplates(templatesForTabs, pendingChanges);
 
     //Initialize first tab as selected
@@ -1240,13 +1208,12 @@ class bid {
   }
 
   setProductSelectionEditItems(templatesForTabs, pendingChanges) {
-    const {metadata, selections, selectionRelationships} = pendingChanges;
+    const {selections} = pendingChanges;
     this.productSelectionEditItems = [];
     const selectedProductSelection = _.find(selections, (selection) => selection._id === this.selectedProductSelectionId);
 
     _.each(templatesForTabs, (templateForTab) => {
-      this.productSelectionEditItems.push(new InputSelectionItem(this.templateLibraries,
-        pendingChanges, templateForTab, this.selectedProductSelectionId, this.lookupData));
+      this.productSelectionEditItems.push(new InputSelectionItem(pendingChanges, templateForTab, this.selectedProductSelectionId));
     });
   }
 
@@ -1267,8 +1234,8 @@ class bid {
 
   getPendingFullHierarchyTreeData() {
     const jobSelection = this.jobSelection;
-    const companyTemplate = TemplateLibrariesHelper.getTemplateByType(this.templateLibraries, Constants.templateTypes.company);
-    const companySelection = SelectionsHelper.getSelectionByTemplate(this.selections, companyTemplate);
+    const companyTemplate = TemplateLibrariesHelper.getTemplateByType(this, Constants.templateTypes.company);
+    const companySelection = SelectionsHelper.getSelectionByTemplate(this, companyTemplate);
     let pendingFullHierarchyTreeData = [];
     let treeItemSelected = null;
     let i;
@@ -1282,9 +1249,9 @@ class bid {
   addItemToFullHierarchyTreeData(treeDataArray, selection) {
     var i;
     var selectionChildren = [];
-    const selectionTemplate = TemplateLibrariesHelper.getTemplateById(this.templateLibraries, selection.templateId);
+    const selectionTemplate = TemplateLibrariesHelper.getTemplateById(this, selection.templateId);
     const templateDisplayValue = selectionTemplate && ItemTemplatesHelper.getDisplayCaption(selectionTemplate);
-    const selectionDisplayValue = SelectionsHelper.getDisplayValue(this.templateLibraries, this.selections, selection);
+    const selectionDisplayValue = SelectionsHelper.getDisplayValue(this, selection);
     var treeItem = {
         data: {selectionId: selection._id},
         label: `${templateDisplayValue} - ${selectionDisplayValue} (${selection._id})`,
@@ -1292,7 +1259,7 @@ class bid {
     }
     treeDataArray.push(treeItem);
 
-    const childSelections = SelectionsHelper.getChildSelections(selection, this.selections, this.selectionRelationships);
+    const childSelections = SelectionsHelper.getChildSelections(selection, this);
 
     for (i = 0; i < childSelections.length; i += 1) {
       treeItem = this.addItemToFullHierarchyTreeData(selectionChildren, childSelections[i]);

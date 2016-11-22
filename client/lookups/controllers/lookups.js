@@ -197,7 +197,7 @@ class lookups {
     if (this.getReactively('templateLibraries', true) &&
         this.templateLibraries.length !== this.templateLibraryOptions.length &&
         this.templateLibrarySelected) {
-      this.templateLibraryOptions = TemplateLibrariesHelper.getTemplateLibraryOptions(this.templateLibraries, this.$filter, this.templateLibrarySelected._id);
+      this.templateLibraryOptions = TemplateLibrariesHelper.getTemplateLibraryOptions(this, this.$filter, this.templateLibrarySelected._id);
     }
     if (this.getReactively('this.templateLibraryOptionsSelected[0]') &&
         this.lookupDataTemplateLibraryId !== this.templateLibraryOptionsSelected[0]._id) {

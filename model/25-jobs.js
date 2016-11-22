@@ -69,6 +69,11 @@ Schema.Job = new SimpleSchema({
     type: Date,
     optional: true
   },
+  // the date that pricing is determined by
+  pricingAt: {
+    type: Date,
+    optional: true
+  },
   notes: {
     type: String,
     optional: true

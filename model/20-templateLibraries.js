@@ -1021,21 +1021,23 @@ function cloneTemplateLibrary(templateLibrary) {
   return clone;
 }
 
+const getTemplateLibraryWithTemplate = ({templateLibraries}, templateId) => {
+  return _.find(templateLibraries, (templateLibrary) => _.some(templateLibrary.templates, (template) => template.id === templateId));
+};
+
 function getTemplateRelationshipById(templateLibrary, templateRelationshipId) {
   if (!templateLibrary) {
     throw 'templateLibrary must be set in getTemplateRelationshipById';
   }
-  return _.find(vm.templateLibrary.templateRelationships, function (templateRelationship) {
+  return _.find(templateLibrary.templateRelationships, function (templateRelationship) {
     return templateRelationship.id === templateRelationshipId;
   });
 }
 
-function getParentTemplateRelationships(templateLibrary, childTemplateId, dependenciesToIgnore) {
+function getParentTemplateRelationships(bidControllerData, childTemplateId, dependenciesToIgnore) {
+  const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, childTemplateId);
   if (!templateLibrary) {
-    throw 'templateLibrary must be set in getParentTemplateRelationships';
-  }
-  if (!childTemplateId) {
-    throw 'childTemplateId must be set in getParentTemplateRelationships';
+    throw `templateLibrary not found for childTemplateId ${childTemplateId} in getParentTemplateRelationships`;
   }
 
   return _.filter(templateLibrary.templateRelationships, function (templateRelationship) {
@@ -1044,12 +1046,11 @@ function getParentTemplateRelationships(templateLibrary, childTemplateId, depend
   });
 }
 
-function getChildTemplateRelationships(templateLibrary, parentTemplateId, dependenciesToIgnore) {
+// dependenciesToIgnore is optional
+function getChildTemplateRelationships(bidControllerData, parentTemplateId, dependenciesToIgnore) {
+  const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplateId);
   if (!templateLibrary) {
-    throw 'templateLibrary must be set in getChildTemplateRelationships';
-  }
-  if (!parentTemplateId) {
-    throw 'parentTemplateId must be set in getChildTemplateRelationships';
+    throw `templateLibrary not found for parentTemplateId ${parentTemplateId} in getChildTemplateRelationships`;
   }
 
   return _.filter(templateLibrary.templateRelationships, function (templateRelationship) {
@@ -1058,57 +1059,63 @@ function getChildTemplateRelationships(templateLibrary, parentTemplateId, depend
   });
 }
 
-function getTemplateParent(templateLibrary, template, dependenciesToIgnore) {
-  if (templateLibrary && template) {
-    var templateRelationship = _.find(templateLibrary.templateRelationships, function (relationship) {
-      return relationship.childTemplateId === template.id
-        && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, relationship.dependency));
-    });
-    if (templateRelationship) {
-      return _.find(templateLibrary.templates, function (templ) {
-        return templ.id == templateRelationship.parentTemplateId;
+function getTemplateParent(bidControllerData, template, dependenciesToIgnore) {
+  if (template) {
+    const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, template.id);
+    if (templateLibrary) {
+      var templateRelationship = _.find(templateLibrary.templateRelationships, function (relationship) {
+        return relationship.childTemplateId === template.id
+          && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, relationship.dependency));
       });
+      if (templateRelationship) {
+        return _.find(templateLibrary.templates, function (templ) {
+          return templ.id == templateRelationship.parentTemplateId;
+        });
+      }
     }
   }
-
   return null;
 }
 
-function getTemplateParents(templateLibrary, template, dependenciesToIgnore) {
+function getTemplateParents(bidControllerData, template, dependenciesToIgnore) {
   var parentTemplates = [];
 
-  if (templateLibrary && template) {
-    var parentTemplateRelationships = _.filter(templateLibrary.templateRelationships, function (templateRelationship) {
-      return templateRelationship.childTemplateId === template.id
-        && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, templateRelationship.dependency));
-    })
-
-    parentTemplates = _.map(parentTemplateRelationships, function (templateRelationship) {
-      return _.find(templateLibrary.templates, function (templ) {
-        return templ.id === templateRelationship.parentTemplateId;
+  if (template) {
+    const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, template.id);
+    if (templateLibrary) {
+      var parentTemplateRelationships = _.filter(templateLibrary.templateRelationships, function (templateRelationship) {
+        return templateRelationship.childTemplateId === template.id
+          && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, templateRelationship.dependency));
       })
-    });
-  }
 
+      parentTemplates = _.map(parentTemplateRelationships, function (templateRelationship) {
+        return _.find(templateLibrary.templates, function (templ) {
+          return templ.id === templateRelationship.parentTemplateId;
+        })
+      });
+    }
+  }
   return parentTemplates;
 }
 
-function getTemplateChildren(templateLibrary, template, dependenciesToIgnore) {
+function getTemplateChildren(bidControllerData, template, dependenciesToIgnore) {
   var templateChildren = [];
 
-  if (templateLibrary && template) {
-    var childTemplateRelationships = _.filter(templateLibrary.templateRelationships, function (templateRelationship) {
-      return templateRelationship.parentTemplateId === template.id
-        && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, templateRelationship.dependency));
-    });
+  if (template) {
+    const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, template.id);
+    if (templateLibrary) {
+      var childTemplateRelationships = _.filter(templateLibrary.templateRelationships, function (templateRelationship) {
+        return templateRelationship.parentTemplateId === template.id
+          && (!dependenciesToIgnore || !_.contains(dependenciesToIgnore, templateRelationship.dependency));
+      });
 
-    templateChildren = _.map(childTemplateRelationships, function (templateRelationship) {
-      return _.find(templateLibrary.templates, function (templ) {
-        return templ.id == templateRelationship.childTemplateId;
-      })
-    });
+      templateChildren = _.map(childTemplateRelationships, function (templateRelationship) {
+        return _.find(templateLibrary.templates, function (templ) {
+          return templ.id == templateRelationship.childTemplateId;
+        })
+      });
+    }
   }
-
   return templateChildren;
 }
 
@@ -1143,40 +1150,37 @@ function addTemplate(templateLibrary, templateType, parentTemplate) {
 // because I think angular meteor sometimes uses mongo style splices where a given object ends up
 // getting updated to a different 1. Say you have [a,b,c] and you remove b. What angular/meteor/mongo
 // does is alter the b object to be like c and actually remove c. And that gets reflected in meteor objects.
-const getTemplateById = (templateLibraryOrList, templateId) => {
-  if (!templateLibraryOrList) {
-    throw 'templateLibraryOrList must be set in getTemplateById';
+const getTemplateById = (bidControllerData, templateId) => {
+  if (!bidControllerData) {
+    throw 'bidControllerData must be set in getTemplateById';
   }
 
-  const templateLibraries = _.isArray(templateLibraryOrList) ? templateLibraryOrList : [templateLibraryOrList];
+  const {templateLibraries} = bidControllerData;
   let template = null;
   _.find(templateLibraries, (templateLibrary) => {
     template = _.find(templateLibrary.templates, (template) => template.id === templateId);
-    return template && templateLibrary;
+    return template;
   });
   return template;
 }
 
-const getTemplateByType = (templateLibraryOrList, templateType) => {
-  if (!templateLibraryOrList) {
-    throw 'templateLibraryOrList must be set in getTemplateByType';
-  }
-  if (!templateType) {
-    throw 'templateType must be set in getTemplateByType';
+const getTemplateByType = (bidControllerData, templateType) => {
+  if (!bidControllerData) {
+    throw 'bidControllerData must be set in getTemplateByType';
   }
 
-  const templateLibraries = _.isArray(templateLibraryOrList) ? templateLibraryOrList : [templateLibraryOrList];
+  const {templateLibraries} = bidControllerData;
   let template = null;
   _.find(templateLibraries, (templateLibrary) => {
     template = _.find(templateLibrary.templates, (template) => template.templateType === templateType);
-    return template && templateLibrary;
+    return template;
   });
   return template;
 };
 
-const getTemplatesByTemplateSetting = (templateLibraryOrList, templateSettingKey, templateSettingValue) => {
-  if (!templateLibraryOrList) {
-    throw 'templateLibraryOrList must be set in getTemplatesByTemplateSetting';
+const getTemplatesByTemplateSetting = (bidControllerData, templateSettingKey, templateSettingValue) => {
+  if (!bidControllerData) {
+    throw 'bidControllerData must be set in getTemplatesByTemplateSetting';
   }
   if (!templateSettingKey) {
     throw 'templateSettingKey must be set in getTemplatesByTemplateSetting';
@@ -1185,7 +1189,7 @@ const getTemplatesByTemplateSetting = (templateLibraryOrList, templateSettingKey
     throw 'templateSettingValue must be set in getTemplatesByTemplateSetting';
   }
 
-  const templateLibraries = _.isArray(templateLibraryOrList) ? templateLibraryOrList : [templateLibraryOrList];
+  const {templateLibraries} = bidControllerData;
   const templates = [];
   _.each(templateLibraries, (templateLibrary) => {
     _.each(templateLibrary.templates, (template) => {
@@ -1254,9 +1258,9 @@ const getTemplatesByTemplateSetting = (templateLibraryOrList, templateSettingKey
 //   return templates;
 // };
 
-function getTemplateSettingByIds(templateLibrary, templateId, templateSettingId) {
-  if (!templateLibrary) {
-    throw 'templateLibrary must be set in getTemplateSettingByIds';
+function getTemplateSettingByIds(bidControllerData, templateId, templateSettingId) {
+  if (!bidControllerData) {
+    throw 'bidControllerData must be set in getTemplateSettingByIds';
   }
   if (!templateId) {
     throw 'templateId must be set in getTemplateSettingByIds';
@@ -1264,7 +1268,7 @@ function getTemplateSettingByIds(templateLibrary, templateId, templateSettingId)
   if (!templateSettingId) {
     throw 'templateSettingId must be set in getTemplateSettingByIds';
   }
-  var template=getTemplateById(templateLibrary, templateId);
+  var template=getTemplateById(bidControllerData, templateId);
   if (template) {
     return _.find(template.templateSettings, function (templateSetting) {
       return templateSetting.id === templateSettingId;
@@ -1290,9 +1294,9 @@ function getTemplateSettingByTemplateAndKeyAndIndex(template, templateSettingKey
   return undefined;
 }
 
-function getTemplateSettingByKeyAndIndex(templateLibrary, templateId, templateSettingKey, templateSettingIndex) {
-  if (!templateLibrary) {
-    throw 'templateLibrary must be set in getTemplateSettingByKeyAndIndex';
+function getTemplateSettingByKeyAndIndex(bidControllerData, templateId, templateSettingKey, templateSettingIndex) {
+  if (!bidControllerData) {
+    throw 'bidControllerData must be set in getTemplateSettingByKeyAndIndex';
   }
   if (!templateId) {
     throw 'templateId must be set in getTemplateSettingByKeyAndIndex';
@@ -1300,14 +1304,14 @@ function getTemplateSettingByKeyAndIndex(templateLibrary, templateId, templateSe
   if (!templateSettingKey) {
     throw 'templateSettingKey must be set in getTemplateSettingByKeyAndIndex';
   }
-  var template = getTemplateById(templateLibrary, templateId);
+  var template = getTemplateById(bidControllerData, templateId);
 
   return getTemplateSettingByTemplateAndKeyAndIndex(template, templateSettingKey, templateSettingIndex);
 }
 
-function addTemplateSetting(templateLibrary, templateId, templateSettingKey, templateSettingValue, order) {
-  if (!templateLibrary) {
-    throw 'templateLibrary must be set in addTemplateSetting';
+function addTemplateSetting(bidControllerData, templateId, templateSettingKey, templateSettingValue, order) {
+  if (!bidControllerData) {
+    throw 'bidControllerData must be set in addTemplateSetting';
   }
   if (!templateId) {
     throw 'templateId must be set in addTemplateSetting';
@@ -1315,9 +1319,9 @@ function addTemplateSetting(templateLibrary, templateId, templateSettingKey, tem
   if (!templateSettingKey) {
     throw 'templateSettingKey must be set in addTemplateSetting';
   }
-  var template = getTemplateById(templateLibrary,templateId);
+  var template = getTemplateById(bidControllerData, templateId);
   if (!template) {
-    throw `no template found for template ${templateId} in templateLibrary ${templateLibrary._id} in addTemplateSetting`;
+    throw `no template found for template ${templateId} in addTemplateSetting`;
   }
   var templateSetting= {
       id: Random.id(),
@@ -1331,9 +1335,9 @@ function addTemplateSetting(templateLibrary, templateId, templateSettingKey, tem
   return templateSetting;
 }
 
-function deleteTemplateSetting(templateLibrary, templateId, templateSettingId) {
-  if (!templateLibrary) {
-    throw 'templateLibrary must be set in getTemplateSettingByIds';
+function deleteTemplateSetting(bidControllerData, templateId, templateSettingId) {
+  if (!bidControllerData) {
+    throw 'bidControllerData must be set in getTemplateSettingByIds';
   }
   if (!templateId) {
     throw 'templateId must be set in getTemplateSettingByIds';
@@ -1341,11 +1345,11 @@ function deleteTemplateSetting(templateLibrary, templateId, templateSettingId) {
   if (!templateSettingId) {
     throw 'templateSettingId must be set in getTemplateSettingByIds';
   }
-  var template = getTemplateById(templateLibrary,templateId);
+  var template = getTemplateById(bidControllerData,templateId);
   if (!template) {
     throw 'no template found for templateId';//`no template found for template ${templateId} in templateLibrary ${templateLibrary._id}`;
   }
-  var templateSetting=getTemplateSettingByIds(templateLibrary,templateId,templateSettingId);
+  var templateSetting=getTemplateSettingByIds(bidControllerData,templateId,templateSettingId);
   if (!templateSetting) {
     throw 'no templateSetting found for templateSettingId';//`no template found for template ${templateId} in templateLibrary ${templateLibrary._id}`;
   }
@@ -1353,11 +1357,12 @@ function deleteTemplateSetting(templateLibrary, templateId, templateSettingId) {
   template.templateSettings.splice(template.templateSettings.indexOf(templateSetting), 1);
 }
 
-function deleteTemplate(templateLibrary, templateId) {
-  if (!templateLibrary) {
-    throw 'templateLibrary must be set in deleteTemplate';
+function deleteTemplate(bidControllerData, templateId) {
+  if (!bidControllerData) {
+    throw 'bidControllerData must be set in deleteTemplate';
   }
-  var template = getTemplateById(templateLibrary, templateId);
+  const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, templateId);
+  const template = getTemplateById(bidControllerData, templateId);
   if (!template) {
     throw `no template found for template ${templateId} in templateLibrary ${templateLibrary._id} in deleteTemplate`;
   }
@@ -1377,9 +1382,9 @@ function deleteTemplate(templateLibrary, templateId) {
   templateLibrary.templates.splice(templateIndex, 1);
 }
 
-function getAllSubTemplatesOfBaseTemplateChild(templateLibrary, template) {
-  if (!templateLibrary) {
-    throw 'templateLibrary must be set in getAllSubTemplatesOfBaseTemplateChild';
+function getAllSubTemplatesOfBaseTemplateChild(bidControllerData, template) {
+  if (!bidControllerData) {
+    throw 'bidControllerData must be set in getAllSubTemplatesOfBaseTemplateChild';
   }
   if (!template) {
     throw `template must be set in getAllSubTemplatesOfBaseTemplateChild`;
@@ -1387,21 +1392,21 @@ function getAllSubTemplatesOfBaseTemplateChild(templateLibrary, template) {
 
   var subTemplateList = [];
 
-  var baseTemplateChild = _.chain(TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template))
+  var baseTemplateChild = _.chain(TemplateLibrariesHelper.getTemplateChildren(bidControllerData, template))
     .find((childTemplate) => { return ItemTemplatesHelper.isABaseTemplate(childTemplate); })
     .value();
 
-  populateSubTemplateListWithTemplateChildren(templateLibrary, baseTemplateChild, subTemplateList);
+  populateSubTemplateListWithTemplateChildren(bidControllerData, baseTemplateChild, subTemplateList);
 
   return subTemplateList;
 }
 
-function populateSubTemplateListWithTemplateChildren(templateLibrary, template, subTemplateList) {
-  _.each(TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template),
+function populateSubTemplateListWithTemplateChildren(bidControllerData, template, subTemplateList) {
+  _.each(TemplateLibrariesHelper.getTemplateChildren(bidControllerData, template),
     (childTemplate) => {
       if (ItemTemplatesHelper.isASubTemplate(childTemplate)) {
         subTemplateList.push(childTemplate);
-        populateSubTemplateListWithTemplateChildren(templateLibrary, childTemplate, subTemplateList);
+        populateSubTemplateListWithTemplateChildren(bidControllerData, childTemplate, subTemplateList);
       }
     });
 }
@@ -1415,7 +1420,8 @@ const getTemplateSettingsForTabs = (template) => {
 };
 
 // Of the children of the product selection return the template of the one whose templateType is Product
-const  getProductTemplate = ({selections, selectionRelationships}, templateLibraries, productSelectionId) => {
+const  getProductTemplate = (bidControllerData, productSelectionId) => {
+  const {selections, selectionRelationships, templateLibraries} = bidControllerData;
   const productSelection = _.find(selections, (_selection) => _selection._id === productSelectionId);
   const childSelectionIds = _.chain(selectionRelationships)
       .filter((relationship) => relationship.parentSelectionId === productSelectionId)
@@ -1442,7 +1448,7 @@ const  getProductTemplate = ({selections, selectionRelationships}, templateLibra
 // or (if templateTypeCandidates is specified) where candidateTemplate is a child of a parent of
 // targetTemplate (or its parent, .etc.) that is of an appropriate template type.
 // Essentially trying to determine if candidateTemplate belongs to a product or one of its base products.
-const getAncestorRelationship = (templateLibrary, candidateTemplate, targetTemplate, templateTypeCandidates) => {
+const getAncestorRelationship = (bidControllerData, candidateTemplate, targetTemplate, templateTypeCandidates) => {
   if (!targetTemplate) {
     return null;
   }
@@ -1450,7 +1456,7 @@ const getAncestorRelationship = (templateLibrary, candidateTemplate, targetTempl
     (templateTypeCandidate) => templateTypeCandidate === targetTemplate.templateType)) {
     return null;
   }
-  const candidateTemplateParents = getTemplateParents(templateLibrary, candidateTemplate, []);
+  const candidateTemplateParents = getTemplateParents(bidControllerData, candidateTemplate, []);
   let qualifyingRelationship = _.find(candidateTemplateParents, (parentTemplate) => {
     if (!parentTemplate || !targetTemplate) {
       return null;
@@ -1458,9 +1464,9 @@ const getAncestorRelationship = (templateLibrary, candidateTemplate, targetTempl
     return parentTemplate.id === targetTemplate.id;
   });
   if (!qualifyingRelationship && templateTypeCandidates) {
-    const targetTemplateParents = getTemplateParents(templateLibrary, targetTemplate, []);
+    const targetTemplateParents = getTemplateParents(bidControllerData, targetTemplate, []);
     _.find(targetTemplateParents, (parentTemplate) => {
-      qualifyingRelationship = getAncestorRelationship(templateLibrary, candidateTemplate, parentTemplate, templateTypeCandidates);
+      qualifyingRelationship = getAncestorRelationship(bidControllerData, candidateTemplate, parentTemplate, templateTypeCandidates);
       return qualifyingRelationship;
     });
   }
@@ -1475,13 +1481,13 @@ const getAncestorRelationship = (templateLibrary, candidateTemplate, targetTempl
 // 3) If candidateTemplate has a userRole then the user must have that role (ToDo: implement)
 // 4) There must be no template higher in the hierarchy with a noOverride templateSetting (ToDo: implement)
 // 5) There must be no selection higher in the hierarchy with a noOverride selectionSetting (ToDo: implement)
-const templateIsAppropriateForTabs = (templateLibrary, candidateTemplate, targetTemplate, productTemplate) => {
+const templateIsAppropriateForTabs = (bidControllerData, candidateTemplate, targetTemplate, productTemplate) => {
   // 1) One of these must be true:
   //    candidateTemplate has a templateRelationship where it is the child of targetTemplate.
   //    candidateTemplate has a templateRelationship where it is the child of productTemplate or a base template of productTemplate.
-  let qualifyingRelationship = getAncestorRelationship(templateLibrary, candidateTemplate, targetTemplate, null);
+  let qualifyingRelationship = getAncestorRelationship(bidControllerData, candidateTemplate, targetTemplate, null);
   if (!qualifyingRelationship && productTemplate) {
-    qualifyingRelationship = getAncestorRelationship(templateLibrary, candidateTemplate, productTemplate,
+    qualifyingRelationship = getAncestorRelationship(bidControllerData, candidateTemplate, productTemplate,
       [Constants.templateTypes.product, Constants.templateTypes.baseProduct]);
   }
   if (!qualifyingRelationship) {
@@ -1496,19 +1502,17 @@ const templateIsAppropriateForTabs = (templateLibrary, candidateTemplate, target
   return true;
 };
 
-const getTemplatesForTabs = (pendingChanges, templateLibraries, selectionId) => {
-  const {selections} = pendingChanges;
+const getTemplatesForTabs = (bidControllerData, selectionId) => {
+  const {selections, templateLibraries} = bidControllerData;
   const selection = _.find(selections, (_selection) => _selection._id === selectionId);
-  const selectionTemplate = getTemplateById(templateLibraries, selection.templateId);
+  const selectionTemplate = getTemplateById(bidControllerData, selection.templateId);
   const productTemplate = selectionTemplate.templateType === Constants.templateTypes.productSelection
-    ? getProductTemplate(pendingChanges, templateLibraries, selectionId) : null;
+    ? getProductTemplate(bidControllerData, selectionId) : null;
   const templates = [];
   const templateToTemplateLibrary = {};
   _.each(templateLibraries, (templateLibrary) => {
     _.each(templateLibrary.templates, (template) => {
-      // const templateSettingsForTabs = getTemplateSettingsForTabs(template);
-      // if (templateSettingsForTabs.length > 0 && _.indexOf(templates, template) === -1 ) {
-      if (templateIsAppropriateForTabs(templateLibrary, template, selectionTemplate, productTemplate)) {
+      if (templateIsAppropriateForTabs(bidControllerData, template, selectionTemplate, productTemplate)) {
         templates.push(template);
         templateToTemplateLibrary[template] = templateLibrary;
       }
@@ -1516,11 +1520,11 @@ const getTemplatesForTabs = (pendingChanges, templateLibraries, selectionId) => 
   });
   return _.sortBy(templates, (template) => {
     const templateLibrary = templateToTemplateLibrary[template];
-    return getTemplateSettingByKeyAndIndex(templateLibrary, template.id, Constants.templateSettingKeys.displayOrder, 0);
+    return getTemplateSettingByKeyAndIndex(bidControllerData, template.id, Constants.templateSettingKeys.displayOrder, 0);
   });
 };
 
-const addSelectOptions = (templateLibrary, selectOptions, template) => {
+const addSelectOptions = (bidControllerData, selectOptions, template) => {
   if (!template)
       return;
 
@@ -1532,18 +1536,14 @@ const addSelectOptions = (templateLibrary, selectOptions, template) => {
     });
   }
 
-  const templateChildren = TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template);
+  const templateChildren = TemplateLibrariesHelper.getTemplateChildren(bidControllerData, template);
   _.each(templateChildren, (childTemplate) => {
-    addSelectOptions(templateLibrary, selectOptions, childTemplate);
+    addSelectOptions(bidControllerData, selectOptions, childTemplate);
   });
 }
 
-const getTemplateLibraryWithTemplate = (templateLibraries, templateId) => {
-  return _.find(templateLibraries, (templateLibrary) => _.some(templateLibrary.templates, (template) => template.id === templateId));
-};
-
 //Traverse potentially all templates related to this one until one found with matching name
-const getTemplateFromTemplateName = (templateLibrary, template, templateName, visitedTemplates) => {
+const getTemplateFromTemplateName = (bidControllerData, template, templateName, visitedTemplates) => {
   var templateRelationship;
   var returnTemplate;
 
@@ -1565,24 +1565,24 @@ const getTemplateFromTemplateName = (templateLibrary, template, templateName, vi
 
   //Check children (But don't bother with Children of sub-Templates)
   if (!ItemTemplatesHelper.isASubTemplate(template)) {
-    const templateChildren = TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template);
+    const templateChildren = TemplateLibrariesHelper.getTemplateChildren(bidControllerData, template);
     _.find(templateChildren, (childTemplate) => {
-      return getTemplateFromTemplateName(templateLibrary, childTemplate, templateName, visitedTemplates);
+      return getTemplateFromTemplateName(bidControllerData, childTemplate, templateName, visitedTemplates);
     });
   }
 
   //Now check parent(s)
-  const templateParents = TemplateLibrariesHelper.getTemplateParents(templateLibrary, template);
+  const templateParents = TemplateLibrariesHelper.getTemplateParents(bidControllerData, template);
   _.find(templateParents, (parentTemplate) => {
-    return getTemplateFromTemplateName(templateLibrary, parentTemplate, templateName, visitedTemplates);
+    return getTemplateFromTemplateName(bidControllerData, parentTemplate, templateName, visitedTemplates);
   });
 
   return null;
 };
 
-// const getLookupDataFromTemplateName = (templateLibrary, template, templateName) => {
+// const getLookupDataFromTemplateName = (bidControllerData, template, templateName) => {
 //   var visitedTemplates = [];
-//   var lookupDataTemplate = getTemplateFromTemplateName(templateLibrary, template, templateName, visitedTemplates);
+//   var lookupDataTemplate = getTemplateFromTemplateName(bidControllerData, template, templateName, visitedTemplates);
 //   if (lookupDataTemplate) {
 //     return lookupDataTemplate.data;
 //   }
@@ -1590,13 +1590,14 @@ const getTemplateFromTemplateName = (templateLibrary, template, templateName, vi
 //   return null;
 // };
 
-const populateLookupOptions = (templateLibrary, template, metadata, selectOptions, lookupData) => {
+const populateLookupOptions = (bidControllerData, selectOptions) => {
+  const {job, lookupData} = bidControllerData;
   const standardLookupData = lookupData && lookupData.standard;
   let valuesAdded = [];
 
   if (standardLookupData) {
     standardLookupData.forEach(function (lookup) {
-      if (LookupsHelper.isValidLookup(lookupData, Constants.lookupTypes.standard, lookup) &&
+      if (LookupsHelper.isValidLookup(lookupData, Constants.lookupTypes.standard, lookup, job.pricingAt) &&
         !_.contains(valuesAdded, lookup.value)) {
         selectOptions.push({
           id: lookup.value,
@@ -1609,7 +1610,8 @@ const populateLookupOptions = (templateLibrary, template, metadata, selectOption
   }
 }
 
-const populateCustomOptions = (templateLibrary, template, metadata, selectOptions, lookupData) => {
+const populateCustomOptions = (bidControllerData, template, selectOptions) => {
+  const {lookupData} = bidControllerData;
   const customOptions = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.customOptions);
   let sheetMaterialData;
   let skusAdded = [];
@@ -1633,7 +1635,7 @@ const populateCustomOptions = (templateLibrary, template, metadata, selectOption
         });
       }
     } else if (customOptions === 'GetSpecificationOptions') {
-      const templateChildren = TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template);
+      const templateChildren = TemplateLibrariesHelper.getTemplateChildren(bidControllerData, template);
       _.each(templateChildren, (childTemplate) => {
         if (childTemplate.templateType === Constants.templateTypes.condition) {
           const switchValue = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.switchValue);
@@ -1653,37 +1655,35 @@ const populateCustomOptions = (templateLibrary, template, metadata, selectOption
 }
 
 // populates select options if necessary. Returns select options
-const populateSelectOptions = (templateLibraries, template, metadata, forceRefresh, lookupData) => {
-  if (!templateLibraries) {
-    throw 'templateLibraries must be set in populateSelectOptions';
+const populateSelectOptions = (bidControllerData, template, forceRefresh) => {
+  if (!bidControllerData) {
+    throw 'bidControllerData must be set in populateSelectOptions';
   }
   if (!template) {
     throw 'template must be set in populateSelectOptions';
   }
-  if (!metadata) {
-    throw 'metadata must be set in populateSelectOptions';
-  }
 
+  const {metadata} = bidControllerData;
   if (!forceRefresh && metadata.selectOptions
     && metadata.selectOptions[template.id] && metadata.selectOptions[template.id].length > 0) {
     return metadata.selectOptions;
   }
 
-  const templateLibrary = getTemplateLibraryWithTemplate(templateLibraries, template.id);
+  const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, template.id);
   let selectOptions = [];
 
   if (ItemTemplatesHelper.isASubTemplate(template)) {
-    const parentTemplate = TemplateLibrariesHelper.getTemplateParent(templateLibrary, template);
+    const parentTemplate = TemplateLibrariesHelper.getTemplateParent(bidControllerData, template);
     if (parentTemplate) {
-      selectOptions = populateSelectOptions(templateLibraries, parentTemplate, metadata, forceRefresh, lookupData);
+      selectOptions = populateSelectOptions(bidControllerData, parentTemplate, forceRefresh);
     }
   } else if (ItemTemplatesHelper.isABaseTemplate(template)) {
-    addSelectOptions(templateLibrary, selectOptions, template);
+    addSelectOptions(bidControllerData, selectOptions, template);
   } else if (ItemTemplatesHelper.getTemplateSettingValueForTemplate(
     template, Constants.templateSettingKeys.lookupType) === Constants.lookupTypes.standard) {
-    populateLookupOptions(templateLibrary, template, metadata, selectOptions, lookupData);
+    populateLookupOptions(bidControllerData, selectOptions);
   } else {
-    populateCustomOptions(templateLibrary, template, metadata, selectOptions, lookupData);
+    populateCustomOptions(bidControllerData, template, selectOptions);
   }
 
   metadata.selectOptions[template.id] = selectOptions;
@@ -1691,7 +1691,8 @@ const populateSelectOptions = (templateLibraries, template, metadata, forceRefre
   return selectOptions;
 }
 
-const populateTabPages = (templateLibraries, template, metadata) => {
+const populateTabPages = (bidControllerData, template) => {
+  const {metadata} = bidControllerData;
   const selectOptions = metadata.selectOptions[template.id];
   const tabPageAll = {
     name: 'All',
@@ -1699,7 +1700,7 @@ const populateTabPages = (templateLibraries, template, metadata) => {
   };
   const tabPages = [tabPageAll];
   _.each(selectOptions, (selectOption) => {
-    const selectOptionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selectOption.id);
+    const selectOptionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, selectOption.id);
     const selectOptionTabPageNames = ItemTemplatesHelper.getTemplateSettingValuesForTemplate(
       selectOptionTemplate, Constants.templateSettingKeys.displayCategory);
 
@@ -1727,20 +1728,22 @@ const populateTabPages = (templateLibraries, template, metadata) => {
   return tabPages;
 }
 
-const getSelectOptions = (metadata, template) => {
-  if (metadata && metadata.selectOptions && template)
-  return metadata.selectOptions[template.id];
+const getSelectOptions = (bidControllerData, template) => {
+  const {metadata} = bidControllerData;
+  if (metadata && metadata.selectOptions && template) {
+    return metadata.selectOptions[template.id];
+  }
 }
 
-const addUnitTemplateSettings = (templateLibrary, templateId, worksheetUnitValue, order) => {
+const addUnitTemplateSettings = (bidControllerData, templateId, worksheetUnitValue, order) => {
   switch (worksheetUnitValue.toLowerCase()) {
     case 'ea':
-      addTemplateSetting(templateLibrary, templateId, Constants.templateSettingKeys.numeratorUnit, UnitOfMeasure.units.dollars, order++);
+      addTemplateSetting(bidControllerData, templateId, Constants.templateSettingKeys.numeratorUnit, UnitOfMeasure.units.dollars, order++);
       break;
     case 'pair':
     default:
-      addTemplateSetting(templateLibrary, templateId, Constants.templateSettingKeys.numeratorUnit, UnitOfMeasure.units.dollars, order++);
-      // addTemplateSetting(templateLibrary, templateId, Constants.templateSettingKeys.denominatorUnit, UnitOfMeasure.units.pair, order++);
+      addTemplateSetting(bidControllerData, templateId, Constants.templateSettingKeys.numeratorUnit, UnitOfMeasure.units.dollars, order++);
+      // addTemplateSetting(bidControllerData, templateId, Constants.templateSettingKeys.denominatorUnit, UnitOfMeasure.units.pair, order++);
       break;
   }
 
@@ -1759,32 +1762,34 @@ const camelCase = (text) => {
   }).join('');
 }
 
-const addProductSkuSelectorTemplate = (templateLibrary, parentTemplate) => {
+const addProductSkuSelectorTemplate = (bidControllerData, parentTemplate) => {
+  const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
   let order = 0;
   const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.input, parentTemplate);
   newTemplate.name = `${parentTemplate.name} Type`;
   newTemplate.description = newTemplate.name;
   const lookupKey = LookupsHelper.getLookupKey(parentTemplate.name);
   const variableName = camelCase(parentTemplate.name);
-  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.select, order++);
-  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.displayCategory, "Primary", order++);
-  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.variableName, variableName, order++);
-  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.lookupType, Constants.lookupTypes.standard, order++);
-  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.lookupKey, lookupKey, order++);
+  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.select, order++);
+  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, "Primary", order++);
+  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.variableName, variableName, order++);
+  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.lookupType, Constants.lookupTypes.standard, order++);
+  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.lookupKey, lookupKey, order++);
   return newTemplate;
 }
 
-const addPriceTemplate = (templateLibrary, parentTemplate, defaultUnitsText) => {
+const addPriceTemplate = (bidControllerData, parentTemplate, defaultUnitsText) => {
+  const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
   let order = 0;
   const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.override, parentTemplate);
   newTemplate.name = `${parentTemplate.name} Price Override`;
   const variableName = camelCase(parentTemplate.name);
-  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.isVariableOverride, 'true', order++);
-  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.variableToOverride, 'priceEach', order++);
-  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.propertyToOverride, Constants.templateSettingKeys.valueFormula, order++);
-  // addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.overrideValue, `[lookup]`, order++);
-  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.lookupType, Constants.lookupTypes.price, order++);
-  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.lookupKeyVariable, variableName, order++);
+  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.isVariableOverride, 'true', order++);
+  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.variableToOverride, 'priceEach', order++);
+  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.propertyToOverride, Constants.templateSettingKeys.valueFormula, order++);
+  // addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.overrideValue, `[lookup]`, order++);
+  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.lookupType, Constants.lookupTypes.price, order++);
+  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.lookupKeyVariable, variableName, order++);
   return newTemplate;
 }
 
@@ -1813,7 +1818,8 @@ const getNameColumnValue = (workbookMappings, rowStartCellAddress, worksheet) =>
   return getCellValue(rowStartCellAddress, worksheet, 0);
 }
 
-const addProductsFromWorkbook = (workbook, templateLibrary, lookups, parentTemplate, workbookMappings) => {
+const addProductsFromWorkbook = (workbook, bidControllerData, lookups, parentTemplate, workbookMappings) => {
+  const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
   if (!workbook) {
     throw 'workbook must be set in addProductsFromWorkbook';
   }
@@ -1832,14 +1838,14 @@ const addProductsFromWorkbook = (workbook, templateLibrary, lookups, parentTempl
   newTemplate.name = newTemplateName;
   newTemplate.description = newTemplateName;
   let order = 0;
-  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.selectOption, order++);
-  addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.isASubTemplate, 'true', order++);
+  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.selectOption, order++);
+  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.isASubTemplate, 'true', order++);
   if (workbookMappings.category && workbookMappings.category.name) {
-    addTemplateSetting(templateLibrary, newTemplate.id, Constants.templateSettingKeys.displayCategory, workbookMappings.category.name);
+    addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, workbookMappings.category.name);
   }
 
-  addProductSkuSelectorTemplate(templateLibrary, newTemplate);
-  addPriceTemplate(templateLibrary, newTemplate, workbookMappings.defaultUnits);
+  addProductSkuSelectorTemplate(bidControllerData, newTemplate);
+  addPriceTemplate(bidControllerData, newTemplate, workbookMappings.defaultUnits);
 
   for (let i = 0; i < workbookMappings.rowCount; i++) {
     const rowStartCellAddress = {...startCellAddress, r: startCellAddress.r + i};
@@ -1860,6 +1866,7 @@ const addProductsFromWorkbook = (workbook, templateLibrary, lookups, parentTempl
 
     LookupsHelper.addProductSkuLookup(templateLibrary, lookups, newTemplate.name, itemName, itemName);
 
+    let unitsText;
     _.each(workbookMappings.columns, (column) => {
       const columnValue = getColumnValue(column, rowStartCellAddress, worksheet);
       if (columnValue) {
@@ -1872,7 +1879,7 @@ const addProductsFromWorkbook = (workbook, templateLibrary, lookups, parentTempl
           switch (column.header.customProperty) {
             case 'unit':
               unitsText = columnValue || '[none]';
-              // order = addUnitTemplateSettings(templateLibrary, newTemplate.id, columnValue, order);
+              // order = addUnitTemplateSettings(bidControllerData, newTemplate.id, columnValue, order);
               break;
             case 'price':
               if (!unitsText) {
@@ -1912,7 +1919,7 @@ const addProductsFromWorkbook = (workbook, templateLibrary, lookups, parentTempl
 //     </span>`;
 // };
 
-const getTemplateLibraryOptions = (templateLibraries, $filter, selectedTemplateLibraryId) => {
+const getTemplateLibraryOptions = ({templateLibraries}, $filter, selectedTemplateLibraryId) => {
   return _.chain(templateLibraries)
     .sortBy((templateLibrary) => templateLibrary.createdAt)
     .reverse()

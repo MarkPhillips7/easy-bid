@@ -529,8 +529,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       'Tea', `InChina`, `Earl Purple`, 3.99, undefined,
       moment().startOf('day').add(-10, 'days').toDate(), undefined, userInfo.systemAdminUserId);
 
+    const bidControllerData = {templateLibraries: [cabinetryTemplateLibrary]};
     const workbook = XLSX.readFile(process.env.PWD + '/server/startup/Spreadsheet Estimator V2.1.xlsx');
-    TemplateLibrariesHelper.addProductsFromWorkbook(workbook, cabinetryTemplateLibrary, lookups, templateProduct, workbookMetadata.drawerSlides);
+    TemplateLibrariesHelper.addProductsFromWorkbook(workbook, bidControllerData, lookups, templateProduct, workbookMetadata.drawerSlides);
     // TemplateLibrariesHelper.addTemplatesFromSpreadsheet(spreadsheet, cabinetryTemplateLibrary, lookups, templateProduct, spreadsheetMetadata.hinges);
     _.each(lookups, (lookup) => {
       Lookups.insert(lookup);

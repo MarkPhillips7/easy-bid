@@ -8,6 +8,7 @@ Initialization.initializeSelections = function (companyInfo, userInfo) {
   if (!selection && job && templateLibrary) {
     console.log(`adding selections for company ${company.name} and job ${job.name}`);
 
+    debugger;
     let companySelection = addSelectionsForTemplateAndChildren(templateLibrary, job._id,
       _.find(templateLibrary.templates, (template) => {
       return template.templateType === Constants.templateTypes.company;
@@ -50,24 +51,24 @@ function addSelectionForTemplate(templateLibrary, jobId, template, selectionValu
 
 function addSelectionsForTemplateChildren(templateLibrary, jobId, selection, template,
                                           selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt) {
-
+  const controllerData = {templateLibraries: [templateLibrary]};
   if (selection && template)
   {
     //If a child template exists with the same type as templateToStopAt then just return.
     if (templateToStopAt &&
-      _.find(TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template), (templateChild) => {return templateChild.templateType == templateToStopAt.templateType;})){
+      _.find(TemplateLibrariesHelper.getTemplateChildren(controllerData, template), (templateChild) => {return templateChild.templateType == templateToStopAt.templateType;})){
       return;
     }
 
     //Add selections for template children that are not SubItems (sub templates) first so that everything that might be overridden by sub template exists.
-    _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(templateLibrary, template.id))
+    _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(controllerData, template.id))
       .filter((templateRelationship) => {return templateRelationship.relationToItem != Constants.relationToItem.subItem;})
       .each((templateRelationship, index, list) => {
         addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selection, template, selectionAddingMode, templateRelationship);
       });
 
     //Now it's safe to add selections for template children that are SubItems.
-    _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(templateLibrary, template.id))
+    _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(controllerData, template.id))
       .filter((templateRelationship) => {return templateRelationship.relationToItem == Constants.relationToItem.subItem;})
       .each((templateRelationship, index, list) => {
         addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selection, template, selectionAddingMode, templateRelationship);
@@ -86,7 +87,7 @@ function addSelectionsForTemplateChildren(templateLibrary, jobId, selection, tem
       //If this template is not a base template then still need to add selections for children of parent template(s)
       if (!isABaseTemplate)
       {
-        _.each(TemplateLibrariesHelper.getTemplateParents(templateLibrary, template), (parentTemplate) => {
+        _.each(TemplateLibrariesHelper.getTemplateParents(controllerData, template), (parentTemplate) => {
           addSelectionsForTemplateChildren(templateLibrary, jobId, selection, parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates);
         });
       }
@@ -115,7 +116,8 @@ function addOrUpdateSelectionSettings(templateLibrary, selection, selectionSetti
 }
 
 function addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selection, template, selectionAddingMode, templateRelationship) {
-  let childTemplate = TemplateLibrariesHelper.getTemplateById(templateLibrary, templateRelationship.childTemplateId);
+  const controllerData = {templateLibraries: [templateLibrary]};
+  let childTemplate = TemplateLibrariesHelper.getTemplateById(controllerData, templateRelationship.childTemplateId);
   let isASubTemplate = ItemTemplatesHelper.isASubTemplate(childTemplate);
   let isABaseTemplate = ItemTemplatesHelper.isABaseTemplate(childTemplate);
 
@@ -153,7 +155,7 @@ function addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selec
         }
         break;
       case Constants.templateTypes.productSelection:
-        _.each(TemplateLibrariesHelper.getAllSubTemplatesOfBaseTemplateChild(templateLibrary, childTemplate),
+        _.each(TemplateLibrariesHelper.getAllSubTemplatesOfBaseTemplateChild(controllerData, childTemplate),
           (subTemplate, index, list) => {
             if (subTemplate.name !== 'Lazy Susan Cabinet') {
               return;
@@ -168,12 +170,12 @@ function addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selec
 
             //Add the template children of the base template before the sub template children because they override some of these
             addSelectionsForTemplateChildren(templateLibrary, jobId, subTemplateSelection,
-              TemplateLibrariesHelper.getTemplateParent(templateLibrary, subTemplate),
+              TemplateLibrariesHelper.getTemplateParent(controllerData, subTemplate),
               Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates);
 
             //Add selection and template children for this sub template
             addSelectionsForTemplateChildren(templateLibrary, jobId, subTemplateSelection,
-              TemplateLibrariesHelper.getTemplateById(templateLibrary, subTemplateSelection.templateId),
+              TemplateLibrariesHelper.getTemplateById(controllerData, subTemplateSelection.templateId),
               Constants.selectionAddingModes.ignoreSubTemplates);
 
             //AddSelectionsForTemplateAndChildren(context, selections, templates, childTemplate, "LazySusan Selection", masterSelection, selection, null);
@@ -196,7 +198,9 @@ function addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selec
           let overrideValue = _.find(childTemplate.templateSettings, (templateSetting) => {
             return templateSetting.key == "OverrideValue";
           }).value;
-          const {selectionToOverride, levelFromHere} = SelectionsHelper.getSelectionToOverride(templateLibrary, selection, variableToOverride, [], null, null, 0);
+          const controllerData = {templateLibraries: [templateLibrary]};
+          const {selectionToOverride, levelFromHere} =
+            SelectionsHelper.getSelectionToOverride(controllerData, selection, variableToOverride, [], 0);
           if (selectionToOverride) {
             addOrUpdateSelectionSettings(templateLibrary, selectionToOverride, [ { key: propertyToOverride, value: overrideValue, levelFromHere } ]);
           }

@@ -21,6 +21,7 @@ Initialization.initializeJobs = function (companyInfo, userInfo) {
       customerProfile: customer.profile,
       customerId: customer._id,
       createdAt: new Date(),
+      pricingAt: new Date(),
       dueAt: moment().add(7, 'days').toDate(),
       estimatorProfile: estimator.profile,
       estimatorId: estimator._id

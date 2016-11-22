@@ -93,7 +93,8 @@ Selections.allow({
   }
 });
 
-function getChildSelections(selection, selections, selectionRelationships) {
+function getChildSelections(selection, bidControllerData) {
+  const {selections, selectionRelationships} = bidControllerData;
   if (!selection) {
     throw 'selection must be set in getChildSelections';
   }
@@ -113,7 +114,8 @@ function getChildSelections(selection, selections, selectionRelationships) {
   }
 }
 
-function getChildSelectionsWithTemplateId(selection, templateId, selections, selectionRelationships) {
+function getChildSelectionsWithTemplateId(selection, templateId, bidControllerData) {
+  const {selections, selectionRelationships} = bidControllerData;
   if (!selection) {
     throw 'selection must be set in getChildSelectionsWithTemplateId';
   }
@@ -124,8 +126,9 @@ function getChildSelectionsWithTemplateId(selection, templateId, selections, sel
   if (selections && selectionRelationships) {
     const childSelectionIds = _.chain(selectionRelationships)
         .filter((selectionRelationship) => selectionRelationship.parentSelectionId === selection._id)
-        .map((selectionRelationship) => selectionRelationship.childSelectionId);
-    return _.map(selections, (_selection) => _selection.templateId === templateId &&
+        .map((selectionRelationship) => selectionRelationship.childSelectionId)
+        .value();
+    return _.filter(selections, (_selection) => _selection.templateId === templateId &&
         _.some(childSelectionIds, (childSelectionId) => childSelectionId === _selection._id));
   } else {
     const childSelectionIds = SelectionRelationships.find({parentSelectionId: selection._id})
@@ -140,26 +143,8 @@ function getChildSelectionsWithTemplateId(selection, templateId, selections, sel
     }
 }
 
-function getChildSelectionsWithTemplateIds(selection, templateIds) {
-  if (!selection) {
-    throw 'selection must be set in getChildSelectionsWithTemplateIds';
-  }
-  if (!templateIds) {
-    throw 'templateIds must be set in getChildSelectionsWithTemplateIds';
-  }
-
-  let childSelectionIds = SelectionRelationships.find({parentSelectionId: selection._id})
-    .map(function(relationship){
-      return relationship.childSelectionId;
-    });
-  return Selections.find(
-    {
-      _id: { $in: childSelectionIds },
-      templateId: { $in: templateIds }
-    }).fetch();
-}
-
-function getParentSelections(selection, selections, selectionRelationships) {
+function getParentSelections(selection, bidControllerData) {
+  const {selections, selectionRelationships} = bidControllerData;
   if (!selection) {
     throw 'selection must be set in getParentSelections';
   }
@@ -181,33 +166,28 @@ function getParentSelections(selection, selections, selectionRelationships) {
 
 // Return getSelectionToOverride as long as that selection's variableCollectorSelection matches the original
 // selection's variableCollectorSelection. If not add new selection under variableCollectorSelection.
-function getSelectionToOverrideOrAddIfAppropriate(templateLibrary, selection, variableToOverride,
-  selectionIdsToIgnore, selections, selectionRelationships, selectionValue, lookupData, metadata, jobId, overrideTemplate) {
-  let returnValue = getSelectionToOverride(templateLibrary, selection, variableToOverride,
-    selectionIdsToIgnore, selections, selectionRelationships, 0);
+function getSelectionToOverrideOrAddIfAppropriate(bidControllerData, selection, variableToOverride,
+  selectionIdsToIgnore, selectionValue, overrideTemplate) {
+  let returnValue = getSelectionToOverride(bidControllerData, selection, variableToOverride, selectionIdsToIgnore, 0);
   // If no selectionToOverride was found just give up.
   if (!returnValue || !returnValue.selectionToOverride) {
     return returnValue;
   }
 
-  const expectedVariableCollectorSelection = getVariableCollectorSelection([templateLibrary],
-    selections, selectionRelationships, selection);
-  const selectionToOverrideVariableCollectorSelection = getVariableCollectorSelection([templateLibrary],
-    selections, selectionRelationships, returnValue.selectionToOverride);
+  const expectedVariableCollectorSelection = getVariableCollectorSelection(bidControllerData, selection);
+  const selectionToOverrideVariableCollectorSelection = getVariableCollectorSelection(bidControllerData, returnValue.selectionToOverride);
   if (expectedVariableCollectorSelection === selectionToOverrideVariableCollectorSelection) {
     return returnValue;
   }
 
   // selectionToOverride belongs to a different variableCollectorSelection, so create a new selection.
   // ToDo: ensure that newSelectionTemplate can be a child of expectedVariableCollectorSelection's template.
-  const newSelectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibrary,
-    returnValue.selectionToOverride.templateId);
-  const newSelection = addSelectionsForTemplateAndChildren(templateLibrary, selections,
-    selectionRelationships, metadata, jobId, newSelectionTemplate, selectionValue,
-    expectedVariableCollectorSelection, 0, Constants.selectionAddingModes.handleAnything, null, lookupData);
+  const newSelectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, returnValue.selectionToOverride.templateId);
+  const newSelection = addSelectionsForTemplateAndChildren(bidControllerData, newSelectionTemplate, selectionValue,
+    expectedVariableCollectorSelection, 0, Constants.selectionAddingModes.handleAnything, null);
 
   // store the overrideTemplate id responsible so that we know whether it was from a specification group
-  addOrUpdateSelectionSettings(templateLibrary, newSelection, [ { key: Constants.selectionSettingKeys.overrideTemplateId, value: overrideTemplate.id } ]);
+  addOrUpdateSelectionSettings(newSelection, [ { key: Constants.selectionSettingKeys.overrideTemplateId, value: overrideTemplate.id } ]);
 
   // There is no longer a selectionToOverride since a new selection was created.
   return {selectionToOverride: null, levelFromHere: 0};
@@ -215,14 +195,13 @@ function getSelectionToOverrideOrAddIfAppropriate(templateLibrary, selection, va
 
 // Return the first selection most closely related to this selection whose template defines a variable named variableToOverride.
 // First check if this selection could be it, then child selections, then parent selections.
-function getSelectionToOverride(templateLibrary, selection, variableToOverride,
-  selectionIdsToIgnore, selections, selectionRelationships, levelFromHere) {
+function getSelectionToOverride(bidControllerData, selection, variableToOverride, selectionIdsToIgnore, levelFromHere) {
   let returnValue = {selectionToOverride: null, levelFromHere};
 
   if (!_.contains(selectionIdsToIgnore, selection._id)) {
     selectionIdsToIgnore.push(selection._id);
 
-    let selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibrary, selection.templateId);
+    let selectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, selection.templateId);
 
     //First check selection
     if (selectionTemplate &&
@@ -233,15 +212,15 @@ function getSelectionToOverride(templateLibrary, selection, variableToOverride,
 
     //Next check child selections that are not sub templates and not variable collectors
     if (!returnValue.selectionToOverride) {
-      let childSelections = SelectionsHelper.getChildSelections(selection, selections, selectionRelationships);
+      let childSelections = SelectionsHelper.getChildSelections(selection, bidControllerData);
       if (childSelections) {
         childSelections.forEach(function (childSelection) {
-          const childSelectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibrary, childSelection.templateId);
+          const childSelectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, childSelection.templateId);
           if (!returnValue.selectionToOverride && childSelectionTemplate &&
             !ItemTemplatesHelper.getTemplateSettingValueForTemplate(childSelectionTemplate, Constants.templateSettingKeys.isVariableCollector) &&
             !ItemTemplatesHelper.isASubTemplate(childSelectionTemplate)) {
-            returnValue = getSelectionToOverride(templateLibrary, childSelection, variableToOverride,
-              selectionIdsToIgnore, selections, selectionRelationships, levelFromHere - 1);
+            returnValue = getSelectionToOverride(bidControllerData, childSelection, variableToOverride,
+              selectionIdsToIgnore, levelFromHere - 1);
           }
         });
       }
@@ -252,12 +231,12 @@ function getSelectionToOverride(templateLibrary, selection, variableToOverride,
     //Lastly check parent selections as long as selection is not a variable collector
     if (!returnValue.selectionToOverride) {
       const isVariableCollector = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, Constants.templateSettingKeys.isVariableCollector);
-      let parentSelections = SelectionsHelper.getParentSelections(selection, selections, selectionRelationships);
+      let parentSelections = SelectionsHelper.getParentSelections(selection, bidControllerData);
       if (parentSelections) {
         parentSelections.forEach(function (parentSelection) {
           if (!returnValue.selectionToOverride) {
-            returnValue = getSelectionToOverride(templateLibrary, parentSelection, variableToOverride,
-              selectionIdsToIgnore, selections, selectionRelationships, levelFromHere + 1);
+            returnValue = getSelectionToOverride(bidControllerData, parentSelection, variableToOverride,
+              selectionIdsToIgnore, levelFromHere + 1);
           }
         });
       }
@@ -279,51 +258,46 @@ function populateTemplateIds(templateLibrary, templateIds, template, onlyIfBaseO
 
   //Now include template IDs for children if this is a base template or a sub template
   if (isABaseTemplate || isASubTemplate) {
-    _.each(TemplateLibrariesHelper.getTemplateChildren(templateLibrary, template), (childTemplate) => {
+    _.each(TemplateLibrariesHelper.getTemplateChildren({templateLibraries: [templateLibrary]}, template), (childTemplate) => {
       populateTemplateIds(templateLibrary, templateIds, childTemplate, true);
     });
   }
 };
 
 //Return array of all selections that are children (or grandchildren, Etc.) that match template.
-//
-function getSelectionsBySelectionParentAndTemplate(templateLibrary, selections,
-  selectionRelationships, selectionParent, template) {
+function getSelectionsBySelectionParentAndTemplate(bidControllerData, selectionParent, template) {
+  const {templateLibraries, selections} = bidControllerData;
   var templateIds = [];
   if (typeof selectionParent === 'string') {
     selectionParent = _.find(selections, (selection) => selection._id === selectionParent);
   }
-  populateTemplateIds(templateLibrary, templateIds, template, false);
+  _.each(templateLibraries, (templateLibrary) => {
+    populateTemplateIds(templateLibrary, templateIds, template, false);
+  });
 
-  return getSelectionsBySelectionParentAndTemplateIds(templateLibrary, selections,
-    selectionRelationships, selectionParent, templateIds);
+  return getSelectionsBySelectionParentAndTemplateIds(bidControllerData, selectionParent, templateIds);
 };
 
-function getSelectionsBySelectionParentAndTemplateIds(templateLibrary, selections,
-  selectionRelationships, selectionParent, templateIds) {
+function getSelectionsBySelectionParentAndTemplateIds(bidControllerData, selectionParent, templateIds) {
+  const {templateLibraries, selections, selectionRelationships} = bidControllerData;
   var selectionsToReturn = [];
 
-  populateSelectionsBySelectionParent(templateLibrary, selections,
-    selectionRelationships, selectionParent);
-
+  populateSelectionsBySelectionParent(selectionParent);
   return selectionsToReturn;
 
-  function populateSelectionsBySelectionParent(templateLibrary, selections,
-    selectionRelationships, selectionParent) {
+  function populateSelectionsBySelectionParent(selectionParent) {
     if (selectionParent) {
-      const childSelections = getChildSelections(selectionParent, selections,
-        selectionRelationships);
+      const childSelections = getChildSelections(selectionParent, bidControllerData);
       _.each(childSelections, (childSelection) => {
         if (_.contains(templateIds, childSelection.templateId)) {
           selectionsToReturn.push(childSelection);
         } else {
-          const selectionTemplate = TemplateLibrariesHelper.getTemplateById([templateLibrary], childSelection.templateId);
+          const selectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, childSelection.templateId);
           if (selectionTemplate &&
               !SelectionsHelper.getSettingValue(childSelection, selectionTemplate,
               Constants.templateSettingKeys.isVariableCollector)) {
             // Check for descendent selections for the template. Often the desired selection is a grandchild of the original selectionParent.
-            populateSelectionsBySelectionParent(templateLibrary, selections,
-              selectionRelationships, childSelection);
+            populateSelectionsBySelectionParent(childSelection);
           }
         }
       });
@@ -331,35 +305,37 @@ function getSelectionsBySelectionParentAndTemplateIds(templateLibrary, selection
   }
 };
 
-const getVariableCollectorSelection = (templateLibraries, selections, selectionRelationships, selection) => {
+const getVariableCollectorSelection = (bidControllerData, selection) => {
+  const {templateLibraries, selections, selectionRelationships} = bidControllerData;
   if (!templateLibraries || !selection) {return null;}
 
-  const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selection.templateId);
+  const selectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, selection.templateId);
   if (selectionTemplate &&
     ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, Constants.templateSettingKeys.isVariableCollector)) {
     return selection;
   }
 
-  const parentSelection = SelectionsHelper.getParentSelections(selection, selections, selectionRelationships)[0];
+  const parentSelection = SelectionsHelper.getParentSelections(selection, bidControllerData)[0];
   if (parentSelection) {
-    return getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, parentSelection);
+    return getVariableCollectorSelection(bidControllerData, parentSelection);
   }
 
   return null;
 }
 
 //Create variable (if ValueFormula template setting exists) for selection and its children.
-function createSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, selection) {
+function createSelectionVariables(bidControllerData, selection) {
+  const {metadata} = bidControllerData;
   if (!selection) {
     return;
   }
-  var childSelections = getChildSelections(selection, selections, selectionRelationships);
+  var childSelections = getChildSelections(selection, bidControllerData);
 
   _.each(childSelections, (childSelection) => {
-    createSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, childSelection);
+    createSelectionVariables(bidControllerData, childSelection);
   });
 
-  const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selection.templateId);
+  const selectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, selection.templateId);
   if (!selectionTemplate) {
     return;
   }
@@ -369,7 +345,7 @@ function createSelectionVariables(templateLibraries, selections, selectionRelati
     return;
   }
 
-  const variableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selection);
+  const variableCollectorSelection = getVariableCollectorSelection(bidControllerData, selection);
   if (!variableCollectorSelection) {
     return;
   }
@@ -383,7 +359,8 @@ function createSelectionVariables(templateLibraries, selections, selectionRelati
   }
 }
 
-const getSelectionByTemplate = (selections, template) => {
+const getSelectionByTemplate = (bidControllerData, template) => {
+  const {selections} = bidControllerData;
   if (template) {
     // console.log(`looking for selection for template.id ${template.id}`);
     return _.find(selections, (selection) => selection.templateId === template.id);
@@ -417,7 +394,9 @@ const getSettingValue = (selection, selectionTemplate, settingKey) => {
   return returnValue;
 };
 
-const addSelectionReferencingVariable = (metadata, jsonVariableName, selectionReferencingVariable, variableCollectorSelection) => {
+const addSelectionReferencingVariable = (bidControllerData, jsonVariableName,
+  selectionReferencingVariable, variableCollectorSelection) => {
+  const {metadata} = bidControllerData;
   if (!metadata.selectionIdsReferencingVariables[variableCollectorSelection._id]) {
     metadata.selectionIdsReferencingVariables[variableCollectorSelection._id] = [];
   }
@@ -437,38 +416,38 @@ const addSelectionReferencingVariable = (metadata, jsonVariableName, selectionRe
   }
 }
 
-const getJsonVariableValue = (templateLibraries, selections, selectionRelationships, metadata,
-  selection, jsonVariableName, selectionReferencingVariable) => {
-    var variableCollectorSelection = selection
-      ? getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selection)
-      : null;
-    if (variableCollectorSelection) {
-      metadata.variables[variableCollectorSelection._id] = metadata.variables[variableCollectorSelection._id] || {};
-      let variableValue = metadata.variables[variableCollectorSelection._id][jsonVariableName];
-      if (variableValue !== undefined) {
-        if (selectionReferencingVariable && variableCollectorSelection._id !== selectionReferencingVariable._id) {
-          addSelectionReferencingVariable(metadata, jsonVariableName, selectionReferencingVariable, variableCollectorSelection);
-        }
-
-        return variableValue;
+// selectionReferencingVariable is optional
+const getJsonVariableValue = (bidControllerData, selection, jsonVariableName, selectionReferencingVariable) => {
+  const {metadata} = bidControllerData;
+  var variableCollectorSelection = selection
+    ? getVariableCollectorSelection(bidControllerData, selection)
+    : null;
+  if (variableCollectorSelection) {
+    metadata.variables[variableCollectorSelection._id] = metadata.variables[variableCollectorSelection._id] || {};
+    let variableValue = metadata.variables[variableCollectorSelection._id][jsonVariableName];
+    if (variableValue !== undefined) {
+      if (selectionReferencingVariable && variableCollectorSelection._id !== selectionReferencingVariable._id) {
+        addSelectionReferencingVariable(bidControllerData, jsonVariableName, selectionReferencingVariable, variableCollectorSelection);
       }
 
-      // variableCollectorSelection does not contain variable, so check its parent.
-      const parentSelection = SelectionsHelper.getParentSelections(variableCollectorSelection, selections, selectionRelationships)[0];
-      if (parentSelection) {
-        variableValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
-          parentSelection, jsonVariableName, selectionReferencingVariable);
-        // copy parent's variable value into this variable collector's variable value
-        //metadata.variables[variableCollectorSelection._id][jsonVariableName] = variableValue;
-        return variableValue;
-      }
+      return variableValue;
     }
 
-    return undefined;
+    // variableCollectorSelection does not contain variable, so check its parent.
+    const parentSelection = SelectionsHelper.getParentSelections(variableCollectorSelection, bidControllerData)[0];
+    if (parentSelection) {
+      variableValue = getJsonVariableValue(bidControllerData, parentSelection, jsonVariableName, selectionReferencingVariable);
+      // copy parent's variable value into this variable collector's variable value
+      //metadata.variables[variableCollectorSelection._id][jsonVariableName] = variableValue;
+      return variableValue;
+    }
+  }
+
+  return undefined;
 };
 
-const refreshSelectionsReferencingVariable =
-  (templateLibraries, selections, selectionRelationships, metadata, lookupData, variableCollectorSelection, jsonVariableName) => {
+const refreshSelectionsReferencingVariable = (bidControllerData, variableCollectorSelection, jsonVariableName) => {
+  const {metadata, selections} = bidControllerData;
   // Make sure formulas that reference selection's variable get updated
   if (metadata.selectionIdsReferencingVariables[variableCollectorSelection._id]) {
     const selectionIdsReferencingVariable = _.find(metadata.selectionIdsReferencingVariables[variableCollectorSelection._id],
@@ -480,7 +459,7 @@ const refreshSelectionsReferencingVariable =
       _.each(selectionIdsReferencingVariable.selectionIds, (selectionId) => {
         const selectionReferencingVariable = _.find(selections, (_selection) => _selection._id === selectionId);
         if (selectionReferencingVariable) {
-          SelectionsHelper.getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, lookupData, selectionReferencingVariable);
+          SelectionsHelper.getSelectionValue(bidControllerData, selectionReferencingVariable);
         }
       });
     }
@@ -517,8 +496,8 @@ const refreshSelectionsReferencingVariable =
 //   return LookupsHelper.getLookupValue(lookupData, lookupType, lookupKey);
 // }
 
-const replaceValueFormulaLookupValues = (templateLibraries, selections, selectionRelationships,
-    metadata, lookupData, selection, valueFormula, selectionReferencingVariable) => {
+const replaceValueFormulaLookupValues = (bidControllerData, selection, valueFormula, selectionReferencingVariable) => {
+  const {job, lookupData, metadata} = bidControllerData;
   // expecting valueFormula like `getLookup${lookupType}(${lookupKey})`, for example `getLookupPrice(drawerSlides)`
   if (valueFormula) {
     const lookupMatches = Formulas.findLookups(valueFormula);
@@ -527,9 +506,8 @@ const replaceValueFormulaLookupValues = (templateLibraries, selections, selectio
         const {lookupType, templateVariableName} = Formulas.parseLookupInfo(lookupMatch);
         if (lookupType && templateVariableName) {
           const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(templateVariableName);
-          const jsonVariableValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
-            selection, jsonVariableName, selectionReferencingVariable);
-          const lookupValue = LookupsHelper.getLookupValue(lookupData, lookupType, jsonVariableValue) || '0';
+          const jsonVariableValue = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selectionReferencingVariable);
+          const lookupValue = LookupsHelper.getLookupValue(lookupData, lookupType, jsonVariableValue, job.pricingAt) || '0';
           valueFormula = valueFormula.replace(lookupMatch, lookupValue);
         }
       });
@@ -538,14 +516,13 @@ const replaceValueFormulaLookupValues = (templateLibraries, selections, selectio
   return valueFormula;
 }
 
-const calculateFormulaValue = (templateLibraries, selections, selectionRelationships,
-    metadata, lookupData, selection, valueFormula, selectionReferencingVariable) => {
+const calculateFormulaValue = (bidControllerData, selection, valueFormula, selectionReferencingVariable) => {
+  const {metadata} = bidControllerData;
   if (!selection) {
     return 0;
   }
 
-  valueFormula = replaceValueFormulaLookupValues(templateLibraries, selections, selectionRelationships,
-      metadata, lookupData, selection, valueFormula, selectionReferencingVariable);
+  valueFormula = replaceValueFormulaLookupValues(bidControllerData, selection, valueFormula, selectionReferencingVariable);
   const expr = Parser.parse(valueFormula);
   let formulaValue = 0;
   let variableValues = {};
@@ -553,8 +530,7 @@ const calculateFormulaValue = (templateLibraries, selections, selectionRelations
   expr.variables().forEach((templateVariableName) => {
     if (allVariableValuesFound) {
       const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(templateVariableName);
-      const jsonVariableValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
-        selection, jsonVariableName, selectionReferencingVariable);
+      const jsonVariableValue = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selectionReferencingVariable);
 
       if (jsonVariableValue === undefined) {
         allVariableValuesFound = false;
@@ -575,17 +551,17 @@ const calculateFormulaValue = (templateLibraries, selections, selectionRelations
   return {formulaValue, allVariableValuesFound};
 };
 
-const sumSelections = (templateLibraries, selections, selectionRelationships,
-    metadata, lookupData, selectionsToSum, valueFormula, selectionReferencingVariable) => {
+// selectionReferencingVariable is optional
+const sumSelections = (bidControllerData, selectionsToSum, valueFormula, selectionReferencingVariable) => {
+  const {selections} = bidControllerData;
   if (!selectionsToSum) {
     return 0;
   }
 
   const add = (previousValue, selectionId) => {
     const selection = _.find(selections, (_selection) => _selection._id === selectionId);
-    const {formulaValue, allVariableValuesFound} = calculateFormulaValue(
-        templateLibraries, selections, selectionRelationships,
-        metadata, lookupData, selection, valueFormula, selectionReferencingVariable);
+    const {formulaValue, allVariableValuesFound} =
+      calculateFormulaValue(bidControllerData, selection, valueFormula, selectionReferencingVariable);
     return previousValue + formulaValue;
   };
 
@@ -594,55 +570,51 @@ const sumSelections = (templateLibraries, selections, selectionRelationships,
 
 // This currently does not go through all descendents... only looks at descendents if templeType matches
 // Intended to add all children of a particular type but needed to get descendents of children for area selections
-const addDescendentSelectionsByTemplateType = (templateLibraries, selections, selectionRelationships, metadata, descendentSelectionIds, selectionParent, templateType) => {
+const addDescendentSelectionsByTemplateType = (bidControllerData, descendentSelectionIds, selectionParent, templateType) => {
   if (selectionParent) {
-    const childSelections = getChildSelections(selectionParent, selections, selectionRelationships);
+    const childSelections = getChildSelections(selectionParent, bidControllerData);
     _.each(childSelections, (childSelection) => {
-      const childSelectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, childSelection.templateId);
+      const childSelectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, childSelection.templateId);
       if (childSelectionTemplate && childSelectionTemplate.templateType === templateType) {
         descendentSelectionIds.push(childSelection._id);
       } else {
         //Now add descendents of this child (but only for children with the requested templateType)
-        addDescendentSelectionsByTemplateType(templateLibraries, selections, selectionRelationships, metadata, descendentSelectionIds, childSelection, templateType);
+        addDescendentSelectionsByTemplateType(bidControllerData, descendentSelectionIds, childSelection, templateType);
       }
     });
   }
 };
 
 // This currently does not go through all descendents... only looks at descendents if templeType matches
-const getDescendentSelectionIdsByTemplateType = (templateLibraries, selections, selectionRelationships, metadata, selectionParent, templateType) => {
+const getDescendentSelectionIdsByTemplateType = (bidControllerData, selectionParent, templateType) => {
   if (selectionParent) {
     let descendentSelectionIds = [];
-    addDescendentSelectionsByTemplateType(templateLibraries, selections, selectionRelationships, metadata, descendentSelectionIds, selectionParent, templateType);
+    addDescendentSelectionsByTemplateType(bidControllerData, descendentSelectionIds, selectionParent, templateType);
     return descendentSelectionIds;
   }
 
   return null;
 };
 
-const applyFunctionOverChildrenOfParent = (templateLibraries, selections, selectionRelationships, metadata, lookupData, selection) => {
+const applyFunctionOverChildrenOfParent = (bidControllerData, selection) => {
   let returnValue = undefined;
-  const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selection.templateId);
+  const selectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, selection.templateId);
   const applicableTemplateType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
     selectionTemplate, 'ApplicableTemplateType');
-  const parentSelection = SelectionsHelper.getParentSelections(selection, selections, selectionRelationships)[0];
-  const descendentSelectionIds = getDescendentSelectionIdsByTemplateType(
-    templateLibraries, selections, selectionRelationships, metadata, parentSelection, applicableTemplateType);
-  const functionName = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
-    selectionTemplate, 'Function');
-  const valueFormula = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
-    selectionTemplate, 'ValueFormula');
+  const parentSelection = SelectionsHelper.getParentSelections(selection, bidControllerData)[0];
+  const descendentSelectionIds = getDescendentSelectionIdsByTemplateType(bidControllerData, parentSelection, applicableTemplateType);
+  const functionName = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, 'Function');
+  const valueFormula = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, 'ValueFormula');
 
   if (functionName.toUpperCase() === 'SUM') {
-    returnValue = sumSelections(templateLibraries, selections, selectionRelationships,
-      metadata, lookupData, descendentSelectionIds, valueFormula, selection);
+    returnValue = sumSelections(bidControllerData, descendentSelectionIds, valueFormula, selection);
   }
   return returnValue;
 };
 
-const getDisplayValue = (templateLibraries, selections, selection) => {
+const getDisplayValue = (bidControllerData, selection) => {
   if (selection) {
-    const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selection.templateId);
+    const selectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, selection.templateId);
     if (selectionTemplate) {
       if (selectionTemplate.templateType === Constants.templateTypes.product) {
         return selectionTemplate.name;
@@ -670,8 +642,8 @@ const getPendingChangeMessagesByOriginalAndCurrentInfo = (originalValue, origina
   return pendingChangeMessages;
 }
 
-const getCustomValue = (templateLibraries, selections, selectionRelationships, metadata, lookupData,
-    customLookup, selection, selectionTemplate) => {
+const getCustomValue = (bidControllerData, customLookup, selection, selectionTemplate) => {
+  const {job, lookupData} = bidControllerData;
   let caseMaterialInteriorSku;
   let caseMaterialExposedSku;
   let returnValue = undefined;
@@ -684,16 +656,14 @@ const getCustomValue = (templateLibraries, selections, selectionRelationships, m
     //CaseMaterialInteriorSku might be an actual SKU or a variable name containing a SKU
     caseMaterialInteriorSku = getSettingValue(selection, selectionTemplate, 'CaseMaterialInteriorSku');
     jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(caseMaterialInteriorSku);
-    jsonVariableValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
-      selection, jsonVariableName, selection);
+    jsonVariableValue = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selection);
     if (jsonVariableValue !== undefined) {
       caseMaterialInteriorSku = jsonVariableValue;
     }
 
     caseMaterialExposedSku = getSettingValue(selection, selectionTemplate, 'CaseMaterialExposedSku');
     jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(caseMaterialExposedSku);
-    jsonVariableValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
-      selection, jsonVariableName, selection);
+    jsonVariableValue = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selection);
     if (jsonVariableValue !== undefined) {
       caseMaterialExposedSku = jsonVariableValue;
     }
@@ -704,7 +674,7 @@ const getCustomValue = (templateLibraries, selections, selectionRelationships, m
     const sheetMaterialData = lookupData && lookupData['sheetMaterialData'];
 
     //This should be something that can be set per job
-    const pricingDate = new Date();
+    const pricingAt = job.pricingAt || new Date();
 
     // For now just get the first qualifying price
     if (sheetMaterialData) {
@@ -713,8 +683,8 @@ const getCustomValue = (templateLibraries, selections, selectionRelationships, m
           _.each(sheetMaterial.sheetMaterialOfferings, (sheetMaterialOffering) => {
             if (sheetMaterialOffering.nominalThickness == nominalThickness) {
               sheetMaterialOffering.sheetMaterialPricings.forEach(function (sheetMaterialPricing) {
-                if (sheetMaterialPricing.effectiveDate <= pricingDate
-                    && sheetMaterialPricing.expirationDate >= pricingDate) {
+                if (sheetMaterialPricing.effectiveDate <= pricingAt
+                    && sheetMaterialPricing.expirationDate >= pricingAt) {
                   //Want to return price per square foot
                   returnValue = sheetMaterialPricing.purchasePricePerSheet
                   / (sheetMaterialOffering.length / 12 * sheetMaterialOffering.width / 12);
@@ -729,14 +699,15 @@ const getCustomValue = (templateLibraries, selections, selectionRelationships, m
   return returnValue;
 }
 
-const getSelectionValue = (templateLibraries, selections, selectionRelationships, metadata, lookupData, selection) => {
+const getSelectionValue = (bidControllerData, selection) => {
+  const {metadata} = bidControllerData;
   if (!selection) {
     throw new Error('selection required in getSelectionValue');
   }
-  const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selection.templateId);
+  const selectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, selection.templateId);
   let selectionValue;
   let selectionValueSource = selection.valueSource;
-  const variableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selection);
+  const variableCollectorSelection = getVariableCollectorSelection(bidControllerData, selection);
   // variableCollectorSelection may not exist because it was deleted. Just return undefined in that case.
   if (!variableCollectorSelection) {
     return undefined;
@@ -758,20 +729,18 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
       selectionValueSource = Constants.valueSources.lookupData;
     }
     else if (selectionTemplate.templateType === Constants.templateTypes.function) {
-      selectionValue = applyFunctionOverChildrenOfParent(templateLibraries, selections, selectionRelationships, metadata, lookupData, selection);
+      selectionValue = applyFunctionOverChildrenOfParent(bidControllerData, selection);
       selectionValueSource = Constants.valueSources.calculatedValue;
     }
     //Check for a custom lookup
     else if (customLookup = getSettingValue(selection, selectionTemplate, Constants.templateSettingKeys.customLookup)) {
-      selectionValue = getCustomValue(templateLibraries, selections, selectionRelationships, metadata, lookupData,
-        customLookup, selection, selectionTemplate);
+      selectionValue = getCustomValue(bidControllerData, customLookup, selection, selectionTemplate);
       selectionValueSource = Constants.valueSources.lookup;
     }
     //Check for valueFormula, which evaluates based on variables.
     else if (valueFormula = getSettingValue(selection,
       selectionTemplate, Constants.templateSettingKeys.valueFormula)) {
-      const {formulaValue, allVariableValuesFound} = calculateFormulaValue(templateLibraries, selections, selectionRelationships,
-          metadata, lookupData, selection, valueFormula, selection);
+      const {formulaValue, allVariableValuesFound} = calculateFormulaValue(bidControllerData, selection, valueFormula, selection);
       if (allVariableValuesFound) {
         selectionValue = formulaValue;
         selectionValueSource = Constants.valueSources.calculatedValue;
@@ -781,8 +750,7 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
     else if (variableToDisplay = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
         selectionTemplate, Constants.templateSettingKeys.variableToDisplay)) {
       const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(selectionTemplate.variableToDisplay);
-      selectionValue = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
-        selection, jsonVariableName, selection);
+      selectionValue = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selection);
       selectionValueSource = Constants.valueSources.calculatedValue;
     }
     //If no VariableToDisplay, check for defaultValue as long as not isOverridingDefault.
@@ -817,24 +785,24 @@ const getSelectionValue = (templateLibraries, selections, selectionRelationships
     selection.valueSource = selectionValueSource;
   }
 
-  storeSelectionValueAndUpdatePendingChanges(templateLibraries, selections, selectionRelationships,
-    metadata, lookupData, selection, selectionValue, selection.value, variableCollectorSelection,
-    variableCollectorSelectionVariableSet, originalValueSource, selectionValueSource, selectionJsonVariableName);
+  storeSelectionValueAndUpdatePendingChanges(bidControllerData, selection,
+    selectionValue, selection.value, variableCollectorSelection, variableCollectorSelectionVariableSet,
+    originalValueSource, selectionValueSource, selectionJsonVariableName);
   return selectionValue;
 };
 
-const initializeValueToUse = (templateLibraries, selections, selectionRelationships, metadata, lookupData, selection) => {
+const initializeValueToUse = (bidControllerData, selection) => {
   if (!selection) {
     return;
   }
 
-  const childSelections = getChildSelections(selection, selections, selectionRelationships);
+  const childSelections = getChildSelections(selection, bidControllerData);
   _.each(childSelections, (childSelection) => {
-    initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, childSelection);
+    initializeValueToUse(bidControllerData, childSelection);
   });
 
   //Calling getSelectionValue() causes checks for undefined variables.
-  getSelectionValue(templateLibraries, selections, selectionRelationships, metadata, lookupData, selection);
+  getSelectionValue(bidControllerData, selection);
 };
 
 const initializePendingSelectionChanges = (metadata) => {
@@ -949,21 +917,22 @@ const getInitializedMetadata = () => {
   return metadata;
 };
 
-const initializeSelectionVariables = (templateLibraries, selections, selectionRelationships, metadata, lookupData) => {
+const initializeSelectionVariables = (bidControllerData) => {
+  const {metadata} = bidControllerData;
   // start with the topmost selection, which should be the company selection
-  const companyTemplate = TemplateLibrariesHelper.getTemplateByType(templateLibraries, Constants.templateTypes.company);
+  const companyTemplate = TemplateLibrariesHelper.getTemplateByType(bidControllerData, Constants.templateTypes.company);
   if (!companyTemplate) {
     return;
   }
 
-  const companySelection = getSelectionByTemplate(selections, companyTemplate);
+  const companySelection = getSelectionByTemplate(bidControllerData, companyTemplate);
   if (!companySelection) {
     return;
   }
 
-  createSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, companySelection);
+  createSelectionVariables(bidControllerData, companySelection);
 
-  initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, companySelection);
+  initializeValueToUse(bidControllerData, companySelection);
 
   //If any dependent variables are undefined, then something must be wrong.
   if (metadata.variablesUndefined.length > 0) {
@@ -972,15 +941,15 @@ const initializeSelectionVariables = (templateLibraries, selections, selectionRe
   }
 };
 
-const getDisplayDescription = (templateLibraries, selections, selectionRelationships, selection) => {
+const getDisplayDescription = (bidControllerData, selection) => {
   if (selection) {
-    const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selection.templateId);
+    const selectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, selection.templateId);
     if (selectionTemplate) {
       const templateVariableName = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, 'VariableName');
       if (templateVariableName) {
-        const parentSelection = SelectionsHelper.getParentSelections(selection, selections, selectionRelationships)[0];
+        const parentSelection = SelectionsHelper.getParentSelections(selection, bidControllerData)[0];
         if (parentSelection) {
-          const parentSelectionDisplayDescription = getDisplayDescription(templateLibraries, selections, selectionRelationships, parentSelection);
+          const parentSelectionDisplayDescription = getDisplayDescription(bidControllerData, parentSelection);
           return `${parentSelectionDisplayDescription} ${templateVariableName}`;
         }
         return templateVariableName;
@@ -992,12 +961,13 @@ const getDisplayDescription = (templateLibraries, selections, selectionRelations
   return '';
 }
 
-const getPendingChangeMessages = (templateLibraries, selections, selectionRelationships, metadata) => {
+const getPendingChangeMessages = (bidControllerData) => {
+  const {metadata, selections} = bidControllerData;
   return _.reduce(
     metadata.pendingSelectionChanges,
     (pendingChangeMessages, pendingChangeMessagesWithoutSelectionDescription, selectionId) => {
       const selection = _.find(selections, (selection) => selection._id === selectionId);
-      const selectionDisplayDescription = getDisplayDescription(templateLibraries, selections, selectionRelationships, selection);
+      const selectionDisplayDescription = getDisplayDescription(bidControllerData, selection);
       let newPendingChangeMessages = [];
       _.each(pendingChangeMessagesWithoutSelectionDescription.displayMessages, (pendingChangeMessageWithoutSelectionDescription) => {
         const newPendingChangeMessage = selectionDisplayDescription + ' ' + pendingChangeMessageWithoutSelectionDescription;
@@ -1010,12 +980,12 @@ const getPendingChangeMessages = (templateLibraries, selections, selectionRelati
     []);
 }
 
-const storeSelectionValueAndUpdatePendingChanges = (templateLibraries, selections,
-    selectionRelationships, metadata, lookupData, selection, selectionValue, oldValue, variableCollectorSelection,
-    variableCollectorSelectionVariableSet, originalValueSource, selectionValueSource,
-    selectionJsonVariableName) => {
+const storeSelectionValueAndUpdatePendingChanges = (bidControllerData, selection,
+  selectionValue, oldValue, variableCollectorSelection, variableCollectorSelectionVariableSet,
+  originalValueSource, selectionValueSource, selectionJsonVariableName) => {
+  const {metadata} = bidControllerData;
   const originalValue = oldValue;
-  const originalDisplayValue = getDisplayValue(templateLibraries, selections, selection);
+  const originalDisplayValue = getDisplayValue(bidControllerData, selection);
   if (selectionValue !== undefined
       && selectionValue !== null &&
       (variableCollectorSelectionVariableSet || oldValue !== selectionValue.toString())) {
@@ -1026,13 +996,12 @@ const storeSelectionValueAndUpdatePendingChanges = (templateLibraries, selection
 
     // Make sure formulas that reference this selection's variable get updated
     if (selectionJsonVariableName && variableCollectorSelection) {
-      refreshSelectionsReferencingVariable(templateLibraries, selections, selectionRelationships,
-        metadata, lookupData, variableCollectorSelection, selectionJsonVariableName);
+      refreshSelectionsReferencingVariable(bidControllerData, variableCollectorSelection, selectionJsonVariableName);
     }
   }
 
   const isGettingInserted = _.contains(metadata.selectionIdsToBeInserted, selection._id);
-  const currentDisplayValue = getDisplayValue(templateLibraries, selections, selection);
+  const currentDisplayValue = getDisplayValue(bidControllerData, selection);
   let displayMessages = getPendingChangeMessagesByOriginalAndCurrentInfo(originalValue, originalDisplayValue,
     originalValueSource, selection.value, currentDisplayValue, selectionValueSource, isGettingInserted);
   if (displayMessages.length > 0) {
@@ -1055,10 +1024,9 @@ const storeSelectionValueAndUpdatePendingChanges = (templateLibraries, selection
   }
 }
 
-const setSelectionValue = (templateLibraries, selections, selectionRelationships,
-    metadata, lookupData, selection, selectionValue, oldValue, originalValueSource, selectionValueSource) => {
-  const templateLibrary = TemplateLibrariesHelper.getTemplateLibraryWithTemplate(templateLibraries, selection.templateId);
-  const selectionTemplate = _.find(templateLibrary.templates, (template) => template.id === selection.templateId);
+const setSelectionValue = (bidControllerData, selection, selectionValue, oldValue, originalValueSource, selectionValueSource) => {
+  const {metadata} = bidControllerData;
+  const selectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, selection.templateId);
   let variableCollectorSelection;
   let variableCollectorSelectionVariableSet = false;
   let jsonVariableName;
@@ -1077,7 +1045,7 @@ const setSelectionValue = (templateLibraries, selections, selectionRelationships
   }
 
   if (selectionTemplate) {
-    variableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selection);
+    variableCollectorSelection = getVariableCollectorSelection(bidControllerData, selection);
     jsonVariableName = ItemTemplatesHelper.getJsonVariableName(selectionTemplate);
 
     if (jsonVariableName && variableCollectorSelection
@@ -1087,56 +1055,53 @@ const setSelectionValue = (templateLibraries, selections, selectionRelationships
       metadata.variables[variableCollectorSelection._id][jsonVariableName] = selectionValue;
 
       variableCollectorSelectionVariableSet = true;
-      // refreshSelectionsReferencingVariable(templateLibraries, selections,
-      //   selectionRelationships, metadata, variableCollectorSelection, jsonVariableName);
+      // refreshSelectionsReferencingVariable(bidControllerData, variableCollectorSelection, jsonVariableName);
     }
   }
 
   if (oldValue !== selectionValue || variableCollectorSelectionVariableSet) {
-    storeSelectionValueAndUpdatePendingChanges(templateLibraries, selections,
-      selectionRelationships, metadata, lookupData, selection, selectionValue, oldValue, variableCollectorSelection,
-      variableCollectorSelectionVariableSet, originalValueSource, selectionValueSource, jsonVariableName);
+    storeSelectionValueAndUpdatePendingChanges(bidControllerData, selection, selectionValue,
+      oldValue, variableCollectorSelection, variableCollectorSelectionVariableSet,
+      originalValueSource, selectionValueSource, jsonVariableName);
   }
 }
 
-const getVariableCollectorSelectionWithVariableValue = (templateLibraries,
-    selections, selectionRelationships, metadata, selection, jsonVariableName) => {
+const getVariableCollectorSelectionWithVariableValue = (bidControllerData, selection, jsonVariableName) => {
+  const {metadata} = bidControllerData;
   if (!selection) {
     return null;
   }
-  const variableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selection);
+  const variableCollectorSelection = getVariableCollectorSelection(bidControllerData, selection);
   if (jsonVariableName && variableCollectorSelection
       && metadata.variables
       && metadata.variables[variableCollectorSelection._id]
       && metadata.variables[variableCollectorSelection._id][jsonVariableName] !== undefined) {
     return variableCollectorSelection;
   }
-  const parentSelection = SelectionsHelper.getParentSelections(variableCollectorSelection, selections, selectionRelationships)[0];
-  return getVariableCollectorSelectionWithVariableValue(templateLibraries,
-      selections, selectionRelationships, metadata, parentSelection, jsonVariableName);
+  const parentSelection = SelectionsHelper.getParentSelections(variableCollectorSelection, bidControllerData)[0];
+  return getVariableCollectorSelectionWithVariableValue(bidControllerData, parentSelection, jsonVariableName);
 }
 
-const isCandidateSelectionAnAncestor = (selections, selectionRelationships, selection, candidateSelection) => {
+const isCandidateSelectionAnAncestor = (bidControllerData, selection, candidateSelection) => {
   if (!selection || !candidateSelection) {
     return false;
   }
   if (selection._id === candidateSelection._id) {
     return true;
   }
-  const parentSelection = SelectionsHelper.getParentSelections(selection, selections, selectionRelationships)[0];
-  return isCandidateSelectionAnAncestor(selections, selectionRelationships, parentSelection, candidateSelection);
+  const parentSelection = SelectionsHelper.getParentSelections(selection, bidControllerData)[0];
+  return isCandidateSelectionAnAncestor(bidControllerData, parentSelection, candidateSelection);
 }
 
 // If there is a variable associated with this template, a different selection up the hierarchy is
 // probably its variableCollectorSelection, so we need to find all of the
 // selectionIdsReferencingVariables and move some of them to the new variableCollectorSelection.
 // Essentially we need to move the ones that have the new variableCollectorSelection as an ancestor.
-const moveVariableReferencesToNewVariableCollectorSelection = (templateLibraries, template,
-    selections, selectionRelationships, metadata, selection) => {
+const moveVariableReferencesToNewVariableCollectorSelection = (bidControllerData, template, selection) => {
+  const {metadata, selections} = bidControllerData;
   const jsonVariableName = ItemTemplatesHelper.getJsonVariableName(template);
-  const oldVariableCollectorSelection = getVariableCollectorSelectionWithVariableValue(templateLibraries,
-    selections, selectionRelationships, metadata, selection, jsonVariableName);
-  const newVariableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selection);
+  const oldVariableCollectorSelection = getVariableCollectorSelectionWithVariableValue(bidControllerData, selection, jsonVariableName);
+  const newVariableCollectorSelection = getVariableCollectorSelection(bidControllerData, selection);
 
   if (oldVariableCollectorSelection && newVariableCollectorSelection &&
       metadata.selectionIdsReferencingVariables[oldVariableCollectorSelection._id]) {
@@ -1164,7 +1129,7 @@ const moveVariableReferencesToNewVariableCollectorSelection = (templateLibraries
         const selectionReferencingVariableId = oldSelectionIdsReferencingVariable.selectionIds[oldIndex];
         const selectionReferencingVariable = _.find(selections, (_selection) => _selection._id === selectionReferencingVariableId);
         if (selectionReferencingVariable &&
-            isCandidateSelectionAnAncestor(selections, selectionRelationships, selectionReferencingVariable, newVariableCollectorSelection)) {
+            isCandidateSelectionAnAncestor(bidControllerData, selectionReferencingVariable, newVariableCollectorSelection)) {
           oldSelectionIdsReferencingVariable.selectionIds.splice(oldIndex, 1);
           newSelectionIdsReferencingVariable.selectionIds.push(selectionReferencingVariableId);
         }
@@ -1174,8 +1139,9 @@ const moveVariableReferencesToNewVariableCollectorSelection = (templateLibraries
 }
 
 // See also jobs method version of addSelectionForTemplate
-const addSelectionForTemplate = (templateLibrary, selections, selectionRelationships,
-    metadata, jobId, template, selectionValue, parentSelectionId, childOrder, lookupData) => {
+const addSelectionForTemplate = (bidControllerData, template, selectionValue, parentSelectionId, childOrder) => {
+  const {job, metadata, selections, selectionRelationships, templateLibraries} = bidControllerData;
+  const templateLibrary = TemplateLibrariesHelper.getTemplateLibraryWithTemplate(bidControllerData, template.id);
   // check(templateLibrary, Match.Any);// Schema.TemplateLibrary);
   // check(selections, Match.Any);// Match.OneOf([Schema.Selection], null));
   // check(selectionRelationships, Match.Any);// Match.OneOf([Schema.SelectionRelationship], null));
@@ -1186,7 +1152,7 @@ const addSelectionForTemplate = (templateLibrary, selections, selectionRelations
   // check(childOrder, Match.Any);// Match.OneOf(Number, null));
   let selection = {
     isOverridingDefault: false,
-    jobId: jobId,
+    jobId: job._id,
     templateLibraryId: templateLibrary._id,
     templateId: template.id,
     value: selectionValue || ''
@@ -1201,7 +1167,7 @@ const addSelectionForTemplate = (templateLibrary, selections, selectionRelations
 
   if (parentSelectionId) {
     let selectionRelationship = {
-      jobId: jobId,
+      jobId: job._id,
       parentSelectionId: parentSelectionId,
       childSelectionId: selectionId,
       order: childOrder
@@ -1216,18 +1182,17 @@ const addSelectionForTemplate = (templateLibrary, selections, selectionRelations
   // probably its variableCollectorSelection, so we need to find all of the
   // selectionIdsReferencingVariables and move some of them to the new variableCollectorSelection.
   // Essentially we need to move the ones that have the new variableCollectorSelection as an ancestor.
-  moveVariableReferencesToNewVariableCollectorSelection([templateLibrary], template,
-    selections, selectionRelationships, metadata, selection);
+  moveVariableReferencesToNewVariableCollectorSelection(bidControllerData, template, selection);
 
   // Call getSelectionValue to update relevant metadata (or maybe instead setSelectionValue)
-  setSelectionValue([templateLibrary], selections, selectionRelationships,
-      metadata, lookupData, selection, selection.value, null, Constants.valueSources.nothing, Constants.valueSources.userEntry);
+  setSelectionValue(bidControllerData, selection, selection.value, null,
+    Constants.valueSources.nothing, Constants.valueSources.userEntry);
   // getSelectionValue(templateLibrary, selections, selectionRelationships, metadata, lookupData, selection);
 
   return selection;
 };
 
-const addOrUpdateSelectionSettings = (templateLibrary, selection, selectionSettingsToAddOrUpdate) => {
+const addOrUpdateSelectionSettings = (selection, selectionSettingsToAddOrUpdate) => {
   let newSelectionSettings = selection.selectionSettings || [];
   if (selectionSettingsToAddOrUpdate) {
     _.each(selectionSettingsToAddOrUpdate, (selectionSettingToAddOrUpdate) => {
@@ -1247,10 +1212,9 @@ const addOrUpdateSelectionSettings = (templateLibrary, selection, selectionSetti
   selection.selectionSettings = newSelectionSettings;
 }
 
-const addSelectionsForChildTemplateRelationship = (templateLibrary, selections,
-    selectionRelationships, metadata, jobId, selection, template,
-    selectionAddingMode, templateRelationship, templateToStopAt, lookupData) => {
-  const childTemplate = TemplateLibrariesHelper.getTemplateById(templateLibrary, templateRelationship.childTemplateId);
+const addSelectionsForChildTemplateRelationship = (bidControllerData, selection, template,
+    selectionAddingMode, templateRelationship, templateToStopAt) => {
+  const childTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, templateRelationship.childTemplateId);
   if (!childTemplate) {
     return;
   }
@@ -1291,19 +1255,17 @@ const addSelectionsForChildTemplateRelationship = (templateLibrary, selections,
         }
         let overrideType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.overrideType);
         const {selectionToOverride, levelFromHere} =
-          getSelectionToOverrideOrAddIfAppropriate(templateLibrary, selection, variableToOverride,
-            [], selections, selectionRelationships, overrideValue, lookupData, metadata, jobId, childTemplate);
+          getSelectionToOverrideOrAddIfAppropriate(bidControllerData, selection, variableToOverride, [], overrideValue, childTemplate);
         if (selectionToOverride) {
           // if overrideType is fromSpecificationGroup  and selectionToOverride's overrideType is fromSpecificationGroup, just update the selection
           const overrideTemplateId = getSelectionSettingValueForSelection(selectionToOverride, Constants.selectionSettingKeys.overrideTemplateId);
-          const overrideTemplate = TemplateLibrariesHelper.getTemplateById(templateLibrary, overrideTemplateId);
+          const overrideTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, overrideTemplateId);
           let selectionToOverrideOverrideType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(overrideTemplate, Constants.templateSettingKeys.overrideType);
           if (overrideType === Constants.overrideTypes.fromSpecificationGroup && selectionToOverrideOverrideType === Constants.overrideTypes.fromSpecificationGroup) {
-            setSelectionValue([templateLibrary], selections, selectionRelationships,
-                metadata, lookupData, selectionToOverride, overrideValue,
+            setSelectionValue(bidControllerData, selectionToOverride, overrideValue,
                 selectionToOverride.value, selectionToOverride.valueSource, Constants.valueSources.defaultValue);
           } else {
-            addOrUpdateSelectionSettings(templateLibrary, selectionToOverride, [ { key: propertyToOverride, value: overrideValue, levelFromHere, overrideType } ]);
+            addOrUpdateSelectionSettings(selectionToOverride, [ { key: propertyToOverride, value: overrideValue, levelFromHere, overrideType } ]);
           }
         }
       } else if (isASubTemplate) {
@@ -1311,64 +1273,62 @@ const addSelectionsForChildTemplateRelationship = (templateLibrary, selections,
       } else if (isABaseTemplate) {
         //If template IsABaseTemplate then don't add selection for this template now, just add selections for all of
         //its child sub templates (and they will add this template's other children).
-        addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata,
-          jobId, selection, childTemplate, Constants.selectionAddingModes.onlySubTemplates, templateToStopAt, lookupData);
+        addSelectionsForTemplateChildren(bidControllerData, selection, childTemplate,
+          Constants.selectionAddingModes.onlySubTemplates, templateToStopAt);
       } else {
         // SelectionsHelper.getSelectionValue(templateLibraries[0], selections, selectionRelationships, metadata, selection) => {
         const defaultValue = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.defaultValue);
 
         //Not a base template or a sub template, so no matter the adding mode should go back to handling everything
-        addSelectionsForTemplateAndChildren(templateLibrary, selections, selectionRelationships,
-          metadata, jobId, childTemplate, defaultValue, selection, 0, Constants.selectionAddingModes.handleAnything, templateToStopAt, lookupData);
+        addSelectionsForTemplateAndChildren(bidControllerData, childTemplate,
+          defaultValue, selection, 0, Constants.selectionAddingModes.handleAnything, templateToStopAt);
       }
     }
   }
 };
 
-const isTemplateConditionMet = (templateLibrary, selections, selectionRelationships, metadata, selection, template) => {
+const isTemplateConditionMet = (bidControllerData, selection, template) => {
   const conditionType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.conditionType);
   switch (conditionType) {
     case Constants.conditionTypes.switch:
       const switchVariable = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.switchVariable);
       const switchValue = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.switchValue);
       const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(switchVariable);
-      const jsonVariableValue = getJsonVariableValue([templateLibrary], selections, selectionRelationships, metadata,
-        selection, jsonVariableName, selection);
+      const jsonVariableValue = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selection);
       return jsonVariableValue == switchValue;
     default:
       return false;
   }
 }
 
-const addSelectionsForTemplateChildren = (templateLibrary, selections, selectionRelationships, metadata, jobId, selection, template,
-    selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt, lookupData) => {
+const addSelectionsForTemplateChildren = (bidControllerData, selection, template,
+    selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt) => {
   if (selection && template)
   {
-
     if (template.templateType === Constants.templateTypes.condition &&
-      !isTemplateConditionMet(templateLibrary, selections, selectionRelationships, metadata, selection, template)) {
+      !isTemplateConditionMet(bidControllerData, selection, template)) {
       return;
     }
 
     //Add selections for template children that are not SubItems (sub templates) first so that everything that might be overridden by sub template exists.
     // But don't add selections for optionalOverride or optionalExplicit template children at all
-    _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(templateLibrary, template.id))
+    _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(bidControllerData, template.id))
       .filter((templateRelationship) => {
         return templateRelationship.relationToItem != Constants.relationToItem.subItem &&
           templateRelationship.dependency !== Constants.dependency.optionalOverride &&
           templateRelationship.dependency !== Constants.dependency.optionalExplicit;
       })
       .each((templateRelationship, index, list) => {
-        addSelectionsForChildTemplateRelationship(templateLibrary, selections, selectionRelationships,
-          metadata, jobId, selection, template, selectionAddingMode, templateRelationship, templateToStopAt, lookupData);
+        addSelectionsForChildTemplateRelationship(bidControllerData, selection, template,
+          selectionAddingMode, templateRelationship, templateToStopAt);
       });
 
     //Now it's safe to add selections for template children that are SubItems.
-    _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(templateLibrary, template.id))
+    _.chain(TemplateLibrariesHelper.getChildTemplateRelationships(bidControllerData, template.id))
       .filter((templateRelationship) => {return templateRelationship.relationToItem == Constants.relationToItem.subItem;})
       .each((templateRelationship, index, list) => {
-        addSelectionsForChildTemplateRelationship(templateLibrary, selections, selectionRelationships,
-          metadata, jobId, selection, template, selectionAddingMode, templateRelationship, templateToStopAt, lookupData);
+        addSelectionsForChildTemplateRelationship(bidControllerData, selection, template,
+          selectionAddingMode, templateRelationship, templateToStopAt);
       });
 
     //Handle case where this is a sub template but also a parent of a sub template. So need to add the template children of the base template
@@ -1379,89 +1339,83 @@ const addSelectionsForTemplateChildren = (templateLibrary, selections, selection
         });
 
       //To get here must be a sub template or base template, so go ahead and add selections for children
-      addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata,
-        jobId, selection, template, Constants.selectionAddingModes.ignoreSubTemplates, templateToStopAt, lookupData);
+      addSelectionsForTemplateChildren(bidControllerData, selection, template,
+        Constants.selectionAddingModes.ignoreSubTemplates, templateToStopAt);
 
       //If this template is not a base template then still need to add selections for children of parent template(s)
       if (!isABaseTemplate)
       {
-        _.each(TemplateLibrariesHelper.getTemplateParents(templateLibrary, template), (parentTemplate) => {
-          addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata,
-            jobId, selection, parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates, templateToStopAt, lookupData);
+        _.each(TemplateLibrariesHelper.getTemplateParents(bidControllerData, template), (parentTemplate) => {
+          addSelectionsForTemplateChildren(bidControllerData, selection, parentTemplate,
+            Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates, templateToStopAt);
         });
       }
     }
   }
 };
 
-const addSelectionsForTemplateAndChildren = (templateLibrary, selections, selectionRelationships, metadata,
-      jobId, template, selectionValue, parentSelection, childOrder,
-      selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt, lookupData) => {
+const addSelectionsForTemplateAndChildren = (bidControllerData, template, selectionValue, parentSelection, childOrder,
+      selectionAddingMode=Constants.selectionAddingModes.handleAnything, templateToStopAt) => {
   if (template.templateType === Constants.templateTypes.condition &&
-    !isTemplateConditionMet(templateLibrary, selections, selectionRelationships, metadata, parentSelection, template)) {
+    !isTemplateConditionMet(bidControllerData, parentSelection, template)) {
     return null;
   }
 
-  let selection = addSelectionForTemplate(templateLibrary, selections, selectionRelationships, metadata, jobId, template, selectionValue, parentSelection._id, childOrder, lookupData);
-  addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata,
-    jobId, selection, template, selectionAddingMode, templateToStopAt, lookupData);
+  let selection = addSelectionForTemplate(bidControllerData, template, selectionValue, parentSelection._id, childOrder);
+  addSelectionsForTemplateChildren(bidControllerData, selection, template, selectionAddingMode, templateToStopAt);
 
   return selection;
 };
 
-const addSelectionChildrenOfProduct = (templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection,
-    productTemplate, lookupData) => {
+const addSelectionChildrenOfProduct = (bidControllerData, subTemplateSelection, productTemplate) => {
   //Add the template children of the base template before the sub template children because they override some of these
-  const parentTemplate =  TemplateLibrariesHelper.getTemplateParent(templateLibrary, productTemplate);
+  const parentTemplate =  TemplateLibrariesHelper.getTemplateParent(bidControllerData, productTemplate);
   const isABaseTemplate = ItemTemplatesHelper.isABaseTemplate(parentTemplate);
   const isASubTemplate = ItemTemplatesHelper.isASubTemplate(parentTemplate);
   if (!isABaseTemplate && !isASubTemplate) {
     return;
   }
 
-  addSelectionChildrenOfProduct(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection, parentTemplate, lookupData);
+  addSelectionChildrenOfProduct(bidControllerData, subTemplateSelection, parentTemplate);
 
-  addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection,
-      parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates, null, lookupData);
+  addSelectionsForTemplateChildren(bidControllerData, subTemplateSelection,
+      parentTemplate, Constants.selectionAddingModes.addBaseTemplateChildrenForSubTemplates, null);
 
   //Add selection and template children for productTemplate (sub template)
-  const subTemplateSelectionTemplate =  TemplateLibrariesHelper.getTemplateById(templateLibrary, subTemplateSelection.templateId);
-  addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection,
-      subTemplateSelectionTemplate, Constants.selectionAddingModes.ignoreSubTemplates, null, lookupData);
+  const subTemplateSelectionTemplate =  TemplateLibrariesHelper.getTemplateById(bidControllerData, subTemplateSelection.templateId);
+  addSelectionsForTemplateChildren(bidControllerData, subTemplateSelection,
+      subTemplateSelectionTemplate, Constants.selectionAddingModes.ignoreSubTemplates, null);
 };
 
-const addProductSelectionAndChildren = (templateLibraries, pendingChanges, lookupData, parentSelection,
-  productSelectionTemplate, productTemplate, childOrder) => {
-  check(templateLibraries, [Schema.TemplateLibrary]);
-  check(pendingChanges, {
+const addProductSelectionAndChildren = (bidControllerData, parentSelection, productSelectionTemplate, productTemplate, childOrder) => {
+  check();
+  check(bidControllerData, {
     selections: [Schema.Selection],
     selectionRelationships: [Schema.SelectionRelationship],
+    lookupData: Match.Any,
     metadata: Match.Any,
     job: Schema.Job,
+    templateLibraries: [Schema.TemplateLibrary],
   });
   check(parentSelection, Schema.Selection);
   check(productSelectionTemplate, Schema.ItemTemplate);
   check(productTemplate, Schema.ItemTemplate);
   check(childOrder, Match.Any);// Match.OneOf(Number, null));
 
-  const templateLibrary = templateLibraries && templateLibraries[0];
-  const {selections, selectionRelationships, metadata, job} = pendingChanges;
-  const jobId = job._id;
-
   //Add selection for productSelectionTemplate
-  var productSelection = addSelectionsForTemplateAndChildren(templateLibrary, selections, selectionRelationships, metadata, jobId,
-      productSelectionTemplate, null, parentSelection, childOrder, Constants.selectionAddingModes.ignoreBaseTemplates, null, lookupData);
+  var productSelection = addSelectionsForTemplateAndChildren(bidControllerData, productSelectionTemplate,
+    null, parentSelection, childOrder, Constants.selectionAddingModes.ignoreBaseTemplates, null);
 
   //Add selection for productTemplate (sub template) (will add template children for sub template after adding template children of base template)
-  var subTemplateSelection = addSelectionForTemplate(templateLibrary, selections, selectionRelationships, metadata, jobId,
-      productTemplate, productTemplate.id, productSelection._id, 0, lookupData);
+  var subTemplateSelection = addSelectionForTemplate(bidControllerData, productTemplate,
+    productTemplate.id, productSelection._id, 0);
 
-  addSelectionChildrenOfProduct(templateLibrary, selections, selectionRelationships, metadata, jobId, subTemplateSelection, productTemplate, lookupData);
+  addSelectionChildrenOfProduct(bidControllerData, subTemplateSelection, productTemplate);
 
-  initializeSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, lookupData);
+  initializeSelectionVariables(bidControllerData);
   // ToDo: Make this (call to initializeSelectionVariables) faster by doing something like the commented (only update the necessary selections)
   // createSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, productSelection);
-  // initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, productSelection);
+  // initializeValueToUse(bidControllerData, productSelection);
   // //If any dependent variables are undefined, then something must be wrong.
   // if (metadata.variablesUndefined.length > 0) {
   //     throw new Error('Variables not defined:' + variablesUndefined.join(","));
@@ -1472,95 +1426,82 @@ const addProductSelectionAndChildren = (templateLibraries, pendingChanges, looku
   // _.each(selectionRefreshesNeeded, (selectionInfo) => {
   //   const {variableCollectorSelection, selectionJsonVariableName} = selectionInfo;
   //   if (selectionJsonVariableName && variableCollectorSelection) {
-  //     refreshSelectionsReferencingVariable(templateLibraries, pendingChanges.selections,
-  //       pendingChanges.selectionRelationships, pendingChanges.metadata,
-  //       variableCollectorSelection, selectionJsonVariableName);
+  //     refreshSelectionsReferencingVariable(bidControllerData, variableCollectorSelection, selectionJsonVariableName);
   //   }
   // });
 
   return productSelection;
 };
 
-const addSpecificationGroupSelectionAndChildren = (templateLibraries, pendingChanges, lookupData, parentSelection,
+const addSpecificationGroupSelectionAndChildren = (bidControllerData, parentSelection,
   specificationGroupTemplate, selectionValue, childOrder) => {
-  check(templateLibraries, [Schema.TemplateLibrary]);
-  check(pendingChanges, {
+  check(bidControllerData, {
     selections: [Schema.Selection],
     selectionRelationships: [Schema.SelectionRelationship],
+    lookupData: Match.Any,
     metadata: Match.Any,
     job: Schema.Job,
+    templateLibraries: [Schema.TemplateLibrary],
   });
   check(parentSelection, Schema.Selection);
   check(specificationGroupTemplate, Schema.ItemTemplate);
   check(specificationGroupTemplate, Schema.ItemTemplate);
   check(childOrder, Match.Any);// Match.OneOf(Number, null));
 
-  const templateLibrary = templateLibraries && templateLibraries[0];
-  const {selections, selectionRelationships, metadata, job} = pendingChanges;
-  const jobId = job._id;
-
-  var specificationGroupSelection = addSelectionsForTemplateAndChildren(
-    templateLibrary, selections, selectionRelationships, metadata, jobId,
+  var specificationGroupSelection = addSelectionsForTemplateAndChildren(bidControllerData,
     specificationGroupTemplate, selectionValue, parentSelection, childOrder,
-    Constants.selectionAddingModes.handleAnything, null, lookupData);
+    Constants.selectionAddingModes.handleAnything, null);
 
-  initializeSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, lookupData);
-  // createSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, specificationGroupSelection);
-  // initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, specificationGroupSelection);
+  initializeSelectionVariables(bidControllerData);
+  // createSelectionVariables(bidControllerData, specificationGroupSelection);
+  // initializeValueToUse(bidControllerData, specificationGroupSelection);
 
   return specificationGroupSelection;
 };
 
-const updateSpecificationGroupSelectionAndChildren = (templateLibraries, pendingChanges, lookupData,
+const updateSpecificationGroupSelectionAndChildren = (bidControllerData,
   specificationGroupSelection, specificationGroupTemplate, selectionValue, childOrder) => {
-  check(templateLibraries, [Schema.TemplateLibrary]);
-  check(pendingChanges, {
+  check(bidControllerData, {
     selections: [Schema.Selection],
     selectionRelationships: [Schema.SelectionRelationship],
+    lookupData: Match.Any,
     metadata: Match.Any,
     job: Schema.Job,
+    templateLibraries: [Schema.TemplateLibrary],
   });
   check(specificationGroupSelection, Schema.Selection);
   check(specificationGroupTemplate, Schema.ItemTemplate);
   check(specificationGroupTemplate, Schema.ItemTemplate);
   check(childOrder, Match.Any);// Match.OneOf(Number, null));
 
-  const templateLibrary = templateLibraries && templateLibraries[0];
-  const {selections, selectionRelationships, metadata, job} = pendingChanges;
-  const jobId = job._id;
-
-  setSelectionValue(templateLibraries, selections, selectionRelationships,
-      metadata, lookupData, specificationGroupSelection, selectionValue,
+  setSelectionValue(bidControllerData, specificationGroupSelection, selectionValue,
       specificationGroupSelection.value, specificationGroupSelection.valueSource, Constants.valueSources.override);
 
-  deleteSelectionChildren(templateLibraries, pendingChanges, lookupData, specificationGroupSelection);
+  deleteSelectionChildren(bidControllerData, specificationGroupSelection);
 
-  addSelectionsForTemplateChildren(templateLibrary, selections, selectionRelationships, metadata,
-    jobId, specificationGroupSelection, specificationGroupTemplate,
-    Constants.selectionAddingModes.handleAnything, null, lookupData);
+  addSelectionsForTemplateChildren(bidControllerData, specificationGroupSelection,
+    specificationGroupTemplate, Constants.selectionAddingModes.handleAnything, null);
 
-  initializeSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, lookupData);
-  // createSelectionVariables(templateLibraries, selections, selectionRelationships, metadata, specificationGroupSelection);
-  // initializeValueToUse(templateLibraries, selections, selectionRelationships, metadata, lookupData, specificationGroupSelection);
+  initializeSelectionVariables(bidControllerData);
+  // createSelectionVariables(bidControllerData, specificationGroupSelection);
+  // initializeValueToUse(bidControllerData, specificationGroupSelection);
 
   return specificationGroupSelection;
 };
 
 // Actually deletes selection, parent selection relationships (but not parent selection), child selection relationships,
 // and all descendent selections (children, grandchildren, etc.)
-// const deleteSelectionAndRelated = (templateLibraries, selections, selectionRelationships, selectionToDelete) => {
-const deleteSelectionAndRelated = (templateLibraries, pendingChanges, lookupData, selectionToDelete) => {
-  check(templateLibraries, [Schema.TemplateLibrary]);
-  check(pendingChanges, {
+const deleteSelectionAndRelated = (bidControllerData, selectionToDelete) => {
+  check(bidControllerData, {
     selections: [Schema.Selection],
     selectionRelationships: [Schema.SelectionRelationship],
+    lookupData: Match.Any,
     metadata: Match.Any,
-    job: Match.Any,
+    job: Schema.Job,
+    templateLibraries: [Schema.TemplateLibrary],
   });
-  // check(selections, [Schema.Selection]);
-  // check(selectionRelationships, [Schema.SelectionRelationship]);
   check(selectionToDelete, Schema.Selection);
-  const {selections, selectionRelationships} = pendingChanges;
+  const {metadata, selections, selectionRelationships, templateLibraries} = bidControllerData;
   const addSelectionAndRelationshipIdsOfDescendents = (selectionToDelete, selectionsToDelete, selectionRelationshipIds) => {
     selectionsToDelete.push(selectionToDelete);
     const childRelationships = _.filter(selectionRelationships,
@@ -1588,10 +1529,10 @@ const deleteSelectionAndRelated = (templateLibraries, pendingChanges, lookupData
     selectionsToDelete,
     selectionRelationshipIdsToDelete);
 
-  selectionRefreshesNeeded = [];
+  const selectionRefreshesNeeded = [];
   _.each(selectionsToDelete, (selectionToDelete) => {
-    const selectionTemplate = TemplateLibrariesHelper.getTemplateById(templateLibraries, selectionToDelete.templateId);
-    const variableCollectorSelection = getVariableCollectorSelection(templateLibraries, selections, selectionRelationships, selectionToDelete);
+    const selectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, selectionToDelete.templateId);
+    const variableCollectorSelection = getVariableCollectorSelection(bidControllerData, selectionToDelete);
     const populateSelectionRefreshesNeeded = (selectionJsonVariableName) => {
       if (selectionJsonVariableName) {
         selectionRefreshesNeeded.push({variableCollectorSelection, selectionJsonVariableName});
@@ -1601,7 +1542,7 @@ const deleteSelectionAndRelated = (templateLibraries, pendingChanges, lookupData
       populateSelectionRefreshesNeeded(ItemTemplatesHelper.getJsonVariableName(selectionTemplate));
       // a condition selection can impact variables determined by each of its children
       if (selectionTemplate.templateType === Constants.templateTypes.condition) {
-        const templateChildren = TemplateLibrariesHelper.getTemplateChildren(templateLibraries[0], selectionTemplate);
+        const templateChildren = TemplateLibrariesHelper.getTemplateChildren(bidControllerData, selectionTemplate);
         _.each(templateChildren, (templateChild) => {
           const templateVariableName = ItemTemplatesHelper.getTemplateSettingValueForTemplate(templateChild, 'VariableToOverride');
           const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(templateVariableName);
@@ -1610,41 +1551,35 @@ const deleteSelectionAndRelated = (templateLibraries, pendingChanges, lookupData
       }
     }
   })
-  pendingChanges.selections = _.filter(selections, (selection) =>
+  bidControllerData.selections = _.filter(selections, (selection) =>
     !_.any(selectionsToDelete, (selectionToDelete) => selectionToDelete._id === selection._id));
-  pendingChanges.selectionRelationships = _.filter(selectionRelationships, (selectionRelationship) => !_.contains(selectionRelationshipIdsToDelete, selectionRelationship._id));
+  bidControllerData.selectionRelationships = _.filter(selectionRelationships, (selectionRelationship) => !_.contains(selectionRelationshipIdsToDelete, selectionRelationship._id));
 
   // Remove deleted selections from metadata
   const selectionIdsToDelete = _.map(selectionsToDelete, (selectionToDelete) => selectionToDelete._id);
-  pendingChanges.metadata.selectionIdsReferencingVariables =
-    _.omit(pendingChanges.metadata.selectionIdsReferencingVariables, (value, key) => _.contains(selectionIdsToDelete, key));
+  metadata.selectionIdsReferencingVariables =
+    _.omit(metadata.selectionIdsReferencingVariables, (value, key) => _.contains(selectionIdsToDelete, key));
 
   // Make sure formulas that reference deleted selection variables get updated
   _.each(selectionRefreshesNeeded, (selectionInfo) => {
     const {variableCollectorSelection, selectionJsonVariableName} = selectionInfo;
     if (selectionJsonVariableName && variableCollectorSelection) {
-      refreshSelectionsReferencingVariable(templateLibraries, pendingChanges.selections,
-        pendingChanges.selectionRelationships, pendingChanges.metadata, lookupData,
-        variableCollectorSelection, selectionJsonVariableName);
+      refreshSelectionsReferencingVariable(bidControllerData, variableCollectorSelection, selectionJsonVariableName);
     }
   });
 };
 
-const deleteSelectionChildren = (templateLibraries, pendingChanges, lookupData, selection) => {
-  const {selections, selectionRelationships} = pendingChanges;
-  const childSelections = getChildSelections(selection, selections, selectionRelationships);
+const deleteSelectionChildren = (bidControllerData, selection) => {
+  const childSelections = getChildSelections(selection, bidControllerData);
   _.each(childSelections, (childSelection) => {
-    deleteSelectionAndRelated(templateLibraries, pendingChanges, lookupData, childSelection);
+    deleteSelectionAndRelated(bidControllerData, childSelection);
   });
 };
 
-const getSpecificationListInfo = (templateLibraries, pendingChanges, lookupData,
-  applicableSpecificationGroupTemplates, selection) => {
-  const {metadata, selections, selectionRelationships} = pendingChanges;
+const getSpecificationListInfo = (bidControllerData, applicableSpecificationGroupTemplates, selection) => {
   let specifications = [];
   _.each(applicableSpecificationGroupTemplates, (template) => {
-    const selectionItem = new InputSelectionItem(templateLibraries, pendingChanges,
-      template, selection._id, lookupData);
+    const selectionItem = new InputSelectionItem(bidControllerData, template, selection._id);
     specifications.push({
       label: selectionItem.value,
       class: selectionItem.isDefinedAtThisLevel ? "label label-success" : "label label-default",
@@ -1658,28 +1593,27 @@ SelectionsHelper = {
   addSelectionForTemplate,
   addSelectionsForTemplateChildren,
   addSpecificationGroupSelectionAndChildren,
-  applyFunctionOverChildrenOfParent: applyFunctionOverChildrenOfParent,
+  applyFunctionOverChildrenOfParent,
   deleteSelectionAndRelated,
   deleteSelectionChildren,
-  getChildSelections: getChildSelections,
-  getChildSelectionsWithTemplateId: getChildSelectionsWithTemplateId,
-  getChildSelectionsWithTemplateIds: getChildSelectionsWithTemplateIds,
-  getDisplayValue: getDisplayValue,
-  getInitializedMetadata: getInitializedMetadata,
-  getJsonVariableValue: getJsonVariableValue,
-  getParentSelections: getParentSelections,
-  getPendingChangeMessages: getPendingChangeMessages,
-  getSelectionByTemplate: getSelectionByTemplate,
-  getSettingValue: getSettingValue,
-  getSelectionToOverride: getSelectionToOverride,
-  getSelectionsBySelectionParentAndTemplate: getSelectionsBySelectionParentAndTemplate,
-  getSelectionValue: getSelectionValue,
+  getChildSelections,
+  getChildSelectionsWithTemplateId,
+  getDisplayValue,
+  getInitializedMetadata,
+  getJsonVariableValue,
+  getParentSelections,
+  getPendingChangeMessages,
+  getSelectionByTemplate,
+  getSettingValue,
+  getSelectionToOverride,
+  getSelectionsBySelectionParentAndTemplate,
+  getSelectionValue,
   getSpecificationListInfo,
-  getVariableCollectorSelection: getVariableCollectorSelection,
+  getVariableCollectorSelection,
   initializeMetadata,
   initializePendingSelectionChanges,
-  initializeSelectionVariables: initializeSelectionVariables,
-  setSelectionValue: setSelectionValue,
-  sumSelections: sumSelections,
+  initializeSelectionVariables,
+  setSelectionValue,
+  sumSelections,
   updateSpecificationGroupSelectionAndChildren,
 }

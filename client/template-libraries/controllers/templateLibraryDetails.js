@@ -25,6 +25,7 @@ angular.module("app").controller("templateLibraryDetails",
     vm.showOption = showOption;
     vm.templateHasFocus = templateHasFocus;
     vm.templateLibrary = {};
+    vm.controllerData = {templateLibraries: [vm.templateLibrary]};
     //vm.templateLibrary = $meteor.object(TemplateLibraries, $stateParams.templateLibraryId);
     vm.usageMode = Constants.usageModes.classicEdit;
 
@@ -52,6 +53,7 @@ angular.module("app").controller("templateLibraryDetails",
         //vm.templateLibraries = $meteor.collection(TemplateLibraries);
         //vm.templateLibrary = TemplateLibraries.findOne($stateParams.templateLibraryId);
         vm.templateLibrary = $meteor.object(TemplateLibraries, $stateParams.templateLibraryId, false);
+        vm.controllerData = {templateLibraries: [vm.templateLibrary]};
 
         //this did not work ...
         //$scope.$watch('vm.templateLibrary', function(newValue, oldValue) {
@@ -178,7 +180,7 @@ angular.module("app").controller("templateLibraryDetails",
       }
 
       function confirmDelete() {
-        TemplateLibrariesHelper.deleteTemplate(vm.templateLibrary, template.id);
+        TemplateLibrariesHelper.deleteTemplate(vm.controllerData, template.id);
         return save()
           .then(setTemplateTypeInfo, failure);
       }
@@ -199,7 +201,7 @@ angular.module("app").controller("templateLibraryDetails",
         templateType = vm.selectedTemplate ? vm.selectedTemplate.templateType : null;
       }
       if (!parentTemplate) {
-        parentTemplate = TemplateLibrariesHelper.getTemplateParent(vm.templateLibrary, vm.selectedTemplate);
+        parentTemplate = TemplateLibrariesHelper.getTemplateParent(vm.controllerData, vm.selectedTemplate);
       }
 
       var templateToAdd = TemplateLibrariesHelper.addTemplate(vm.templateLibrary, templateType, parentTemplate);
@@ -318,7 +320,7 @@ angular.module("app").controller("templateLibraryDetails",
         class: isActive ? 'active' : ''
       });
 
-      var parentTemplate = TemplateLibrariesHelper.getTemplateParent(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
+      var parentTemplate = TemplateLibrariesHelper.getTemplateParent(vm.controllerData, template, [Constants.dependency.optionalOverride]);
       if (parentTemplate) {
         populateBreadcrumbItems(breadcrumbItems, parentTemplate, false);
       }
@@ -452,7 +454,7 @@ angular.module("app").controller("templateLibraryDetails",
         }
       }
 
-      var templateChildren = TemplateLibrariesHelper.getTemplateChildren(vm.templateLibrary, template);
+      var templateChildren = TemplateLibrariesHelper.getTemplateChildren(vm.controllerData, template);
       for (var i = 0; i < templateChildren.length; i++) {
         populateRelevantSubProductTemplates(templateChildren[i], visitedTemplates, false);
       }
@@ -523,7 +525,7 @@ angular.module("app").controller("templateLibraryDetails",
       }
 
       //Now populate children (but ignore sub templates)
-      var templateChildren = TemplateLibrariesHelper.getTemplateChildren(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
+      var templateChildren = TemplateLibrariesHelper.getTemplateChildren(vm.controllerData, template, [Constants.dependency.optionalOverride]);
       for (var i = 0; i < templateChildren.length; i++) {
         //Decided to only populate children if this template type is primary
         if (!ignoreSubTemplates || isThisTemplateTypePrimary) {
@@ -532,18 +534,18 @@ angular.module("app").controller("templateLibraryDetails",
       }
 
       //Now populate helper templates for parent(s)
-      var parentTemplates = TemplateLibrariesHelper.getTemplateParents(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
+      var parentTemplates = TemplateLibrariesHelper.getTemplateParents(vm.controllerData, template, [Constants.dependency.optionalOverride]);
       for (var i = 0; i < parentTemplates.length; i++) {
         populateTypicalRelevantTemplates(parentTemplates[i], visitedTemplates, false, false, false, levelsFromSelected + 1);
       }
     }
 
     function getTemplateById(templateId) {
-      return TemplateLibrariesHelper.getTemplateById(vm.templateLibrary, templateId);
+      return TemplateLibrariesHelper.getTemplateById(vm.controllerData, templateId);
     }
 
     function getTemplateSettingById(templateId, templateSettingId) {
-      return TemplateLibrariesHelper.getTemplateSettingByIds(vm.templateLibrary, templateId, templateSettingId);
+      return TemplateLibrariesHelper.getTemplateSettingByIds(vm.controllerData, templateId, templateSettingId);
     }
 
     function getTemplateRelationshipById(templateRelationshipId) {
@@ -551,15 +553,15 @@ angular.module("app").controller("templateLibraryDetails",
     }
 
     function getTemplateSetting(templateId, templateSettingKey, templateSettingIndex) {
-      return TemplateLibrariesHelper.getTemplateSettingByKeyAndIndex(vm.templateLibrary, templateId, templateSettingKey, templateSettingIndex);
+      return TemplateLibrariesHelper.getTemplateSettingByKeyAndIndex(vm.controllerData, templateId, templateSettingKey, templateSettingIndex);
     }
 
     function addTemplateSetting(templateId, templateSettingKey, templateSettingValue, order) {
-      return TemplateLibrariesHelper.addTemplateSetting(vm.templateLibrary, templateId, templateSettingKey, templateSettingValue, order);
+      return TemplateLibrariesHelper.addTemplateSetting(vm.controllerData, templateId, templateSettingKey, templateSettingValue, order);
     }
 
     function deleteTemplateSetting(templateId, templateSettingId) {
-      return TemplateLibrariesHelper.deleteTemplateSetting(vm.templateLibrary, templateId, templateSettingId);
+      return TemplateLibrariesHelper.deleteTemplateSetting(vm.controllerData, templateId, templateSettingId);
     }
 
     function setFullProductHierarchy() {
@@ -583,7 +585,7 @@ angular.module("app").controller("templateLibraryDetails",
     }
 
     function getTreeDataChildren(template, visitedTemplates) {
-      var templateChildren = TemplateLibrariesHelper.getTemplateChildren(vm.templateLibrary, template, [Constants.dependency.optionalOverride]);
+      var templateChildren = TemplateLibrariesHelper.getTemplateChildren(vm.controllerData, template, [Constants.dependency.optionalOverride]);
       var treeDataChildren = [];
 
       _.each(templateChildren, function (templateChild) {
