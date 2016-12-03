@@ -423,19 +423,19 @@ angular.module('app')
       var valueFormula;
 
       scope.getSelectOptions = () => {
-        if (scope.pendingChanges && scope.pendingChanges.metadata && scope.pendingChanges.metadata.selectOptions
+        if (scope.thebid && scope.thebid.metadata && scope.thebid.metadata.selectOptions
             && scope.inputSelectionItem && scope.inputSelectionItem.template
-            && scope.pendingChanges.metadata.selectOptions[scope.inputSelectionItem.template.id]) {
-          return scope.pendingChanges.metadata.selectOptions[scope.inputSelectionItem.template.id];
+            && scope.thebid.metadata.selectOptions[scope.inputSelectionItem.template.id]) {
+          return scope.thebid.metadata.selectOptions[scope.inputSelectionItem.template.id];
         }
         return [];
       };
 
       //default content is a span
       scope.contentUrl = 'client/layout/views/tab-selector-span.html';
-      if (scope.inputSelectionItem && scope.inputSelectionItem.template && scope.thebid && scope.pendingChanges) {
+      if (scope.inputSelectionItem && scope.inputSelectionItem.template && scope.thebid) {
         template = scope.inputSelectionItem.template;
-        selectOptions = TemplateLibrariesHelper.populateSelectOptions(scope.pendingChanges, template, false);
+        selectOptions = TemplateLibrariesHelper.populateSelectOptions(scope.thebid, template, false);
         selection = scope.inputSelectionItem.getSelection();
         // if (selection && selectOptions) {
         //   for (var i = 0; i < selectOptions.length; i++) {
@@ -463,23 +463,23 @@ angular.module('app')
         //     if (selection) {
         //       if (template.templateType === Constants.templateTypes.specificationGroup) {
         //         SelectionsHelper.updateSpecificationGroupSelectionAndChildren(scope.thebid.templateLibraries,
-        //           scope.pendingChanges, scope.thebid.lookupData, selection, template, newValue, 0);
+        //           scope.thebid, scope.thebid.lookupData, selection, template, newValue, 0);
         //       } else {
-        //         SelectionsHelper.setSelectionValue(scope.thebid.templateLibraries, scope.pendingChanges.selections,
-        //           scope.pendingChanges.selectionRelationships, scope.pendingChanges.metadata, scope.thebid.lookupData, selection, newValue, oldValue,
+        //         SelectionsHelper.setSelectionValue(scope.thebid.templateLibraries, scope.thebid.selections,
+        //           scope.thebid.selectionRelationships, scope.thebid.metadata, scope.thebid.lookupData, selection, newValue, oldValue,
         //           selection.valueSource, Constants.valueSources.userEntry);
         //       }
         //     } else {
         //       if (template.templateType === Constants.templateTypes.specificationGroup) {
-        //         const parentSelection = _.find(scope.pendingChanges.selections, (_selection) => _selection._id === scope.inputSelectionItem.parentSelectionId);
+        //         const parentSelection = _.find(scope.thebid.selections, (_selection) => _selection._id === scope.inputSelectionItem.parentSelectionId);
         //         SelectionsHelper.addSpecificationGroupSelectionAndChildren(scope.thebid.templateLibraries,
-        //           scope.pendingChanges, scope.thebid.lookupData, parentSelection, template, newValue, 0);
+        //           scope.thebid, scope.thebid.lookupData, parentSelection, template, newValue, 0);
         //       } else {
         //         // maybe should just implement additional cases as they arise
         //         const templateLibrary = _.find(scope.thebid.templateLibraries, (templateLibrary) =>
         //           _.some(templateLibrary.templates, (_template) => _template.id === template.id));
-        //         SelectionsHelper.addSelectionForTemplate(templateLibrary, scope.pendingChanges.selections,
-        //           scope.pendingChanges.selectionRelationships, scope.pendingChanges.metadata, scope.thebid.jobId,
+        //         SelectionsHelper.addSelectionForTemplate(templateLibrary, scope.thebid.selections,
+        //           scope.thebid.selectionRelationships, scope.thebid.metadata, scope.thebid.jobId,
         //           template, newValue, scope.inputSelectionItem.parentSelectionId, 0, scope.thebid.lookupData);
         //       }
         //     }

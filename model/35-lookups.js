@@ -53,6 +53,10 @@ Schema.Lookup = new SimpleSchema({
   name: {
     type: String,
   },
+  description: {
+    type: String,
+    optional: true
+  },
   effectiveDate: {
     type: Date
   },
@@ -118,9 +122,10 @@ const getLookupValue = (lookupData, lookupType, lookupKey, pricingAt) => {
   }
 }
 
-const isValidLookup = (lookupData, lookupType, lookup, pricingAt) => {
+const isValidLookup = (lookupData, lookupType, lookupKey, lookup, pricingAt) => {
   const pricingAtToUse = pricingAt || new Date();
   return lookup.lookupType === lookupType
+    && lookup.key === lookupKey
     && lookup.effectiveDate < pricingAtToUse
     && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse);
 }
@@ -262,7 +267,7 @@ const getLookupKeyOptions = (lookupData, lookupType, lookupSubType, selectedLook
   ];
 }
 
-const addLookup = (templateLibrary, lookups, lookupType, lookupSubType, key, name, value,
+const addLookup = (templateLibrary, lookups, lookupType, lookupSubType, key, name, description, value,
   lookupSettings, effectiveDate, expirationDate, userId) => {
   // should not have multiple lookups with the same key and value
   if (!_.some(lookups, (lookup) => lookup.templateLibraryId === templateLibrary._id && lookup.lookupType === lookupType &&
@@ -274,6 +279,7 @@ const addLookup = (templateLibrary, lookups, lookupType, lookupSubType, key, nam
       // supplierId,
       key,
       name,
+      description,
       value,
       lookupSettings,
       effectiveDate: effectiveDate || new Date(),
@@ -285,42 +291,59 @@ const addLookup = (templateLibrary, lookups, lookupType, lookupSubType, key, nam
 }
 
 const addPriceLookup = (templateLibrary, lookups, generalProductName, productSku,
-  productName, price, unitsText, userId) => {
+  productName, description, price, unitsText, userId) => {
   const lookupKey = LookupsHelper.getLookupKey(productSku);
   const lookupType = Constants.lookupTypes.price;
   const lookupSubType = generalProductName;
   // should not have multiple lookups with the same key
   if (!_.some(lookups, (lookup) => lookup.key === lookupKey)) {
     addLookup(templateLibrary, lookups, Constants.lookupTypes.hierarchical, Constants.lookupSubTypes.lookupSubType,
-      `${Constants.hierarchyRoot}${lookupType}`, lookupSubType, lookupSubType, undefined, undefined, undefined, userId);
+      `${Constants.hierarchyRoot}${lookupType}`, lookupSubType, undefined, lookupSubType, undefined, undefined, undefined, userId);
     // addLookup(templateLibrary, lookups, Constants.lookupTypes.hierarchical, Constants.lookupSubTypes.lookupKey,
     //   `${Constants.hierarchyRoot}${lookupType}.${lookupSubType}`, lookupKey, lookupKey);
-    lookups.push({
-      lookupType,
-      lookupSubType,
-      templateLibraryId: templateLibrary._id,
-      // supplierId,
-      key: lookupKey,
-      name: productName,
-      value: price,
-      effectiveDate: new Date(),
-      lookupSettings: [{
-        id: Random.id(),
-        key: Constants.lookupSettingKeys.unitsText,
-        value: unitsText,
-      }],
-      createdAt: new Date(),
-      createdBy: userId,
-    });
+    addLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey, productName, description, price, [{
+      id: Random.id(),
+      key: Constants.lookupSettingKeys.unitsText,
+      value: unitsText,
+    }], undefined, undefined, userId);
+    // lookups.push({
+    //   lookupType,
+    //   lookupSubType,
+    //   templateLibraryId: templateLibrary._id,
+    //   // supplierId,
+    //   key: lookupKey,
+    //   name: productName,
+    //   description,
+    //   value: price,
+    //   effectiveDate: new Date(),
+    //   lookupSettings: [{
+    //     id: Random.id(),
+    //     key: Constants.lookupSettingKeys.unitsText,
+    //     value: unitsText,
+    //   }],
+    //   createdAt: new Date(),
+    //   createdBy: userId,
+    // });
   }
 }
+
+const addOptionLookup = (templateLibrary, lookups, optionTypeName, optionValue, userId) => {
+  const lookupKey = optionTypeName; // LookupsHelper.getLookupKey(optionTypeName);
+  const lookupType = Constants.lookupTypes.standard;
+  const lookupSubType = Constants.lookupSubTypes.option;
+  addLookup(templateLibrary, lookups, Constants.lookupTypes.hierarchical, Constants.lookupSubTypes.lookupKey,
+    `${Constants.hierarchyRoot}${lookupType}.${lookupSubType}`, lookupKey, undefined, lookupKey, undefined, undefined, undefined, userId);
+  // console.log(`Adding option lookup key = '${lookupKey}', name = '${optionValue}'`);
+  addLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey, optionValue, undefined, optionValue,
+    undefined, undefined, undefined, userId);
+};
 
 const addProductSkuLookup = (templateLibrary, lookups, generalProductName, productSku, productName, userId) => {
   const lookupKey = generalProductName; // LookupsHelper.getLookupKey(generalProductName);
   const lookupType = Constants.lookupTypes.standard;
   const lookupSubType = 'Product';
   addLookup(templateLibrary, lookups, Constants.lookupTypes.hierarchical, Constants.lookupSubTypes.lookupSubType,
-    `${Constants.hierarchyRoot}${lookupType}`, lookupSubType, lookupSubType, undefined, undefined, undefined, userId);
+    `${Constants.hierarchyRoot}${lookupType}`, lookupSubType, undefined, lookupSubType, undefined, undefined, undefined, userId);
   // addLookup(templateLibrary, lookups, Constants.lookupTypes.hierarchical, Constants.lookupSubTypes.lookupKey,
   //   `${Constants.hierarchyRoot}${lookupType}.${lookupSubType}`, lookupKey, lookupKey);
   // it is expected to have multiple lookups with the same key
@@ -436,6 +459,7 @@ const getDateStatusOptions = () => {
 
 LookupsHelper = {
   addLookup,
+  addOptionLookup,
   addPriceLookup,
   addProductSkuLookup,
   getDateStatus,

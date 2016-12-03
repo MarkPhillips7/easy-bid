@@ -423,118 +423,135 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     //   value: Constants.templateSettingKeys.valueFormula,
     // }];
     const workbookMetadata = {
-      drawerSlides: {
-        generalProductName: 'Drawer Slides',
-        defaultUnits: 'pair',
-        sheet: 'Price List',
-        startCell: 'C165',
-        rowCount: 54,
-        columns: [
-          // ...priceEachMappings,
-          // name is at columnOffset of 0 by default so commented
-          // {
-          //   header: { templateProperty: 'name', },
-          //   columnOffset: 0,
-          // },
-          {
-            header: { customProperty: 'unit', },
-            value: 'Pair', // columnOffset: 2, // 'E165'
-          }, {
-            header: { customProperty: 'price', }, // override priceEach
-            columnOffset: 1, // 'D165'
-          }
-        ],
-        category: {
-          name: 'Hardware',
-        },
-      },
-      hinges: {
-        generalProductName: 'Hinge',
-        defaultUnits: 'each',
-        sheet: 'Price List',
-        startCell: 'C139',
-        rowCount: 3,
-        columns: [
-          //...priceEachMappings,
-          {
-            header: { templateProperty: 'name', },
-            columnOffset: 0,
-          }, {
-            header: { templateProperty: 'description', },
-            columnOffset: 1, // D139 since startCell is C139
-          }, {
-            header: { customProperty: 'unit', },
-            columnOffset: 2, // 'E139'
-          }, {
-            header: { templateSettingKey: Constants.templateSettingKeys.overrideValue, }, // overriding priceEach
-            columnOffset: 3, // 'F139'
-          }, {
-            header: { conditionProperty: 'hardwareMaterial', },
-            absoluteRowOffset: -11, // 'F$128'
-            columnOffset: 3, // 'F$128'
-            columnCount: 4, // F$128, G$128, H$128, I$128
-          }
-        ],
-        category: {
-          name: 'Hardware',
-          subcategory: {
-            name: 'Hinges',
+      specificationOptions: [
+        {
+          // Each column represents a different specification option
+          // assumption is that first row represents header (like 'Exterior color') and remaining nonempty rows are the options
+          sheet: '1. Job Info.',
+          startCell: 'G39',
+          rowCount: 25,
+          columnCount: 12,
+          category: {
+            name: 'Options',
+          },
+        }
+      ],
+      products: [
+        {
+          generalProductName: 'Drawer Slides',
+          defaultUnits: 'pair',
+          sheet: 'Price List',
+          startCell: 'C165',
+          rowCount: 54,
+          columns: [
+            // ...priceEachMappings,
+            // name is at columnOffset of 0 by default so commented
+            // {
+            //   header: { templateProperty: 'name', },
+            //   columnOffset: 0,
+            // },
+            {
+              header: { customProperty: 'unit', },
+              value: 'Pair', // columnOffset: 2, // 'E165'
+            }, {
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 1, // 'D165'
+            }
+          ],
+          category: {
+            name: 'Hardware',
+          },
+        }, {
+          generalProductName: 'Hinge',
+          defaultUnits: 'each',
+          sheet: 'Price List',
+          startCell: 'C139',
+          rowCount: 3,
+          columns: [
+            //...priceEachMappings,
+            // name is at columnOffset of 0 by default so commented
+            // {
+            //   header: { templateProperty: 'name', },
+            //   columnOffset: 0,
+            // },
+            {
+              header: { customProperty: 'description', },
+              columnOffset: 1, // D139 since startCell is C139
+            }, {
+              header: { customProperty: 'unit', },
+              columnOffset: 2, // 'E139'
+            }, {
+              header: { conditionSwitchVariable: 'hardwareMaterial', },
+              absoluteRowOffset: -11, // 'F$128'
+              columnOffset: 3, // 'F$128'
+              columnCount: 4, // F$128, G$128, H$128, I$128
+            }, {
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 3, // 'F139'
+            }
+          ],
+          category: {
+            name: 'Hardware',
+            subcategory: {
+              name: 'Hinges',
+            },
           },
         },
-      }
+      ],
     };
     let lookups = [];
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
-      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Hierarchical', Constants.lookupTypes.hierarchical, [
+      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Hierarchical', undefined, Constants.lookupTypes.hierarchical, [
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-sitemap fa-stack-1x'},
       ], undefined, undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
-      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Label', Constants.lookupTypes.label, [
+      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Label', undefined, Constants.lookupTypes.label, [
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-ellipsis-h fa-stack-1x'},
       ], undefined, undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
-      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Price', Constants.lookupTypes.price, [
+      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Price', undefined, Constants.lookupTypes.price, [
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-dollar fa-stack-1x'},
       ], undefined, undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
-      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Standard', Constants.lookupTypes.standard, [
+      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Standard', undefined, Constants.lookupTypes.standard, [
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-arrow-up fa-stack-1x'},
       ], undefined, undefined, userInfo.systemAdminUserId);
 
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
       Constants.lookupSubTypes.lookupSubType, `${Constants.hierarchyRoot}${Constants.lookupTypes.hierarchical}`,
-      Constants.lookupSubTypes.lookupType, Constants.lookupSubTypes.lookupType, undefined, undefined, undefined, userInfo.systemAdminUserId);
+      Constants.lookupSubTypes.lookupType, undefined, Constants.lookupSubTypes.lookupType, undefined, undefined, undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
       Constants.lookupSubTypes.lookupSubType, `${Constants.hierarchyRoot}${Constants.lookupTypes.hierarchical}.${Constants.lookupSubTypes.lookupType}`,
-      Constants.lookupSubTypes.lookupSubType, Constants.lookupSubTypes.lookupSubType, undefined, undefined, undefined, userInfo.systemAdminUserId);
-
+      Constants.lookupSubTypes.lookupSubType, undefined, Constants.lookupSubTypes.lookupSubType, undefined, undefined, undefined, userInfo.systemAdminUserId);
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
+      Constants.lookupSubTypes.lookupSubType, `${Constants.hierarchyRoot}${Constants.lookupTypes.standard}`,
+      Constants.lookupSubTypes.option, undefined, Constants.lookupSubTypes.option, undefined, undefined, undefined, userInfo.systemAdminUserId);
+        
     // Create lookup records with varying effectiveDate and expirationDate values
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
-      'Tea', `InChina`, `Earl Grey`, 3.12, undefined,
+      'Tea', `InChina`, `Earl Grey`, 'Price of earl grey tea in china', 3.12, undefined,
       moment().startOf('day').add(-10, 'days').toDate(), moment().startOf('day').add(-1, 'days').toDate(), userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
-      'Tea', `InChina`, `Earl Grey`, 3.18, undefined,
+      'Tea', `InChina`, `Earl Grey`, 'Price of earl grey tea in china', 3.18, undefined,
       moment().startOf('day').add(-1, 'days').toDate(), moment().startOf('day').add(2, 'days').toDate(), userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
-      'Tea', `InChina`, `Earl Grey`, 3.28, undefined,
+      'Tea', `InChina`, `Earl Grey`, 'Price of earl grey tea in china', 3.28, undefined,
       moment().startOf('day').add(2, 'days').toDate(), moment().startOf('day').add(12, 'days').toDate(), userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
-      'Tea', `InChina`, `Earl Grey`, 3.33, undefined,
+      'Tea', `InChina`, `Earl Grey`, 'Price of earl grey tea in china', 3.33, undefined,
       moment().startOf('day').add(12, 'days').toDate(), undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
-      'Tea', `InChina`, `Earl Purple`, 3.99, undefined,
+      'Tea', `InChina`, `Earl Purple`, 'Price of tea in china', 3.99, undefined,
       moment().startOf('day').add(-10, 'days').toDate(), undefined, userInfo.systemAdminUserId);
 
     const bidControllerData = {templateLibraries: [cabinetryTemplateLibrary]};
     const workbook = XLSX.readFile(process.env.PWD + '/server/startup/Spreadsheet Estimator V2.1.xlsx');
-    TemplateLibrariesHelper.addProductsFromWorkbook(workbook, bidControllerData, lookups, templateProduct, workbookMetadata.drawerSlides);
-    // TemplateLibrariesHelper.addTemplatesFromSpreadsheet(spreadsheet, cabinetryTemplateLibrary, lookups, templateProduct, spreadsheetMetadata.hinges);
-    _.each(lookups, (lookup) => {
-      Lookups.insert(lookup);
+    _.each(workbookMetadata.products, (productMappings) => {
+      TemplateLibrariesHelper.addProductsFromWorkbook(workbook, bidControllerData, lookups, templateProduct, productMappings);
     });
 
     var templateCabinet = {
@@ -555,6 +572,14 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       id: Random.id(),
       parentTemplateId: templateProduct.id,
       childTemplateId: templateCabinet.id
+    });
+
+    const templateParents = [templateCompany, templateCustomer, templateJob, templateArea, templateCabinet];
+    _.each(workbookMetadata.specificationOptions, (specificationOptionsMappings) => {
+      TemplateLibrariesHelper.addSpecificationOptionsFromWorkbook(workbook, bidControllerData, lookups, templateParents, specificationOptionsMappings);
+    });
+    _.each(lookups, (lookup) => {
+      Lookups.insert(lookup);
     });
 
     var templateDoorStyle = {

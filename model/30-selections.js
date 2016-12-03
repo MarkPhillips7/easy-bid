@@ -1212,6 +1212,34 @@ const addOrUpdateSelectionSettings = (selection, selectionSettingsToAddOrUpdate)
   selection.selectionSettings = newSelectionSettings;
 }
 
+// given stringMaybeWithVariableBindings like 'hinge{hardwareMaterial}{lengthInInches}'
+// should result in templateVariableNames = ['hardwareMaterial', 'lengthInInches']
+const populateTemplateVariables = (templateVariableNames, stringMaybeWithVariableBindings, fromIndex) => {
+  const indexOfLeftBrace = stringMaybeWithVariableBindings.indexOf('{', fromIndex);
+  if (indexOfLeftBrace > 0) {
+    const indexOfRightBrace = stringMaybeWithVariableBindings.indexOf('}', indexOfLeftBrace + 1);
+    if (indexOfRightBrace > 0) {
+      const templateVariableName = stringMaybeWithVariableBindings.substring(indexOfLeftBrace + 1, indexOfRightBrace);
+      templateVariableNames.push(templateVariableName);
+      populateTemplateVariables(templateVariableNames, stringMaybeWithVariableBindings.replace(`{${templateVariableName}}`, ''), indexOfLeftBrace)
+    }
+  }
+};
+
+// stringMaybeWithVariableBindings expected to be like 'hinge{hardwareMaterial}{lengthInInches}'
+// where hardwareMaterial and lengthInInches are template variable names
+const replaceVariablesWithValues = (bidControllerData, selection, stringMaybeWithVariableBindings) => {
+  let returnString = stringMaybeWithVariableBindings;
+  const templateVariableNames = [];
+  populateTemplateVariables(templateVariableNames, stringMaybeWithVariableBindings, 0);
+  _.each(templateVariableNames, (templateVariableName) => {
+    const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(templateVariableName);
+    const jsonVariableValue = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selection);
+    returnString = returnString.replace(`{${templateVariableName}}`, jsonVariableValue);
+  });
+  return returnString;
+};
+
 const addSelectionsForChildTemplateRelationship = (bidControllerData, selection, template,
     selectionAddingMode, templateRelationship, templateToStopAt) => {
   const childTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, templateRelationship.childTemplateId);
@@ -1251,7 +1279,8 @@ const addSelectionsForChildTemplateRelationship = (bidControllerData, selection,
         if (!overrideValue) {
           const lookupType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.lookupType);
           const lookupKeyVariable = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.lookupKeyVariable);
-          overrideValue = `getLookup${lookupType}(${lookupKeyVariable})`;
+          const lookupKeyVariableReplaced = replaceVariablesWithValues(bidControllerData, selection, lookupKeyVariable);
+          overrideValue = `getLookup${lookupType}(${lookupKeyVariableReplaced})`;
         }
         let overrideType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.overrideType);
         const {selectionToOverride, levelFromHere} =

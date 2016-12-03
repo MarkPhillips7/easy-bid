@@ -1590,14 +1590,24 @@ const getTemplateFromTemplateName = (bidControllerData, template, templateName, 
 //   return null;
 // };
 
-const populateLookupOptions = (bidControllerData, selectOptions) => {
+const populateLookupOptions = (bidControllerData, template, selectOptions) => {
   const {job, lookupData} = bidControllerData;
+  const lookupType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.lookupType);
+  if (lookupType !== Constants.lookupTypes.standard) {
+    return;
+  }
   const standardLookupData = lookupData && lookupData.standard;
   let valuesAdded = [];
 
   if (standardLookupData) {
-    standardLookupData.forEach(function (lookup) {
-      if (LookupsHelper.isValidLookup(lookupData, Constants.lookupTypes.standard, lookup, job.pricingAt) &&
+    const lookupKey = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.lookupKey);
+    if (!lookupKey) {
+      return;
+    }
+    _.chain(standardLookupData)
+    .filter((lookup) => lookup.lookupType === lookupType && lookup.key === lookupKey)
+    .each((lookup) => {
+      if (LookupsHelper.isValidLookup(lookupData, lookupType, lookupKey, lookup, job.pricingAt) &&
         !_.contains(valuesAdded, lookup.value)) {
         selectOptions.push({
           id: lookup.value,
@@ -1681,7 +1691,7 @@ const populateSelectOptions = (bidControllerData, template, forceRefresh) => {
     addSelectOptions(bidControllerData, selectOptions, template);
   } else if (ItemTemplatesHelper.getTemplateSettingValueForTemplate(
     template, Constants.templateSettingKeys.lookupType) === Constants.lookupTypes.standard) {
-    populateLookupOptions(bidControllerData, selectOptions);
+    populateLookupOptions(bidControllerData, template, selectOptions);
   } else {
     populateCustomOptions(bidControllerData, template, selectOptions);
   }
@@ -1751,7 +1761,8 @@ const addUnitTemplateSettings = (bidControllerData, templateId, worksheetUnitVal
 }
 
 const camelCase = (text) => {
-  const textArray = text.split(' ');
+  // only include spaces, characters, and digits prior to splitting
+  const textArray = text.replace(/[^a-z0-9 ]/gi,'').split(' ');
   return _.map(textArray, (item, index) => {
     if (index === 0) {
       return item.toLowerCase();
@@ -1768,7 +1779,7 @@ const addProductSkuSelectorTemplate = (bidControllerData, parentTemplate) => {
   const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.input, parentTemplate);
   newTemplate.name = `${parentTemplate.name} Type`;
   newTemplate.description = newTemplate.name;
-  const lookupKey = LookupsHelper.getLookupKey(parentTemplate.name);
+  const lookupKey = parentTemplate.name; // LookupsHelper.getLookupKey(parentTemplate.name);
   const variableName = camelCase(parentTemplate.name);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.select, order++);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, "Primary", order++);
@@ -1778,12 +1789,15 @@ const addProductSkuSelectorTemplate = (bidControllerData, parentTemplate) => {
   return newTemplate;
 }
 
-const addPriceTemplate = (bidControllerData, parentTemplate, defaultUnitsText) => {
+const addPriceTemplate = (bidControllerData, parentTemplate, defaultUnitsText, conditionSwitchVariable) => {
   const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
   let order = 0;
   const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.override, parentTemplate);
   newTemplate.name = `${parentTemplate.name} Price Override`;
-  const variableName = camelCase(parentTemplate.name);
+  // if parentTemplate.name is 'Metal Hinge' and conditionSwitchVariable is 'hardwareMaterial' we would want variableName = 'metalHinge{hardwareMaterial}'
+  const variableName = conditionSwitchVariable
+    ? `${camelCase(parentTemplate.name)}{${conditionSwitchVariable}}`
+    : camelCase(parentTemplate.name);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.isVariableOverride, 'true', order++);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.variableToOverride, 'priceEach', order++);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.propertyToOverride, Constants.templateSettingKeys.valueFormula, order++);
@@ -1793,16 +1807,40 @@ const addPriceTemplate = (bidControllerData, parentTemplate, defaultUnitsText) =
   return newTemplate;
 }
 
-const getCellValue = (rowStartCellAddress, worksheet, columnOffset) => {
-  const columnCellAddress = {...rowStartCellAddress, c: rowStartCellAddress.c + columnOffset};
-  const columnCell = SpreadsheetUtils.encode_cell(columnCellAddress);
-  return worksheet[columnCell] && worksheet[columnCell].v;
+// decided instead to add conditional switchVariable to addPriceTemplate
+// const addConditionTemplate = (bidControllerData, parentTemplate, switchVariable, defaultSwitchValue) => {
+//   const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
+//   let order = 0;
+//   const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.condition, parentTemplate);
+//   newTemplate.name = `${parentTemplate.name} Condition of ${switchVariable}`;
+//   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.conditionType, Constants.conditionTypes.switch, order++);
+//   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.switchVariable, switchVariable, order++);
+//   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.switchValue, defaultSwitchValue, order++);
+//   return newTemplate;
+// }
+
+const cleanCellValue = (cellValue) => {
+  if (typeof cellValue === 'string') {
+    return cellValue.trim();
+  }
+  return cellValue;
+}
+
+const getCellValue = (startCellAddress, worksheet, offsetOptions) => {
+  const {columnOffset, rowOffset} = offsetOptions;
+  const cellAddress = {
+    ...startCellAddress,
+    c: startCellAddress.c + (columnOffset || 0),
+    r: startCellAddress.r + (rowOffset || 0),
+  };
+  const cell = SpreadsheetUtils.encode_cell(cellAddress);
+  return worksheet[cell] && cleanCellValue(worksheet[cell].v);
 }
 
 const getColumnValue = (column, rowStartCellAddress, worksheet) => {
   // 'if (column.columnOffset)' did not work because '(0)' is falsy
   if (typeof column.columnOffset === 'number') {
-    return getCellValue(rowStartCellAddress, worksheet, column.columnOffset);
+    return getCellValue(rowStartCellAddress, worksheet, column);
   } else if (column.value) {
     return column.value;
   }
@@ -1815,8 +1853,93 @@ const getNameColumnValue = (workbookMappings, rowStartCellAddress, worksheet) =>
     return getColumnValue(nameColumn, rowStartCellAddress, worksheet);
   }
   // name is at columnOffset of 0 by default
-  return getCellValue(rowStartCellAddress, worksheet, 0);
+  return getCellValue(rowStartCellAddress, worksheet, {});
 }
+
+const getConditionColumnValue = (workbookMappings, rowStartCellAddress, worksheet) => {
+  const conditionSwitchColumn = _.find(workbookMappings.columns, (column) => column.header && column.header.conditionSwitchVariable);
+  if (conditionSwitchColumn) {
+    return getColumnValue(conditionSwitchColumn, rowStartCellAddress, worksheet);
+  }
+  // name is at columnOffset of 0 by default
+  return getCellValue(rowStartCellAddress, worksheet, {});
+}
+
+const populateConditionSwitchValues = (conditionSwitchValues, worksheet, conditionSwitchColumn, startCellAddress) => {
+  if (!conditionSwitchColumn) {
+    return;
+  }
+  for (let columnIndex = 0; columnIndex < conditionSwitchColumn.columnCount; columnIndex++) {
+    const conditionSwitchValue = getCellValue(
+      startCellAddress,
+      worksheet,
+      {
+        columnOffset: conditionSwitchColumn.columnOffset + columnIndex,
+        rowOffset: conditionSwitchColumn.absoluteRowOffset
+      });
+    conditionSwitchValues.push(conditionSwitchValue);
+  }
+}
+
+const addSpecificationOptionsFromWorkbook = (workbook, bidControllerData, lookups, templateParents, workbookMappings) => {
+  const parentTemplate = templateParents && templateParents[0];
+  const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
+  if (!workbook) {
+    throw 'workbook must be set in addSpecificationOptionsFromWorkbook';
+  }
+  const worksheet = workbook.Sheets[workbookMappings.sheet];
+  const startCellAddress = SpreadsheetUtils.decode_cell(workbookMappings.startCell);
+  console.log(`start cell = ${workbookMappings.startCell} = {r:${startCellAddress.r},c:${startCellAddress.c}} = "${worksheet[workbookMappings.startCell].v}"`);
+
+  for (let columnOffset = 0; columnOffset < workbookMappings.columnCount; columnOffset++) {
+    // const columnStartCellAddress = {...startCellAddress, c: startCellAddress.c + columnOffset};
+    const newTemplateName = getCellValue(startCellAddress, worksheet, {columnOffset});
+    if (!newTemplateName) {
+      // _.any(templateLibrary.templates, (template) => template.name === newTemplateName))
+      // ToDo: maybe we should update existing template or verify it matches
+      continue;
+    }
+
+    const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.input, parentTemplate);
+    newTemplate.name = newTemplateName;
+    newTemplate.description = newTemplateName;
+    let order = 0;
+    addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.select, order++);
+    if (workbookMappings.category && workbookMappings.category.name) {
+      addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, workbookMappings.category.name, order++);
+    }
+    const variableName = camelCase(newTemplateName);
+    const lookupKey = newTemplateName;
+    addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.variableName, variableName, order++);
+    addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.lookupType, Constants.lookupTypes.standard, order++);
+    addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.lookupKey, lookupKey, order++);
+    _.each(templateParents, (templateParent, index) => {
+      // First templateParent relationship was created by addTemplate call
+      if (index > 0) {
+        templateLibrary.templateRelationships.push({
+          id: Random.id(),
+          parentTemplateId: templateParent.id,
+          childTemplateId: newTemplate.id,
+          dependency: Constants.dependency.optionalOverride,
+        });
+      }
+    });
+    let defaultValue;
+    // Start with rowOffset of 1 because first row is the header containing the template name
+    for (let rowOffset = 1; rowOffset < workbookMappings.rowCount; rowOffset++) {
+      const specificationOption = getCellValue(startCellAddress, worksheet, {columnOffset, rowOffset});
+      if (!specificationOption) {
+        // Expect blank rows, just ignore them
+        continue;
+      }
+      if (!defaultValue) {
+        defaultValue = specificationOption;
+        addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.defaultValue, defaultValue, order++);
+      }
+      LookupsHelper.addOptionLookup(templateLibrary, lookups, newTemplateName, specificationOption);
+    }
+  }
+};
 
 const addProductsFromWorkbook = (workbook, bidControllerData, lookups, parentTemplate, workbookMappings) => {
   const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
@@ -1843,9 +1966,12 @@ const addProductsFromWorkbook = (workbook, bidControllerData, lookups, parentTem
   if (workbookMappings.category && workbookMappings.category.name) {
     addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, workbookMappings.category.name);
   }
-
+  const conditionSwitchColumn = _.find(workbookMappings.columns, (column) => column.header && column.header.conditionSwitchVariable);
+  const conditionSwitchVariable = conditionSwitchColumn && conditionSwitchColumn.conditionSwitchVariable;
+  const conditionSwitchValues = [];
+  populateConditionSwitchValues(conditionSwitchValues, worksheet, conditionSwitchColumn, startCellAddress);
   addProductSkuSelectorTemplate(bidControllerData, newTemplate);
-  addPriceTemplate(bidControllerData, newTemplate, workbookMappings.defaultUnits);
+  addPriceTemplate(bidControllerData, newTemplate, workbookMappings.defaultUnits, conditionSwitchVariable);
 
   for (let i = 0; i < workbookMappings.rowCount; i++) {
     const rowStartCellAddress = {...startCellAddress, r: startCellAddress.r + i};
@@ -1867,6 +1993,7 @@ const addProductsFromWorkbook = (workbook, bidControllerData, lookups, parentTem
     LookupsHelper.addProductSkuLookup(templateLibrary, lookups, newTemplate.name, itemName, itemName);
 
     let unitsText;
+    let description;
     _.each(workbookMappings.columns, (column) => {
       const columnValue = getColumnValue(column, rowStartCellAddress, worksheet);
       if (columnValue) {
@@ -1881,11 +2008,23 @@ const addProductsFromWorkbook = (workbook, bidControllerData, lookups, parentTem
               unitsText = columnValue || '[none]';
               // order = addUnitTemplateSettings(bidControllerData, newTemplate.id, columnValue, order);
               break;
+            case 'description':
+              description = columnValue;
+              // order = addUnitTemplateSettings(bidControllerData, newTemplate.id, columnValue, order);
+              break;
             case 'price':
               if (!unitsText) {
                 throw `a unit customProperty must be defined before a price customProperty`;
               }
-              LookupsHelper.addPriceLookup(templateLibrary, lookups, newTemplate.name, itemName, itemName, columnValue, unitsText);
+              if (conditionSwitchColumn) {
+                for (let columnIndex = 0; columnIndex < conditionSwitchColumn.columnCount; columnIndex++) {
+                  const productSku = `${newTemplate.name}${conditionSwitchValues[columnIndex]}`;
+                  const productName = `${itemName} - ${conditionSwitchValues[columnIndex]}`;
+                  LookupsHelper.addPriceLookup(templateLibrary, lookups, newTemplate.name, productSku, productName, description, columnValue, unitsText);
+                }
+              } else {
+                LookupsHelper.addPriceLookup(templateLibrary, lookups, newTemplate.name, itemName, itemName, description, columnValue, unitsText);
+              }
               break;
             default:
               throw `'${column.header.customProperty}' is not a valid customProperty`;
@@ -1938,6 +2077,7 @@ const getTemplateLibraryOptions = ({templateLibraries}, $filter, selectedTemplat
 
 TemplateLibrariesHelper = {
   addProductsFromWorkbook,
+  addSpecificationOptionsFromWorkbook,
   addTemplate,
   addTemplateSetting,
   cloneTemplateLibrary,
