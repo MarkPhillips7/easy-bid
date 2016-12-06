@@ -54,7 +54,6 @@ livedata@1.0.18
 localstorage@1.0.11
 logging@1.1.15
 markphillips7:globals@0.0.1
-markphillips7:parser@0.0.1
 markphillips7:unit-of-measure@0.0.1
 mdg:validation-error@0.2.0
 meteor@1.2.17

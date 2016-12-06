@@ -1,3 +1,5 @@
+import {Parser} from 'expr-eval';
+
 angular.module("app").controller("templateLibraryDetails",
   ['$scope', '$meteor', '$q', '$rootScope', '$stateParams', '$timeout', 'bootstrap.dialog',
   function ($scope, $meteor, $q, $rootScope, $stateParams, $timeout, bootstrapDialog) {

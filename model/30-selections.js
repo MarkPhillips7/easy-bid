@@ -1,3 +1,5 @@
+import {Parser} from 'expr-eval';
+
 Selections = new Mongo.Collection("selections");
 
 Schema.SelectionSetting = new SimpleSchema({
