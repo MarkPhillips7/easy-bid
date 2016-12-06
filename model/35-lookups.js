@@ -338,7 +338,7 @@ const addOptionLookup = (templateLibrary, lookups, optionTypeName, optionValue, 
     undefined, undefined, undefined, userId);
 };
 
-const addProductSkuLookup = (templateLibrary, lookups, generalProductName, productSku, productName, userId) => {
+const addProductSkuLookup = (templateLibrary, lookups, generalProductName, productSku, productName, productDescription, userId) => {
   const lookupKey = generalProductName; // LookupsHelper.getLookupKey(generalProductName);
   const lookupType = Constants.lookupTypes.standard;
   const lookupSubType = 'Product';
@@ -354,6 +354,7 @@ const addProductSkuLookup = (templateLibrary, lookups, generalProductName, produ
     // supplierId,
     key: lookupKey,
     name: productName,
+    description: productDescription,
     value: LookupsHelper.getLookupKey(productSku),
     effectiveDate: new Date(),
     createdAt: new Date(),

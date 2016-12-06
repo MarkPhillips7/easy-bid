@@ -1990,8 +1990,6 @@ const addProductsFromWorkbook = (workbook, bidControllerData, lookups, parentTem
       continue;
     }
 
-    LookupsHelper.addProductSkuLookup(templateLibrary, lookups, newTemplate.name, itemName, itemName);
-
     let unitsText;
     let description;
     _.each(workbookMappings.columns, (column) => {
@@ -2020,6 +2018,7 @@ const addProductsFromWorkbook = (workbook, bidControllerData, lookups, parentTem
                 for (let columnIndex = 0; columnIndex < conditionSwitchColumn.columnCount; columnIndex++) {
                   const productSku = `${newTemplate.name}${conditionSwitchValues[columnIndex]}`;
                   const productName = `${itemName} - ${conditionSwitchValues[columnIndex]}`;
+                  const productDescription = description && `${description} - ${conditionSwitchValues[columnIndex]}`;
                   LookupsHelper.addPriceLookup(templateLibrary, lookups, newTemplate.name, productSku, productName, description, columnValue, unitsText);
                 }
               } else {
@@ -2032,6 +2031,7 @@ const addProductsFromWorkbook = (workbook, bidControllerData, lookups, parentTem
         }
       }
     });
+    LookupsHelper.addProductSkuLookup(templateLibrary, lookups, newTemplate.name, itemName, itemName, description);
   }
 }
 //
