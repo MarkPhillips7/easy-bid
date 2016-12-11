@@ -530,7 +530,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
       Constants.lookupSubTypes.lookupSubType, `${Constants.hierarchyRoot}${Constants.lookupTypes.standard}`,
       Constants.lookupSubTypes.option, undefined, Constants.lookupSubTypes.option, undefined, undefined, undefined, userInfo.systemAdminUserId);
-        
+
     // Create lookup records with varying effectiveDate and expirationDate values
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
       'Tea', `InChina`, `Earl Grey`, 'Price of earl grey tea in china', 3.12, undefined,
@@ -578,6 +578,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     _.each(workbookMetadata.specificationOptions, (specificationOptionsMappings) => {
       TemplateLibrariesHelper.addSpecificationOptionsFromWorkbook(workbook, bidControllerData, lookups, templateParents, specificationOptionsMappings);
     });
+    // SpreadsheetUtils.excelToParserFormula
     _.each(lookups, (lookup) => {
       Lookups.insert(lookup);
     });
