@@ -1760,19 +1760,6 @@ const addUnitTemplateSettings = (bidControllerData, templateId, worksheetUnitVal
   return order;
 }
 
-const camelCase = (text) => {
-  // only include spaces, characters, and digits prior to splitting
-  const textArray = text.replace(/[^a-z0-9 ]/gi,'').split(' ');
-  return _.map(textArray, (item, index) => {
-    if (index === 0) {
-      return item.toLowerCase();
-    }
-    else {
-      return item.charAt(0).toUpperCase() + item.slice(1);
-    }
-  }).join('');
-}
-
 const addProductSkuSelectorTemplate = (bidControllerData, parentTemplate) => {
   const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
   let order = 0;
@@ -1780,7 +1767,7 @@ const addProductSkuSelectorTemplate = (bidControllerData, parentTemplate) => {
   newTemplate.name = `${parentTemplate.name} Type`;
   newTemplate.description = newTemplate.name;
   const lookupKey = parentTemplate.name; // LookupsHelper.getLookupKey(parentTemplate.name);
-  const variableName = camelCase(parentTemplate.name);
+  const variableName = StringUtils.toVariableName(parentTemplate.name);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.select, order++);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, "Primary", order++);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.variableName, variableName, order++);
@@ -1796,8 +1783,8 @@ const addPriceTemplate = (bidControllerData, parentTemplate, defaultUnitsText, c
   newTemplate.name = `${parentTemplate.name} Price Override`;
   // if parentTemplate.name is 'Metal Hinge' and conditionSwitchVariable is 'hardwareMaterial' we would want variableName = 'metalHinge{hardwareMaterial}'
   const variableName = conditionSwitchVariable
-    ? `${camelCase(parentTemplate.name)}{${conditionSwitchVariable}}`
-    : camelCase(parentTemplate.name);
+    ? `${StringUtils.toVariableName(parentTemplate.name)}{${conditionSwitchVariable}}`
+    : StringUtils.toVariableName(parentTemplate.name);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.isVariableOverride, 'true', order++);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.variableToOverride, 'priceEach', order++);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.propertyToOverride, Constants.templateSettingKeys.valueFormula, order++);
@@ -1819,50 +1806,32 @@ const addPriceTemplate = (bidControllerData, parentTemplate, defaultUnitsText, c
 //   return newTemplate;
 // }
 
-const cleanCellValue = (cellValue) => {
-  if (typeof cellValue === 'string') {
-    return cellValue.trim();
-  }
-  return cellValue;
-}
-
-const getCellValue = (startCellAddress, worksheet, offsetOptions) => {
-  const {columnOffset, rowOffset} = offsetOptions;
-  const cellAddress = {
-    ...startCellAddress,
-    c: startCellAddress.c + (columnOffset || 0),
-    r: startCellAddress.r + (rowOffset || 0),
-  };
-  const cell = SpreadsheetUtils.encode_cell(cellAddress);
-  return worksheet[cell] && cleanCellValue(worksheet[cell].v);
-}
-
 const getColumnValue = (column, rowStartCellAddress, worksheet) => {
   // 'if (column.columnOffset)' did not work because '(0)' is falsy
   if (typeof column.columnOffset === 'number') {
-    return getCellValue(rowStartCellAddress, worksheet, column);
+    return SpreadsheetUtils.getCellValue(rowStartCellAddress, worksheet, column);
   } else if (column.value) {
     return column.value;
   }
   return undefined;
 }
 
-const getNameColumnValue = (workbookMappings, rowStartCellAddress, worksheet) => {
-  const nameColumn = _.find(workbookMappings.columns, (column) => column.header && column.header.templateProperty && column.header.templateProperty === 'name');
+const getNameColumnValue = (importSet, rowStartCellAddress, worksheet) => {
+  const nameColumn = _.find(importSet.columns, (column) => column.header && column.header.templateProperty && column.header.templateProperty === 'name');
   if (nameColumn) {
     return getColumnValue(nameColumn, rowStartCellAddress, worksheet);
   }
   // name is at columnOffset of 0 by default
-  return getCellValue(rowStartCellAddress, worksheet, {});
+  return SpreadsheetUtils.getCellValue(rowStartCellAddress, worksheet, {});
 }
 
-const getConditionColumnValue = (workbookMappings, rowStartCellAddress, worksheet) => {
-  const conditionSwitchColumn = _.find(workbookMappings.columns, (column) => column.header && column.header.conditionSwitchVariable);
+const getConditionColumnValue = (importSet, rowStartCellAddress, worksheet) => {
+  const conditionSwitchColumn = _.find(importSet.columns, (column) => column.header && column.header.conditionSwitchVariable);
   if (conditionSwitchColumn) {
     return getColumnValue(conditionSwitchColumn, rowStartCellAddress, worksheet);
   }
   // name is at columnOffset of 0 by default
-  return getCellValue(rowStartCellAddress, worksheet, {});
+  return SpreadsheetUtils.getCellValue(rowStartCellAddress, worksheet, {});
 }
 
 const populateConditionSwitchValues = (conditionSwitchValues, worksheet, conditionSwitchColumn, startCellAddress) => {
@@ -1870,7 +1839,7 @@ const populateConditionSwitchValues = (conditionSwitchValues, worksheet, conditi
     return;
   }
   for (let columnIndex = 0; columnIndex < conditionSwitchColumn.columnCount; columnIndex++) {
-    const conditionSwitchValue = getCellValue(
+    const conditionSwitchValue = SpreadsheetUtils.getCellValue(
       startCellAddress,
       worksheet,
       {
@@ -1881,19 +1850,19 @@ const populateConditionSwitchValues = (conditionSwitchValues, worksheet, conditi
   }
 }
 
-const addSpecificationOptionsFromWorkbook = (workbook, bidControllerData, lookups, templateParents, workbookMappings) => {
+const addSpecificationOptionsFromWorkbook = (workbook, workbookMetadata, bidControllerData, lookups, templateParents, importSet) => {
   const parentTemplate = templateParents && templateParents[0];
   const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
   if (!workbook) {
     throw 'workbook must be set in addSpecificationOptionsFromWorkbook';
   }
-  const worksheet = workbook.Sheets[workbookMappings.sheet];
-  const startCellAddress = SpreadsheetUtils.decode_cell(workbookMappings.startCell);
-  console.log(`start cell = ${workbookMappings.startCell} = {r:${startCellAddress.r},c:${startCellAddress.c}} = "${worksheet[workbookMappings.startCell].v}"`);
+  const worksheet = workbook.Sheets[importSet.sheet];
+  const startCellAddress = SpreadsheetUtils.decode_cell(importSet.startCell);
+  // console.log(`start cell = ${importSet.startCell} = {r:${startCellAddress.r},c:${startCellAddress.c}} = "${worksheet[importSet.startCell].v}"`);
 
-  for (let columnOffset = 0; columnOffset < workbookMappings.columnCount; columnOffset++) {
+  for (let columnOffset = 0; columnOffset < importSet.columnCount; columnOffset++) {
     // const columnStartCellAddress = {...startCellAddress, c: startCellAddress.c + columnOffset};
-    const newTemplateName = getCellValue(startCellAddress, worksheet, {columnOffset});
+    const newTemplateName = SpreadsheetUtils.getCellValue(startCellAddress, worksheet, {columnOffset});
     if (!newTemplateName) {
       // _.any(templateLibrary.templates, (template) => template.name === newTemplateName))
       // ToDo: maybe we should update existing template or verify it matches
@@ -1905,10 +1874,10 @@ const addSpecificationOptionsFromWorkbook = (workbook, bidControllerData, lookup
     newTemplate.description = newTemplateName;
     let order = 0;
     addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.select, order++);
-    if (workbookMappings.category && workbookMappings.category.name) {
-      addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, workbookMappings.category.name, order++);
+    if (importSet.category && importSet.category.name) {
+      addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, importSet.category.name, order++);
     }
-    const variableName = camelCase(newTemplateName);
+    const variableName = StringUtils.toVariableName(newTemplateName);
     const lookupKey = newTemplateName;
     addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.variableName, variableName, order++);
     addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.lookupType, Constants.lookupTypes.standard, order++);
@@ -1926,8 +1895,8 @@ const addSpecificationOptionsFromWorkbook = (workbook, bidControllerData, lookup
     });
     let defaultValue;
     // Start with rowOffset of 1 because first row is the header containing the template name
-    for (let rowOffset = 1; rowOffset < workbookMappings.rowCount; rowOffset++) {
-      const specificationOption = getCellValue(startCellAddress, worksheet, {columnOffset, rowOffset});
+    for (let rowOffset = 1; rowOffset < importSet.rowCount; rowOffset++) {
+      const specificationOption = SpreadsheetUtils.getCellValue(startCellAddress, worksheet, {columnOffset, rowOffset});
       if (!specificationOption) {
         // Expect blank rows, just ignore them
         continue;
@@ -1941,16 +1910,113 @@ const addSpecificationOptionsFromWorkbook = (workbook, bidControllerData, lookup
   }
 };
 
-const addProductsFromWorkbook = (workbook, bidControllerData, lookups, parentTemplate, workbookMappings) => {
+const getSubsetSettingsByColumnOffset = (importSet) => {
+  const startCellAddress = SpreadsheetUtils.decode_cell(importSet.startCell);
+  const subsetOverridesByColumnOffset = [];
+  // Populate subsetOverridesByColumnOffset with an empty object for every columnOffset
+  for (let columnOffset = 0; columnOffset < importSet.columnCount; columnOffset++) {
+    subsetOverridesByColumnOffset.push({});
+  }
+  _.each(importSet.subsetOverrides, (subsetSetting) => {
+    const subsetOverridesStartCellAddress = SpreadsheetUtils.decode_cell(subsetSetting.subsetStartCell);
+    for (let columnCounter = 0; columnCounter < subsetSetting.subsetColumnCount; columnCounter++) {
+      const columnOffset = columnCounter + subsetOverridesStartCellAddress.c - startCellAddress.c;
+      if (columnOffset >= 0 && columnOffset < importSet.columnCount) {
+        // update the subset settings for this columnOffset
+        subsetOverridesByColumnOffset[columnOffset] = {...subsetOverridesByColumnOffset[columnOffset], subsetSetting};
+      }
+    }
+  });
+  return subsetOverridesByColumnOffset;
+};
+
+const addCalculationsFromWorkbook = (workbook, workbookMetadata, bidControllerData, lookups, parentTemplate, importSet) => {
+  const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
+  if (!workbook) {
+    throw 'workbook must be set in addCalculationsFromWorkbook';
+  }
+  // _.each(_.keys(workbook), (workbookKey) => {
+  //   console.log(`workbook key: ${workbookKey}`);
+  // });
+  // _.each(workbook.SheetNames, (sheetName) => {
+  //   console.log(`sheet: ${sheetName}`);
+  // });
+  const worksheet = workbook.Sheets[importSet.sheet];
+  const startCellAddress = SpreadsheetUtils.decode_cell(importSet.startCell);
+  console.log(`start cell = ${importSet.startCell} = {r:${startCellAddress.r},c:${startCellAddress.c}} = "${worksheet[importSet.startCell].v}"`);
+  const subsetOverridesByColumnOffset = getSubsetSettingsByColumnOffset(importSet);
+  // replacementsByCell to be like { `BF24`: 'slideQtyPairs', `'1. Job Info.'!$H$105`: `2/S`}
+  // will get added as cell addresses are referenced
+  const replacementsByCell = {};
+
+  for (let columnOffset = 0; columnOffset < importSet.columnCount; columnOffset++) {
+    // const columnStartCellAddress = {...startCellAddress, c: startCellAddress.c + columnOffset};
+    const newTemplateName = SpreadsheetUtils.getCellValue(startCellAddress, worksheet, {columnOffset});
+    if (!newTemplateName) {
+      // _.any(templateLibrary.templates, (template) => template.name === newTemplateName))
+      // ToDo: maybe we should update existing template or verify it matches
+      continue;
+    }
+
+    const subsetOverrides = subsetOverridesByColumnOffset[columnOffset];
+    const formulaRowOffset = subsetOverrides.formulaRowOffset || importSet.formulaRowOffset;
+    let excelFormula;
+    let templateFormula;
+    if (formulaRowOffset) {
+      excelFormula = SpreadsheetUtils.getCellFormula(startCellAddress, worksheet, {rowOffset: formulaRowOffset, columnOffset});
+    }
+    if (excelFormula) {
+      // if (excelFormula.length > 80) {
+      //   templateFormula = `"too long - ignoring for now"`;
+      // } else {
+      templateFormula = SpreadsheetUtils.excelFormulaToParserFormula(excelFormula, workbook, workbookMetadata);
+      templateFormula = SpreadsheetUtils.replaceCellAddressesInFormula(templateFormula, replacementsByCell,
+        formulaRowOffset, importSet, subsetOverridesByColumnOffset, workbook, worksheet);
+      // }
+    } else {
+      // no excelFormula, just use cell's value for the templateFormula
+      templateFormula = SpreadsheetUtils.getCellValue(startCellAddress, worksheet, {rowOffset: formulaRowOffset, columnOffset});
+    }
+    const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.calculation, parentTemplate);
+    newTemplate.name = newTemplateName;
+    newTemplate.description = newTemplateName;
+    let order = 0;
+    let categoryName;
+    const category = subsetOverrides.category || importSet.category;
+    if (category && category.name) {
+      categoryName = category.name;
+    } else {
+      const categoryRowOffset = subsetOverrides.categoryRowOffset || importSet.categoryRowOffset;
+      if (categoryRowOffset) {
+        categoryName = SpreadsheetUtils.getCellValue(startCellAddress, worksheet, {rowOffset: categoryRowOffset, columnOffset});
+      }
+    }
+    if (categoryName) {
+      addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, categoryName, order++);
+    }
+
+    const units = subsetOverrides.units || importSet.units;
+    if (units) {
+      _.each(units, (unit) => {
+        addTemplateSetting(bidControllerData, newTemplate.id, unit.key, unit.value, order++);
+      })
+    }
+    const variableName = StringUtils.toVariableName(newTemplateName);
+    addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.variableName, variableName, order++);
+    addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.valueFormula, templateFormula, order++);
+  }
+}
+
+const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, lookups, parentTemplate, importSet) => {
   const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
   if (!workbook) {
     throw 'workbook must be set in addProductsFromWorkbook';
   }
-  const worksheet = workbook.Sheets[workbookMappings.sheet];
-  let startCellAddress = SpreadsheetUtils.decode_cell(workbookMappings.startCell);
-  console.log(`start cell = ${workbookMappings.startCell} = {r:${startCellAddress.r},c:${startCellAddress.c}} = "${worksheet[workbookMappings.startCell].v}"`);
+  const worksheet = workbook.Sheets[importSet.sheet];
+  let startCellAddress = SpreadsheetUtils.decode_cell(importSet.startCell);
+  // console.log(`start cell = ${importSet.startCell} = {r:${startCellAddress.r},c:${startCellAddress.c}} = "${worksheet[importSet.startCell].v}"`);
 
-  const newTemplateName = workbookMappings.generalProductName;
+  const newTemplateName = importSet.generalProductName;
   if (!newTemplateName ||
     _.any(templateLibrary.templates, (template) => template.name === newTemplateName)) {
     // ToDo: maybe we should update existing template or verify it matches
@@ -1963,17 +2029,17 @@ const addProductsFromWorkbook = (workbook, bidControllerData, lookups, parentTem
   let order = 0;
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.selectOption, order++);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.isASubTemplate, 'true', order++);
-  if (workbookMappings.category && workbookMappings.category.name) {
-    addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, workbookMappings.category.name);
+  if (importSet.category && importSet.category.name) {
+    addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, importSet.category.name);
   }
-  const conditionSwitchColumn = _.find(workbookMappings.columns, (column) => column.header && column.header.conditionSwitchVariable);
+  const conditionSwitchColumn = _.find(importSet.columns, (column) => column.header && column.header.conditionSwitchVariable);
   const conditionSwitchVariable = conditionSwitchColumn && conditionSwitchColumn.conditionSwitchVariable;
   const conditionSwitchValues = [];
   populateConditionSwitchValues(conditionSwitchValues, worksheet, conditionSwitchColumn, startCellAddress);
   addProductSkuSelectorTemplate(bidControllerData, newTemplate);
-  addPriceTemplate(bidControllerData, newTemplate, workbookMappings.defaultUnits, conditionSwitchVariable);
+  addPriceTemplate(bidControllerData, newTemplate, importSet.defaultUnits, conditionSwitchVariable);
 
-  for (let i = 0; i < workbookMappings.rowCount; i++) {
+  for (let i = 0; i < importSet.rowCount; i++) {
     const rowStartCellAddress = {...startCellAddress, r: startCellAddress.r + i};
     const rowStartCell = SpreadsheetUtils.encode_cell(rowStartCellAddress);
     const rowStartCellValue = worksheet[rowStartCell] && worksheet[rowStartCell].v;
@@ -1982,7 +2048,7 @@ const addProductsFromWorkbook = (workbook, bidControllerData, lookups, parentTem
       continue;
     }
 
-    const itemName = getNameColumnValue(workbookMappings, rowStartCellAddress, worksheet);
+    const itemName = getNameColumnValue(importSet, rowStartCellAddress, worksheet);
     if (!itemName) {
       // ||
       // _.any(templateLibrary.templates, (template) => template.name === itemName)) {
@@ -1992,7 +2058,7 @@ const addProductsFromWorkbook = (workbook, bidControllerData, lookups, parentTem
 
     let unitsText;
     let description;
-    _.each(workbookMappings.columns, (column) => {
+    _.each(importSet.columns, (column) => {
       const columnValue = getColumnValue(column, rowStartCellAddress, worksheet);
       if (columnValue) {
         // if (column.header.templateProperty) {
@@ -2076,6 +2142,7 @@ const getTemplateLibraryOptions = ({templateLibraries}, $filter, selectedTemplat
 }
 
 TemplateLibrariesHelper = {
+  addCalculationsFromWorkbook,
   addProductsFromWorkbook,
   addSpecificationOptionsFromWorkbook,
   addTemplate,

@@ -26,6 +26,12 @@ Constants.dependency = {
 
 Constants.hierarchyRoot = "-";
 
+Constants.importSetTypes = {
+  calculations: 'Calculations',
+  products: 'Products',
+  specificationOptions: 'SpecificationOptions',
+};
+
 Constants.lookupSettingKeys = {
   hardwareMaterial:"HardwareMaterial",
   iconHtml:"IconHtml",

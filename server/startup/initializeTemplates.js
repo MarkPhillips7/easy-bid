@@ -423,21 +423,26 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     //   value: Constants.templateSettingKeys.valueFormula,
     // }];
     const workbookMetadata = {
-      specificationOptions: [
+      importSets: [
         {
+          type: Constants.importSetTypes.specificationOptions,
           // Each column represents a different specification option
           // assumption is that first row represents header (like 'Exterior color') and remaining nonempty rows are the options
           sheet: '1. Job Info.',
           startCell: 'G39',
           rowCount: 25,
-          columnCount: 12,
+          columnCount: 12, // R39
           category: {
             name: 'Options',
           },
-        }
-      ],
-      products: [
-        {
+          // expect formula to contain something like `VLOOKUP($E24,spec_lookup,4,FALSE)`
+          // For above example variable name is from H39 (by adding third parameter with columnOffset as in 4 + -3 = 1)
+          vLookup: {
+            definedName: 'spec_lookup',
+            columnOffset: -3,
+          }
+        }, {
+          type: Constants.importSetTypes.products,
           generalProductName: 'Drawer Slides',
           defaultUnits: 'pair',
           sheet: 'Price List',
@@ -462,6 +467,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             name: 'Hardware',
           },
         }, {
+          type: Constants.importSetTypes.products,
           generalProductName: 'Hinge',
           defaultUnits: 'each',
           sheet: 'Price List',
@@ -496,7 +502,39 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               name: 'Hinges',
             },
           },
-        },
+        }, {
+          type: Constants.importSetTypes.calculations,
+          // Each column represents a different calculation
+          // assumption is that first row represents header (like 'Edge Banding'),
+          sheet: '2. QUOTE SHEET',
+          startCell: 'AU11',
+          categoryRowOffset: -1,
+          formulaRowOffset: 13,
+          columnCount: 120, // last calculation column is FE (Sell Price)
+          subsetOverrides: [{
+            subsetStartCell: 'AU11',
+            subsetColumnCount: 10,
+            units: [
+              {key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.minutes}
+            ],
+            category: {
+              name: 'Labor',
+            },
+          }, {
+            subsetStartCell: 'BE11',
+            subsetColumnCount: 1,
+            unit: UnitOfMeasure.units.hours,
+            category: {
+              name: 'Labor',
+            },
+          }, {
+            subsetStartCell: 'BF11',
+            subsetColumnCount: 6,
+            category: {
+              name: 'Hardware',
+            },
+          },]
+        }
       ],
     };
     let lookups = [];
@@ -550,9 +588,6 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     const bidControllerData = {templateLibraries: [cabinetryTemplateLibrary]};
     const workbook = XLSX.readFile(process.env.PWD + '/server/startup/Spreadsheet Estimator V2.1.xlsx');
-    _.each(workbookMetadata.products, (productMappings) => {
-      TemplateLibrariesHelper.addProductsFromWorkbook(workbook, bidControllerData, lookups, templateProduct, productMappings);
-    });
 
     var templateCabinet = {
       id: Random.id(),
@@ -575,10 +610,20 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     });
 
     const templateParents = [templateCompany, templateCustomer, templateJob, templateArea, templateCabinet];
-    _.each(workbookMetadata.specificationOptions, (specificationOptionsMappings) => {
-      TemplateLibrariesHelper.addSpecificationOptionsFromWorkbook(workbook, bidControllerData, lookups, templateParents, specificationOptionsMappings);
+    _.each(workbookMetadata.importSets, (importSet) => {
+      console.log(`Import => ${importSet.type} - ${importSet.sheet} - ${importSet.startCell}...`);
+      switch (importSet.type) {
+        case Constants.importSetTypes.products:
+          TemplateLibrariesHelper.addProductsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateProduct, importSet);
+          break;
+        case Constants.importSetTypes.specificationOptions:
+          TemplateLibrariesHelper.addSpecificationOptionsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateParents, importSet);
+          break;
+        case Constants.importSetTypes.calculations:
+          TemplateLibrariesHelper.addCalculationsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet);
+          break;
+      }
     });
-    // SpreadsheetUtils.excelToParserFormula
     _.each(lookups, (lookup) => {
       Lookups.insert(lookup);
     });
