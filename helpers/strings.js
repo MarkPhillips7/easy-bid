@@ -10,14 +10,14 @@ const camelCase = (text) => {
       return item.toLowerCase();
     }
     else {
-      return item.length ? item.charAt(0).toUpperCase() + item.slice(1) : '';
+      return item.length ? item.charAt(0).toUpperCase() + item.slice(1).toLowerCase() : '';
     }
   }).join('');
 }
 
 // Return text camelCased with prepended '_' if the first character is a digit
 const toVariableName = (text) => {
-  const variableName = camelCase(text);
+  const variableName = camelCase(text.replace('#', ' num '));
   if (variableName && variableName.length && charIsDigit(variableName[0])) {
     return `_${variableName}`;
   }

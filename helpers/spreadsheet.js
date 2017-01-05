@@ -15,6 +15,19 @@ function split_cell(cstr) { return cstr.replace(/(\$?[A-Z]*)(\$?\d*)/,"$1,$2").s
 function decode_cell(cstr) { var splt = split_cell(cstr); return { c:decode_col(splt[0]), r:decode_row(splt[1]) }; }
 function encode_cell(cell) { return encode_col(cell.c) + encode_row(cell.r); }
 
+const getCellRangeInfo = (cellRange) => {
+  const cellMatches = cellRange.match(/^(\$?[A-Z]*\$?\d*):(\$?[A-Z]*\$?\d*)/);
+  topLeftCell = cellMatches[1];
+  bottomRightCell = cellMatches[2];
+  const topLeftCellObject = SpreadsheetUtils.decode_cell(topLeftCell);
+  const bottomRightCellObject = SpreadsheetUtils.decode_cell(bottomRightCell);
+  return {
+    columnCount: bottomRightCellObject.c - topLeftCellObject.c + 1,
+    rowCount: bottomRightCellObject.r - topLeftCellObject.r + 1,
+    startCellAddressString: topLeftCell,
+  };
+}
+
 const cleanCellValue = (cellValue) => {
   if (typeof cellValue === 'string') {
     return cellValue.trim();
@@ -24,13 +37,14 @@ const cleanCellValue = (cellValue) => {
 
 const getWorksheetCell = (cellAddress, worksheet) => {
   if (cellAddress.c < 0 || cellAddress.r < 0) {
-    throw `Cannot get invalid cell address r=${cellAddress.r}, c=${cellAddress.c}`;
+    console.log(`Cannot get invalid cell address r=${cellAddress.r}, c=${cellAddress.c}`);
+    return 'oops';
   }
   const cell = encode_cell(cellAddress);
   return worksheet[cell];
 }
 
-const getCellValue = (startCellAddress, worksheet, offsetOptions) => {
+const getCellAddressObject = (startCellAddress, offsetOptions) => {
   const {columnOffset, rowOffset} = offsetOptions;
   let includeColumnOffset = true;
   let includeRowOffset = true;
@@ -41,23 +55,35 @@ const getCellValue = (startCellAddress, worksheet, offsetOptions) => {
     includeRowOffset = fixedMatches.length <= 2 || fixedMatches[2] !== '$';
     startCellAddress = decode_cell(startCellAddress);
   }
-  const cellAddress = {
+  return {
     ...startCellAddress,
     c: startCellAddress.c + (includeColumnOffset ? (columnOffset || 0) : 0 ),
     r: startCellAddress.r + (includeRowOffset ? (rowOffset || 0) : 0 ),
   };
-  const worksheetCell = getWorksheetCell(cellAddress, worksheet);
+}
+
+const getCellAddressString = (startCellAddress, offsetOptions) => {
+  let columnDollarOrNot = '';
+  let rowDollarOrNot = '';
+  if (typeof startCellAddress === 'string') {
+    // only include offsets if no leading $. $A$1 should not include either offsets, A1 should include both.
+    const fixedMatches = startCellAddress.match(/(\$)?[A-Z]*(\$)?\d*/);
+    columnDollarOrNot = fixedMatches.length > 1 && fixedMatches[1] || '';
+    rowDollarOrNot = fixedMatches.length > 2 && fixedMatches[2] || '';
+  }
+  const cellObject = getCellAddressObject(startCellAddress, offsetOptions);
+  return `${columnDollarOrNot}${encode_col(cellObject.c)}${rowDollarOrNot}${encode_row(cellObject.r)}`;
+}
+
+const getCellValue = (startCellAddress, worksheet, offsetOptions) => {
+  const cellObject = getCellAddressObject(startCellAddress, offsetOptions);
+  const worksheetCell = getWorksheetCell(cellObject, worksheet);
   return worksheetCell && cleanCellValue(worksheetCell.v);
 }
 
 const getCellFormula = (startCellAddress, worksheet, offsetOptions) => {
-  const {columnOffset, rowOffset} = offsetOptions;
-  const cellAddress = {
-    ...startCellAddress,
-    c: startCellAddress.c + (columnOffset || 0),
-    r: startCellAddress.r + (rowOffset || 0),
-  };
-  const worksheetCell = getWorksheetCell(cellAddress, worksheet);
+  const cellObject = getCellAddressObject(startCellAddress, offsetOptions);
+  const worksheetCell = getWorksheetCell(cellObject, worksheet);
   return worksheetCell && worksheetCell.f;
 }
 
@@ -99,23 +125,6 @@ const removeLeadingEqual = (input) => {
   }
   return input;
 }
-
-// // replace items in quotes with empty quotes
-// // Example formula: =IF(AND(P24="Yes",FJ27="Type 2",Z24<=7),4)
-// // Matches:                     "Yes"      "Type 2"
-// // Replacements:                ""         ""
-// // Result:          =IF(AND(P24=="",FJ27=="",Z24<=7),4)
-// const replaceQuotedStringsWithEmptyStrings = (input, useDoubleQuote) => {
-// 	const stringExpression = useDoubleQuote ? /(".*?")/g : /('.*?')/g;
-// 	const replacement = useDoubleQuote ? `""` : `''`;
-// 	let match;
-// 	const originalStrings = [];
-// 	const result = input.replace(stringExpression, replacement);
-// 	while (match = stringExpression.exec(input)) {
-// 		originalStrings.push(match[1]);
-// 	}
-// 	return {originalStrings, result};
-// }
 
 // replace items in quotes with replacement tokens
 // Example formula: =IF(AND(P24="Yes",FJ27="Type 2",Z24<=7),4)
@@ -200,25 +209,24 @@ const getVariableNameForVLookup = (rangeSource, columnNumber, workbook, workbook
   if (!importSetSource) {
     return null;
   }
-  // console.log(`importSetSource.sheet '${importSetSource.sheet}', importSetSource.startCell '${importSetSource.startCell}', importSetSource.vLookup.columnOffset '${importSetSource.vLookup.columnOffset}'`);
   const worksheet = workbook.Sheets[importSetSource.sheet];
   const vLookupColumnOffset = importSetSource.vLookup.columnOffset || 0;
-  const columnOffset = vLookupColumnOffset + columnNumber - 1;
-  const startCellAddress = decode_cell(importSetSource.startCell);
-  // console.log(`${importSetSource.sheet} - startCell '${importSetSource.startCell}', columnOffset ${columnOffset}`);
-  const templateName = getCellValue(startCellAddress, worksheet, {columnOffset});
+  const columnOffset = vLookupColumnOffset + columnNumber;
+  const {startCellAddressString} = getCellRangeInfo(importSetSource.cellRange);
+  // console.log(`${importSetSource.sheet} - startCellAddress '${importSetSource.startCellAddress}', columnOffset ${columnOffset}`);
+  const templateName = getCellValue(startCellAddressString, worksheet, {columnOffset});
   if (!templateName || typeof templateName !== 'string') {
-    console.log(`expecting something to be a variable name but got '${templateName}' for ${startCellAddress} with columnOffset ${columnOffset}`);
+    console.log(`expecting something to be a variable name but got '${templateName}' for ${startCellAddressString} with columnOffset ${columnOffset}`);
     return null;
   }
   // console.log(`templateName '${templateName}'`);
   return StringUtils.toVariableName(templateName);
 }
 
-// replace Excel-style IF([bool],[true],[false]) expression with Parser [bool] ? [true] : [false] expression
+// replace Excel-style VLOOKUP
 // Example input:   VLOOKUP($E24,spec_lookup,7,FALSE)
 // params match:            $E24,spec_lookup,7,FALSE
-// Result:          (P24=="" AND FJ24!="" AND FF24==''?3:1)
+// Result:          drawerBox
 const replaceVLookup = (vLookupExpression, workbook, workbookMetadata) => {
   // console.log(`vLookupExpression = ${vLookupExpression}`);
 	const matchInfo = vLookupExpression.match(/^VLOOKUP\s*\((.*)\)$/i);
@@ -300,7 +308,7 @@ const getVariableNameForCellAddress = (cell, worksheet, formulaRowOffset) => {
 const replaceCellAddress = (cellAddressMaybeWithSheetName, replacementsByCell,
   formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet) => {
   if (replacementsByCell[cellAddressMaybeWithSheetName]) {
-    return replacementsByCell[cellAddressMaybeWithSheetName];
+    return replacementsByCell[cellAddressMaybeWithSheetName].replacement;
   }
 
   let replacement;
@@ -318,7 +326,7 @@ const replaceCellAddress = (cellAddressMaybeWithSheetName, replacementsByCell,
     // for now just return the value in that cell
     replacement = getCellValue(cellAddress, worksheetToUse, {});
   }
-  replacementsByCell[cellAddressMaybeWithSheetName] = replacement;
+  replacementsByCell[cellAddressMaybeWithSheetName] = {replacement};
   return replacement;
 }
 
@@ -334,8 +342,39 @@ const replaceCellAddresses = (input, replacementsByCell,
     formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet));
 }
 
-const replaceCellAddressesInFormula = (inputFormula, replacementsByCell,
+// Replace cell range with the appropriate values or variableNames joined by commas
+// Example input:   P24:R24
+// matches:         P24:R24                          (represents P24,Q24,R24)
+// Result:          numShelves,numDrawers,numBoxes
+const replaceCellRange = (cellRange, replacementsByCell,
   formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet) => {
+  const {columnCount, rowCount, startCellAddressString} = getCellRangeInfo(cellRange);
+  const valuesOrVariableNames = [];
+  for (let rowOffset = 0;rowOffset < rowCount;rowOffset++) {
+    for (let columnOffset = 0;columnOffset < columnCount;columnOffset++) {
+      const cellAddressString = getCellAddressString(startCellAddressString, {columnOffset, rowOffset});
+      const valueOrVariableName = replaceCellAddress(cellAddressString, replacementsByCell,
+        formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet)
+      valuesOrVariableNames.push(valueOrVariableName);
+    }
+  }
+  return valuesOrVariableNames.join(',');
+}
+
+// Replace each cell range with the appropriate values or variableNames joined by commas
+// Example input:   SUM(P24:R24)+SUM(X24:Z24)
+// matches:             P24:R24      X24:Z24
+// Result:          SUM(numShelves,numDrawers,numBoxes)+SUM(numSlides,numSwings,numSeesaws)
+const replaceCellRanges = (input, replacementsByCell,
+  formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet) => {
+  const cellRangeFinder = /(\$?[A-Z]+\$?[0-9]+:\$?[A-Z]+\$?[0-9]+)/;
+  return input.replace(cellRangeFinder, (match) => replaceCellRange(match, replacementsByCell,
+    formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet));
+}
+
+const replaceCellAddressesInFormula = (inputFormula, replacementsByCell,
+  formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook,
+  worksheet, formulaCellAddressString, variableName) => {
     if (typeof inputFormula !== 'string') {
       throw 'inputFormula must be a string in replaceCellAddresses';
     }
@@ -355,17 +394,20 @@ const replaceCellAddressesInFormula = (inputFormula, replacementsByCell,
 
     // Not replacing single quotes since they are used in the cell addresses that contain sheet name
 
+    result = replaceCellRanges(result, replacementsByCell,
+      formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet);
+
     result = replaceCellAddresses(result, replacementsByCell,
       formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet);
 
     // Now that conversions to Parser format are done it is safe to add back the replacement strings.
   	result = restoreReplacementsToRestore(result, replacementsToRestore);
     // result:
-    console.log(`templateFormula = ${result}`);
+    console.log(`${formulaCellAddressString} ${variableName} = ${result}`);
   	return result;
 }
 
-const excelFormulaToParserFormula = (excelFormula, workbook, workbookMetadata) => {
+const excelFormulaToParserFormula = (excelFormula, workbook, workbookMetadata, formulaCellAddressString) => {
   if (typeof excelFormula !== 'string') {
     throw 'excelFormula must be a string in excelFormulaToParserFormula';
   }
@@ -375,7 +417,7 @@ const excelFormulaToParserFormula = (excelFormula, workbook, workbookMetadata) =
   const replacementsToRestore = [];
 	let result = excelFormula;
   // result: =IF(AND(P24="Yes",FJ24<>"Type 2",FF24='No'),3,1)+IF(OR(Q24=(FA24&" ft"),FJ2>=11),(I24*J24)/144)
-  console.log(`excelFormula =    ${excelFormula}`);
+  console.log(`${formulaCellAddressString} excelFormula =    ${excelFormula}`);
 
 	// Remove all string content so we don't have to worry about accidentally replacing it. Will add it back later.
   // Start with double quotes since they might contain single quotes as apostrophes
@@ -434,8 +476,11 @@ SpreadsheetUtils = {
 	encode_cell: encode_cell,
 	// encode_range: encode_range,
 	excelFormulaToParserFormula,
+  getCellAddressObject,
+  getCellAddressString,
   getCellValue,
   getCellFormula,
+  getCellRangeInfo,
   replaceCellAddressesInFormula,
 	split_cell: split_cell,
 

@@ -28,6 +28,7 @@ Constants.hierarchyRoot = "-";
 
 Constants.importSetTypes = {
   calculations: 'Calculations',
+  formulaReferences: 'FormulaReferences',
   products: 'Products',
   specificationOptions: 'SpecificationOptions',
 };

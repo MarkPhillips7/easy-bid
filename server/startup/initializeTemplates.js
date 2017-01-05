@@ -429,9 +429,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           // Each column represents a different specification option
           // assumption is that first row represents header (like 'Exterior color') and remaining nonempty rows are the options
           sheet: '1. Job Info.',
-          startCell: 'G39',
-          rowCount: 25,
-          columnCount: 12, // R39
+          cellRange: 'G39:R63',
           category: {
             name: 'Options',
           },
@@ -446,8 +444,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           generalProductName: 'Drawer Slides',
           defaultUnits: 'pair',
           sheet: 'Price List',
-          startCell: 'C165',
-          rowCount: 54,
+          cellRange: 'C165:E219',
           columns: [
             // ...priceEachMappings,
             // name is at columnOffset of 0 by default so commented
@@ -471,8 +468,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           generalProductName: 'Hinge',
           defaultUnits: 'each',
           sheet: 'Price List',
-          startCell: 'C139',
-          rowCount: 3,
+          cellRange: 'C139:I141',
+          // startCell: 'C139',
+          // rowCount: 3,
           columns: [
             //...priceEachMappings,
             // name is at columnOffset of 0 by default so commented
@@ -503,17 +501,68 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             },
           },
         }, {
+          // formulaReferences only used to identify variables. Should appear before calculations that might reference it
+          // same cells can also be used for calculations
+          type: Constants.importSetTypes.formulaReferences,
+          // assumption is that first row represents header (like 'Height'),
+          sheet: '2. QUOTE SHEET',
+          cellRange: 'B22:L24',
+          formulaRowOffset: 2,
+        }, {
+          // formulaReferences only used to identify variables. Should appear before calculations that might reference it
+          // same cells can also be used for calculations
+          type: Constants.importSetTypes.formulaReferences,
+          // assumption is that first row represents header (like 'Height'),
+          sheet: '2. QUOTE SHEET',
+          cellRange: 'N11:FQ24',
+          formulaRowOffset: 13,
+          subsetOverrides: [{
+            subsetCellRange: 'AU11:BD24',
+            namePrefix: 'Labor Minutes ',
+          }, {
+            subsetCellRange: 'BE11:BE24',
+            namePrefix: 'Labor ',
+          }, {
+            subsetCellRange: 'BX11:CI24',
+            nameSuffixRowOffset: 6,
+          }, {
+            subsetCellRange: 'BY11:BY24',
+            nameColumnOffset: -1,
+          }, {
+            subsetCellRange: 'CA11:CA24',
+            nameColumnOffset: -1,
+          }, {
+            subsetCellRange: 'CC11:CC24',
+            nameColumnOffset: -1,
+          }, {
+            subsetCellRange: 'CE11:CE24',
+            nameColumnOffset: -1,
+          }, {
+            subsetCellRange: 'CG11:CG24',
+            nameColumnOffset: -1,
+          }, {
+            subsetCellRange: 'CI11:CI24',
+            nameColumnOffset: -1,
+          }, {
+            subsetCellRange: 'CY11:DV24',
+            namePrefix: 'Price ',
+          }, {
+            subsetCellRange: 'DW11:EX24',
+            namePrefix: 'Cost ',
+          }, {
+            subsetCellRange: 'EY11:EY24',
+            nameBase: 'Cost Labor Total',
+          },]
+        }, {
           type: Constants.importSetTypes.calculations,
           // Each column represents a different calculation
           // assumption is that first row represents header (like 'Edge Banding'),
           sheet: '2. QUOTE SHEET',
-          startCell: 'AU11',
+          cellRange: 'AU11:FE24',
           categoryRowOffset: -1,
           formulaRowOffset: 13,
-          columnCount: 120, // last calculation column is FE (Sell Price)
           subsetOverrides: [{
-            subsetStartCell: 'AU11',
-            subsetColumnCount: 10,
+            subsetCellRange: 'AU11:BD24',
             units: [
               {key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.minutes}
             ],
@@ -521,19 +570,17 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               name: 'Labor',
             },
           }, {
-            subsetStartCell: 'BE11',
-            subsetColumnCount: 1,
+            subsetCellRange: 'BE11:BE24',
             unit: UnitOfMeasure.units.hours,
             category: {
               name: 'Labor',
             },
           }, {
-            subsetStartCell: 'BF11',
-            subsetColumnCount: 6,
+            subsetCellRange: 'BF11:BK24',
             category: {
               name: 'Hardware',
             },
-          },]
+          },],
         }
       ],
     };
@@ -609,9 +656,10 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       childTemplateId: templateCabinet.id
     });
 
+    const replacementsByCell = {};
     const templateParents = [templateCompany, templateCustomer, templateJob, templateArea, templateCabinet];
     _.each(workbookMetadata.importSets, (importSet) => {
-      console.log(`Import => ${importSet.type} - ${importSet.sheet} - ${importSet.startCell}...`);
+      console.log(`Import => ${importSet.type} - ${importSet.sheet} - ${importSet.cellRange}...`);
       switch (importSet.type) {
         case Constants.importSetTypes.products:
           TemplateLibrariesHelper.addProductsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateProduct, importSet);
@@ -620,7 +668,10 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           TemplateLibrariesHelper.addSpecificationOptionsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateParents, importSet);
           break;
         case Constants.importSetTypes.calculations:
-          TemplateLibrariesHelper.addCalculationsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet);
+          TemplateLibrariesHelper.addCalculationsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet, replacementsByCell);
+          break;
+        case Constants.importSetTypes.formulaReferences:
+          TemplateLibrariesHelper.addFormulaReferencesFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet, replacementsByCell);
           break;
       }
     });
