@@ -468,63 +468,13 @@ const refreshSelectionsReferencingVariable = (bidControllerData, variableCollect
   }
 };
 
-// const sumSelections = (templateLibraries, selections, selectionRelationships,
-//     metadata, selectionsToSum, parameterVariable, selectionReferencingVariable) => {
-//   if (!selectionsToSum) {
-//     return 0;
-//   }
-//
-//   const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(parameterVariable);
-//   const add = (previousValue, selection) => {
-//     const jsonVariableValue = SelectionsHelper.getJsonVariableValue(
-//       templateLibraries, selections, selectionRelationships, metadata,
-//       selection, jsonVariableName, selectionReferencingVariable);
-//     return previousValue + jsonVariableValue;
-//   };
-//
-//   return selectionsToSum.reduce(add, 0);
-// };
-
-// const getLookupValue = (templateLibraries, selections, selectionRelationships, metadata, lookupData,
-//     selection, selectionTemplate) => {
-//   const lookupType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, Constants.templateSettingKeys.lookupType);
-//   let lookupKey = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, Constants.templateSettingKeys.lookupKey);
-//   if (!lookupKey) {
-//     const lookupKeyVariable = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, Constants.templateSettingKeys.lookupKeyVariable);
-//     const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(lookupKeyVariable);
-//     lookupKey = getJsonVariableValue(templateLibraries, selections, selectionRelationships, metadata,
-//         selection, jsonVariableName, selection);
-//   }
-//   return LookupsHelper.getLookupValue(lookupData, lookupType, lookupKey);
-// }
-
-const replaceValueFormulaLookupValues = (bidControllerData, selection, valueFormula, selectionReferencingVariable) => {
-  const {job, lookupData, metadata} = bidControllerData;
-  // expecting valueFormula like `getLookup${lookupType}(${lookupKey})`, for example `getLookupPrice(drawerSlides)`
-  if (valueFormula) {
-    const lookupMatches = Formulas.findLookups(valueFormula);
-    if (lookupMatches) {
-      _.each(lookupMatches, (lookupMatch) => {
-        const {lookupType, templateVariableName} = Formulas.parseLookupInfo(lookupMatch);
-        if (lookupType && templateVariableName) {
-          const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(templateVariableName);
-          const jsonVariableValue = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selectionReferencingVariable);
-          const lookupValue = LookupsHelper.getLookupValue(lookupData, lookupType, jsonVariableValue, job.pricingAt) || '0';
-          valueFormula = valueFormula.replace(lookupMatch, lookupValue);
-        }
-      });
-    }
-  }
-  return valueFormula;
-}
-
 const calculateFormulaValue = (bidControllerData, selection, valueFormula, selectionReferencingVariable) => {
   const {metadata} = bidControllerData;
   if (!selection) {
     return 0;
   }
 
-  valueFormula = replaceValueFormulaLookupValues(bidControllerData, selection, valueFormula, selectionReferencingVariable);
+  valueFormula = Formulas.replaceFunctionCalls(bidControllerData, selection, valueFormula, selectionReferencingVariable);
   const expr = Parser.parse(valueFormula);
   let formulaValue = 0;
   let variableValues = {};

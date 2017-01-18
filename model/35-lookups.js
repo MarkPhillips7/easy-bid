@@ -68,6 +68,11 @@ Schema.Lookup = new SimpleSchema({
     type: [Schema.LookupSetting],
     optional: true
   },
+  // additional data where keys can be determined by the user
+  // additionalSettings: {
+  //   type: [Schema.LookupSetting],
+  //   optional: true
+  // },
   value: {
     type: String,
   },
@@ -95,31 +100,56 @@ const getSettingValue = (lookup, settingKey) => {
   return null;
 }
 
-// with keyStrings like ['car key', 'house key'] expect return like 'carkey|housekey'
-const getLookupKey = (...keyStrings) => {
+// with keyStrings like ['car key', 'House Key'] expect return like 'carkey|HouseKey'
+const getSquishedKey = (...keyStrings) => {
   return _.reduce(keyStrings, (memo, keyString) => {
     return `${memo}${memo.length > 0 ? '|' : ''}${keyString.replace(/\s/g, '')}`;
   }, '');
 }
 
-const getLookupValue = (lookupData, lookupType, lookupKey, pricingAt) => {
-  if (!lookupData || !lookupType || !lookupKey) {
+const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookupSubType, lookupKey, lookupSetting) => {
+  if (!lookupData || !lookupType || !valueToLookUp) {
     return null;
   }
 
+  const pricingAtToUse = pricingAt || new Date();
+  let lookupRecords;
   switch (lookupType) {
     case Constants.lookupTypes.price:
-    case Constants.lookupTypes.standard:
-    default:
-      const lookupRecords = lookupData && _.filter(lookupData['standard'], (lookup) => {
-        const pricingAtToUse = pricingAt || new Date();
+      lookupRecords = lookupData && _.filter(lookupData['standard'], (lookup) => {
+        // valueToLookUp represents lookup key for price lookups
         return lookup.lookupType === lookupType
           && lookup.effectiveDate < pricingAtToUse
           && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse)
-          && lookup.key === lookupKey;
+          && lookup.key === valueToLookUp;
       });
-      return lookupRecords.length && lookupRecords[0].value;
+      if (lookupRecords.length) {
+        if (lookupSettingKey) {
+          return getSettingValue(lookupRecords[0], lookupSettingKey);
+        }
+        return lookupRecords.length && lookupRecords[0].value;
+      }
+      break;
+    case Constants.lookupTypes.standard:
+    default:
+      // valueToLookUp represents lookup name for standard (and currently all non-price) lookups
+      lookupRecords = lookupData && _.filter(lookupData['standard'], (lookup) => {
+        return lookup.lookupType === lookupType
+          && lookup.lookupSubType === lookupSubType
+          && lookup.key === lookupKey
+          && lookup.name === valueToLookUp
+          && lookup.effectiveDate < pricingAtToUse
+          && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse);
+      });
+      if (lookupRecords.length) {
+        if (lookupSettingKey) {
+          return getSettingValue(lookupRecords[0], lookupSettingKey);
+        }
+        return lookupRecords.length && lookupRecords[0].value;
+      }
+      break;
   }
+  return null;
 }
 
 const isValidLookup = (lookupData, lookupType, lookupKey, lookup, pricingAt) => {
@@ -292,7 +322,7 @@ const addLookup = (templateLibrary, lookups, lookupType, lookupSubType, key, nam
 
 const addPriceLookup = (templateLibrary, lookups, generalProductName, productSku,
   productName, description, price, unitsText, userId) => {
-  const lookupKey = LookupsHelper.getLookupKey(productSku);
+  const lookupKey = productSku;
   const lookupType = Constants.lookupTypes.price;
   const lookupSubType = generalProductName;
   // should not have multiple lookups with the same key
@@ -328,7 +358,7 @@ const addPriceLookup = (templateLibrary, lookups, generalProductName, productSku
 }
 
 const addOptionLookup = (templateLibrary, lookups, optionTypeName, optionValue, userId) => {
-  const lookupKey = optionTypeName; // LookupsHelper.getLookupKey(optionTypeName);
+  const lookupKey = optionTypeName;
   const lookupType = Constants.lookupTypes.standard;
   const lookupSubType = Constants.lookupSubTypes.option;
   addLookup(templateLibrary, lookups, Constants.lookupTypes.hierarchical, Constants.lookupSubTypes.lookupKey,
@@ -338,8 +368,8 @@ const addOptionLookup = (templateLibrary, lookups, optionTypeName, optionValue, 
     undefined, undefined, undefined, userId);
 };
 
-const addProductSkuLookup = (templateLibrary, lookups, generalProductName, productSku, productName, productDescription, userId) => {
-  const lookupKey = generalProductName; // LookupsHelper.getLookupKey(generalProductName);
+const addProductSkuLookup = (templateLibrary, lookups, generalProductName, productSku, productName, productDescription, userId, lookupSettings) => {
+  const lookupKey = generalProductName;
   const lookupType = Constants.lookupTypes.standard;
   const lookupSubType = 'Product';
   addLookup(templateLibrary, lookups, Constants.lookupTypes.hierarchical, Constants.lookupSubTypes.lookupSubType,
@@ -355,7 +385,8 @@ const addProductSkuLookup = (templateLibrary, lookups, generalProductName, produ
     key: lookupKey,
     name: productName,
     description: productDescription,
-    value: LookupsHelper.getLookupKey(productSku),
+    value: productSku,
+    lookupSettings,
     effectiveDate: new Date(),
     createdAt: new Date(),
     createdBy: userId,
@@ -469,7 +500,7 @@ LookupsHelper = {
   getDateStatusTooltip,
   getIconStack1xClass,
   getIconStack2xClass,
-  getLookupKey,
+  getSquishedKey,
   getLookupKeyOptions,
   getLookupValue,
   getLookupSubTypeOptions,

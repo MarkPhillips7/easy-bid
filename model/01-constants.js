@@ -31,6 +31,7 @@ Constants.importSetTypes = {
   formulaReferences: 'FormulaReferences',
   products: 'Products',
   specificationOptions: 'SpecificationOptions',
+  subProducts: 'SubProducts',
 };
 
 Constants.lookupSettingKeys = {

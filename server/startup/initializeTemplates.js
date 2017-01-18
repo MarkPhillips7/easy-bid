@@ -440,18 +440,392 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             columnOffset: -3,
           }
         }, {
-          type: Constants.importSetTypes.products,
+          type: Constants.importSetTypes.subProducts,
+          generalProductName: 'Door',
+          defaultUnits: 'sq-ft',
+          sheet: 'Price List',
+          cellRange: 'C89:I97',
+          columns: [
+            {
+              header: { customProperty: 'unit', },
+              value: 'sq-ft',
+            }, {
+              header: { lookupSetting: 'Door Code', },
+              columnOffset: 5,
+              // valueTranslations are problematic because hard to replace every appropriate place
+              // For example in `VLOOKUP(FI24,lookup_doors,6,FALSE)=1` we would need to know to replace 1 with `"slab (mfg. in house)"`
+              // valueTranslations: {'0': 'buyout', '1': 'slab (mfg. in house)'},
+            }, {
+              header: {
+                conditionSwitchVariable: 'priceType',
+                values: ['buyout', 'slab'],
+              },
+              columnOffset: 3, // 'F$87'
+              columnCount: 2, // 'F$87', 'G$87'
+            }, {
+              // price should be defined after all other column settings
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 3, // 'F$89' (and 'G$89')
+            }
+          ],
+          category: {
+            name: 'Doors / Drawer fronts',
+          },
+          // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
+          vLookup: {
+            definedName: 'lookup_doors',
+            vLookupColumnNumberCases: {
+              '4': {
+                // want something like `lookup("Price","Door",doorStyle,"buyout")`
+                lookupType: 'Price',
+                conditionValue: 'buyout',
+                // replacement: `getLookupPrice("door",{valueToLookUp},"buyout")`,
+              },
+              '5': {
+                lookupType: 'Price',
+                conditionValue: 'slab',
+                // replacement: `getLookupPrice({valueToLookUp},"slab")`,
+              },
+              '6': {
+                // want something like `lookup("Standard","Product","Door",doorStyle,"Door Code")`
+                lookupType: 'Standard',
+                lookupSubType: 'Product',
+                lookupSetting: 'Door Code',
+                // replacement: `getLookupStandard({valueToLookUp},"Door Code")`,
+              },
+            }
+          }
+        }, {
+          type: Constants.importSetTypes.subProducts,
+          generalProductName: 'Door Banding',
+          defaultUnits: 'ln-ft',
+          sheet: 'Price List',
+          cellRange: 'C100:I107',
+          columns: [
+            {
+              header: { customProperty: 'unit', },
+              value: 'ln-ft',
+            }, {
+              // price should be defined after all other column settings
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 3,
+            }
+          ],
+          category: {
+            name: 'Doors / Drawer fronts',
+          },
+          // expect formula to contain something like `VLOOKUP(FH24,lookup_banding,4,FALSE)`
+          vLookup: {
+            definedName: 'lookup_doorbanding',
+            vLookupColumnNumberCases: {
+              '4': {
+                lookupType: 'Price',
+                conditionValue: 'ln-ft',
+                // replacement: `getLookupPrice({valueToLookUp},"ln-ft")`,
+              },
+            }
+          }
+        }, {
+          type: Constants.importSetTypes.subProducts,
+          generalProductName: '.75 Case Material',
+          defaultUnits: 'sq-ft',
+          sheet: 'Price List',
+          cellRange: 'C10:I17',
+          columns: [
+            {
+              header: { customProperty: 'unit', },
+              value: 'sq-ft',
+            }, {
+              header: { lookupSetting: 'Density', },
+              columnOffset: 6,
+            }, {
+              header: {
+                conditionSwitchVariable: 'priceType',
+                values: ['sq-ft', 'sheet'],
+                units: ['sq-ft', 'sheet'],
+              },
+              columnOffset: 3, // 'F10'
+              columnCount: 2, // 'F10', 'H10'
+              columnStep: 2, // step over 2 columns to find the second 1 (H10 instead of G10)
+            }, {
+              // price should be defined after all other column settings
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 3, // 'F$89' (and 'G$89')
+            }
+          ],
+          category: {
+            name: 'Sheet Goods',
+          },
+          // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
+          // this vLookup is also used for '.75 Finished Material' and '.75 Laminated Material'
+          vLookup: {
+            definedName: 'lookup_.75material',
+            vLookupColumnNumberCases: {
+              '4': {
+                lookupType: 'Price',
+                conditionValue: 'sq-ft',
+                // replacement: `getLookupPrice({valueToLookUp},"sq-ft")`,
+              },
+              '6': {
+                lookupType: 'Price',
+                conditionValue: 'sheet',
+                // replacement: `getLookupPrice({valueToLookUp},"sheet")`,
+              },
+              '7': {
+                lookupType: 'Standard',
+                lookupSubType: 'Product',
+                lookupSetting: 'Density',
+                // replacement: `getLookupStandard({valueToLookUp},"Density")`,
+              },
+              '12': {
+                lookupType: 'Price',
+                conditionValue: '1/S Laid up',
+                // replacement: `getLookupPrice({valueToLookUp},"1/S Laid up")`,
+              },
+              '13': {
+                lookupType: 'Price',
+                conditionValue: '2/S Laid up',
+                // replacement: `getLookupPrice({valueToLookUp},"2/S Laid up")`,
+              },
+            }
+          }
+        }, {
+          type: Constants.importSetTypes.subProducts,
+          generalProductName: '.75 Finished Material',
+          defaultUnits: 'sq-ft',
+          sheet: 'Price List',
+          cellRange: 'C21:O25',
+          columns: [
+            {
+              header: { customProperty: 'unit', },
+              value: 'sq-ft',
+            }, {
+              header: { lookupSetting: 'Density', },
+              columnOffset: 6,
+            }, {
+              header: {
+                conditionSwitchVariable: 'priceType',
+                values: ['1/S Laid up', '2/S Laid up'],
+              },
+              columnOffset: 11, // 'N21'
+              columnCount: 2, // 'N21', 'O21'
+            }, {
+              // price should be defined after all other column settings
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 11, // 'N21', 'O21'
+            }
+          ],
+          category: {
+            name: 'Sheet Goods',
+          },
+          // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
+          // but '.75 Case Material' vLookup is used for '.75 Finished Material' and '.75 Laminated Material'
+        }, {
+          type: Constants.importSetTypes.subProducts,
+          generalProductName: '.75 Laminated Material',
+          defaultUnits: 'sq-ft',
+          sheet: 'Price List',
+          cellRange: 'C28:O37',
+          columns: [
+            {
+              header: { customProperty: 'unit', },
+              value: 'sq-ft',
+            }, {
+              header: { lookupSetting: 'Density', },
+              columnOffset: 6,
+            }, {
+              header: {
+                conditionSwitchVariable: 'priceType',
+                values: ['1/S Laid up', '2/S Laid up'],
+              },
+              columnOffset: 11, // 'N21'
+              columnCount: 2, // 'N21', 'O21'
+            }, {
+              // price should be defined after all other column settings
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 11, // 'N21', 'O21'
+            }
+          ],
+          category: {
+            name: 'Sheet Goods',
+          },
+          // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
+          // but '.75 Case Material' vLookup is used for '.75 Finished Material' and '.75 Laminated Material'
+        }, {
+          type: Constants.importSetTypes.subProducts,
+          generalProductName: '.25 Case Material',
+          defaultUnits: 'sq-ft',
+          sheet: 'Price List',
+          cellRange: 'C43:I50',
+          columns: [
+            {
+              header: { customProperty: 'unit', },
+              value: 'sq-ft',
+            }, {
+              header: { lookupSetting: 'Density', },
+              columnOffset: 6,
+            }, {
+              header: {
+                conditionSwitchVariable: 'priceType',
+                values: ['sq-ft', 'sheet'],
+                units: ['sq-ft', 'sheet'],
+              },
+              columnOffset: 3, // 'F10'
+              columnCount: 2, // 'F10', 'H10'
+              columnStep: 2, // step over 2 columns to find the second 1 (H10 instead of G10)
+            }, {
+              // price should be defined after all other column settings
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 3, // 'F$89' (and 'G$89')
+            }
+          ],
+          category: {
+            name: 'Sheet Goods',
+          },
+          // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
+          // this vLookup is also used for '.25 Finished Material' and '.25 Laminated Material'
+          vLookup: {
+            definedName: 'lookup_.25material',
+            vLookupColumnNumberCases: {
+              '4': {
+                lookupType: 'Price',
+                conditionValue: 'sq-ft',
+                // replacement: `getLookupPrice({valueToLookUp},"sq-ft")`,
+              },
+              '6': {
+                lookupType: 'Price',
+                conditionValue: 'sheet',
+                // replacement: `getLookupPrice({valueToLookUp},"sheet")`,
+              },
+              '7': {
+                lookupType: 'Standard',
+                lookupSubType: 'Product',
+                lookupSetting: 'Density',
+                // replacement: `getLookupStandard({valueToLookUp},"Density")`,
+              },
+              '12': {
+                lookupType: 'Price',
+                conditionValue: '1/S Laid up',
+                // replacement: `getLookupPrice({valueToLookUp},"1/S Laid up")`,
+              },
+              '13': {
+                lookupType: 'Price',
+                conditionValue: '2/S Laid up',
+                // replacement: `getLookupPrice({valueToLookUp},"2/S Laid up")`,
+              },
+            }
+          }
+        }, {
+          type: Constants.importSetTypes.subProducts,
+          generalProductName: '.25 Finished Material',
+          defaultUnits: 'sq-ft',
+          sheet: 'Price List',
+          cellRange: 'C54:O58',
+          columns: [
+            {
+              header: { customProperty: 'unit', },
+              value: 'sq-ft',
+            }, {
+              header: { lookupSetting: 'Density', },
+              columnOffset: 6,
+            }, {
+              header: {
+                conditionSwitchVariable: 'priceType',
+                values: ['1/S Laid up', '2/S Laid up'],
+              },
+              columnOffset: 11, // 'N21'
+              columnCount: 2, // 'N21', 'O21'
+            }, {
+              // price should be defined after all other column settings
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 11, // 'N21', 'O21'
+            }
+          ],
+          category: {
+            name: 'Sheet Goods',
+          },
+          // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
+          // but '.25 Case Material' vLookup is used for '.25 Finished Material' and '.25 Laminated Material'
+        }, {
+          type: Constants.importSetTypes.subProducts,
+          generalProductName: '.25 Laminated Material',
+          defaultUnits: 'sq-ft',
+          sheet: 'Price List',
+          cellRange: 'C61:O70',
+          columns: [
+            {
+              header: { customProperty: 'unit', },
+              value: 'sq-ft',
+            }, {
+              header: { lookupSetting: 'Density', },
+              columnOffset: 6,
+            }, {
+              header: {
+                conditionSwitchVariable: 'priceType',
+                values: ['1/S Laid up', '2/S Laid up'],
+              },
+              columnOffset: 11, // 'N21'
+              columnCount: 2, // 'N21', 'O21'
+            }, {
+              // price should be defined after all other column settings
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 11, // 'N21', 'O21'
+            }
+          ],
+          category: {
+            name: 'Sheet Goods',
+          },
+          // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
+          // but '.25 Case Material' vLookup is used for '.25 Finished Material' and '.25 Laminated Material'
+        }, {
+          type: Constants.importSetTypes.subProducts,
+          generalProductName: 'Edge Banding',
+          defaultUnits: 'ln-ft',
+          sheet: 'Price List',
+          cellRange: 'C75:I84',
+          columns: [
+            {
+              header: { customProperty: 'unit', },
+              value: 'ln-ft',
+            }, {
+              header: { lookupSetting: 'ft/roll', },
+              columnOffset: 6,
+            }, {
+              header: {
+                conditionSwitchVariable: 'priceType',
+                values: ['ln-ft', 'roll'],
+                units: ['ln-ft', 'roll'],
+              },
+              columnOffset: 3, // 'F75'
+              columnCount: 2, // 'F75', 'H75'
+              columnStep: 2, // step over 2 columns to find the second 1 (H75 instead of G75)
+            }, {
+              // price should be defined after all other column settings
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 3, // 'F$75' (and 'H$75')
+            }
+          ],
+          category: {
+            name: 'Edge Banding',
+          },
+          // expect formula to contain something like `VLOOKUP(FH24,lookup_banding,4,FALSE)`
+          vLookup: {
+            definedName: 'lookup_banding',
+            vLookupColumnNumberCases: {
+              '4': {
+                lookupType: 'Price',
+                conditionValue: 'ln-ft',
+                // replacement: `getLookupPrice({valueToLookUp},"ln-ft")`,
+              },
+            }
+          }
+        }, {
+          type: Constants.importSetTypes.subProducts,
           generalProductName: 'Drawer Slides',
           defaultUnits: 'pair',
           sheet: 'Price List',
           cellRange: 'C165:E219',
           columns: [
-            // ...priceEachMappings,
-            // name is at columnOffset of 0 by default so commented
-            // {
-            //   header: { templateProperty: 'name', },
-            //   columnOffset: 0,
-            // },
             {
               header: { customProperty: 'unit', },
               value: 'Pair', // columnOffset: 2, // 'E165'
@@ -464,13 +838,11 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             name: 'Hardware',
           },
         }, {
-          type: Constants.importSetTypes.products,
+          type: Constants.importSetTypes.subProducts,
           generalProductName: 'Hinge',
           defaultUnits: 'each',
           sheet: 'Price List',
           cellRange: 'C139:I141',
-          // startCell: 'C139',
-          // rowCount: 3,
           columns: [
             //...priceEachMappings,
             // name is at columnOffset of 0 by default so commented
@@ -485,13 +857,15 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               header: { customProperty: 'unit', },
               columnOffset: 2, // 'E139'
             }, {
-              header: { conditionSwitchVariable: 'hardwareMaterial', },
-              absoluteRowOffset: -11, // 'F$128'
+              header: {
+                conditionSwitchVariable: 'hardwareMaterial',
+                absoluteRowOffset: -11, // 'F$128'
+              },
               columnOffset: 3, // 'F$128'
               columnCount: 4, // F$128, G$128, H$128, I$128
             }, {
               header: { customProperty: 'price', }, // override priceEach
-              columnOffset: 3, // 'F139'
+              columnOffset: 3, // 'F139' (and G139, H139, I139)
             }
           ],
           category: {
@@ -661,8 +1035,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     _.each(workbookMetadata.importSets, (importSet) => {
       console.log(`Import => ${importSet.type} - ${importSet.sheet} - ${importSet.cellRange}...`);
       switch (importSet.type) {
-        case Constants.importSetTypes.products:
-          TemplateLibrariesHelper.addProductsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateProduct, importSet);
+        case Constants.importSetTypes.subProducts:
+          TemplateLibrariesHelper.addSubProductsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateProduct, importSet);
           break;
         case Constants.importSetTypes.specificationOptions:
           TemplateLibrariesHelper.addSpecificationOptionsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateParents, importSet);

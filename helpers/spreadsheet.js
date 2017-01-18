@@ -201,7 +201,8 @@ const replaceIfExpression = (ifExpression) => {
 	return `(${boolExpression}?${valueIfTrue}:${valueIfFalse})`;
 }
 
-const getVariableNameForVLookup = (rangeSource, columnNumber, workbook, workbookMetadata) => {
+const getReplacementForVLookup = (vLookupParameters, workbook, workbookMetadata) => {
+  let [valueToLookUp, rangeSource, columnNumber] = vLookupParameters;
   columnNumber = Number(columnNumber);
   // console.log(`rangeSource '${rangeSource}', columnNumber '${columnNumber}'`);
   const importSetSource = _.find(workbookMetadata.importSets, (importSet) => importSet.vLookup
@@ -209,11 +210,33 @@ const getVariableNameForVLookup = (rangeSource, columnNumber, workbook, workbook
   if (!importSetSource) {
     return null;
   }
+
+  const vLookupColumnNumberCase = importSetSource.vLookup.vLookupColumnNumberCases
+    && importSetSource.vLookup.vLookupColumnNumberCases[columnNumber.toString()];
+  if (vLookupColumnNumberCase) {
+    const {conditionValue, lookupType, lookupSubType, lookupSetting, replacement} = vLookupColumnNumberCase;
+    if (replacement) {
+      return replacement.replace(`{valueToLookUp}`, valueToLookUp);
+    }
+    switch (lookupType) {
+      case Constants.lookupTypes.price:
+        // want something like `lookup("Price","Door",doorStyle,"buyout")`
+        const optionalConditionValueText = conditionValue ? `,"${conditionValue}"` : '';
+        return `lookup("${lookupType}",squish("${importSetSource.generalProductName}",${valueToLookUp}${optionalConditionValueText}))`;
+      case Constants.lookupTypes.standard:
+        // want something like `lookup("Standard","Product","Door",doorStyle,"Door Code")`
+        const optionalLookupSettingText = lookupSetting ? `,"${lookupSetting}"` : '';
+        return `lookup("${lookupType}","${lookupSubType}","${importSetSource.generalProductName}",${valueToLookUp}${optionalLookupSettingText})`;
+      default:
+        console.log(`Unexpected lookupType '${lookupType}' in vLookupColumnNumberCase`);
+        return null;
+    }
+  }
+
   const worksheet = workbook.Sheets[importSetSource.sheet];
   const vLookupColumnOffset = importSetSource.vLookup.columnOffset || 0;
   const columnOffset = vLookupColumnOffset + columnNumber;
   const {startCellAddressString} = getCellRangeInfo(importSetSource.cellRange);
-  // console.log(`${importSetSource.sheet} - startCellAddress '${importSetSource.startCellAddress}', columnOffset ${columnOffset}`);
   const templateName = getCellValue(startCellAddressString, worksheet, {columnOffset});
   if (!templateName || typeof templateName !== 'string') {
     console.log(`expecting something to be a variable name but got '${templateName}' for ${startCellAddressString} with columnOffset ${columnOffset}`);
@@ -230,16 +253,14 @@ const getVariableNameForVLookup = (rangeSource, columnNumber, workbook, workbook
 const replaceVLookup = (vLookupExpression, workbook, workbookMetadata) => {
   // console.log(`vLookupExpression = ${vLookupExpression}`);
 	const matchInfo = vLookupExpression.match(/^VLOOKUP\s*\((.*)\)$/i);
-	const parameters = matchInfo[1].split(',');
-  if (parameters.length < 3) {
+	const vLookupParameters = matchInfo[1].split(',');
+  if (vLookupParameters.length < 3) {
     console.log(`expecting at least 3 parameters to VLOOKUP but got '${vLookupExpression}'`);
     return vLookupExpression;
   }
-  const rangeSource = parameters[1];
-  const columnNumber = parameters[2];
-  const variableName = getVariableNameForVLookup(rangeSource, columnNumber, workbook, workbookMetadata);
-  if (variableName) {
-    return variableName;
+  const replacement = getReplacementForVLookup(vLookupParameters, workbook, workbookMetadata);
+  if (replacement) {
+    return replacement;
   }
 	return vLookupExpression;
 }

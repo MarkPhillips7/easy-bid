@@ -1766,7 +1766,7 @@ const addProductSkuSelectorTemplate = (bidControllerData, parentTemplate) => {
   const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.input, parentTemplate);
   newTemplate.name = `${parentTemplate.name} Type`;
   newTemplate.description = newTemplate.name;
-  const lookupKey = parentTemplate.name; // LookupsHelper.getLookupKey(parentTemplate.name);
+  const lookupKey = parentTemplate.name; // LookupsHelper.getSquishedKey(parentTemplate.name);
   const variableName = StringUtils.toVariableName(parentTemplate.name);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.select, order++);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, "Primary", order++);
@@ -1807,13 +1807,19 @@ const addPriceTemplate = (bidControllerData, parentTemplate, defaultUnitsText, c
 // }
 
 const getColumnValue = (column, rowStartCellAddress, worksheet) => {
+  let columnValue;
   // 'if (column.columnOffset)' did not work because '(0)' is falsy
   if (typeof column.columnOffset === 'number') {
-    return SpreadsheetUtils.getCellValue(rowStartCellAddress, worksheet, column);
+    columnValue = SpreadsheetUtils.getCellValue(rowStartCellAddress, worksheet, column);
   } else if (column.value) {
-    return column.value;
+    columnValue = column.value;
   }
-  return undefined;
+  if (typeof columnValue !== 'undefined' &&
+      column.valueTranslations &&
+      typeof column.valueTranslations[columnValue.toString()] !== 'undefined') {
+    columnValue = column.valueTranslations[columnValue.toString()];
+  }
+  return columnValue;
 }
 
 const getNameColumnValue = (importSet, rowStartCellAddress, worksheet) => {
@@ -1834,17 +1840,25 @@ const getConditionColumnValue = (importSet, rowStartCellAddress, worksheet) => {
   return SpreadsheetUtils.getCellValue(rowStartCellAddress, worksheet, {});
 }
 
-const populateConditionSwitchValues = (conditionSwitchValues, worksheet, conditionSwitchColumn, startCellAddress) => {
+const populateConditionSwitchValues = (conditionSwitchValues, conditionSwitchUnits, worksheet, conditionSwitchColumn, startCellAddress) => {
   if (!conditionSwitchColumn) {
     return;
   }
-  for (let columnIndex = 0; columnIndex < conditionSwitchColumn.columnCount; columnIndex++) {
+  if (conditionSwitchColumn.header.values) {
+    conditionSwitchValues.push(...conditionSwitchColumn.header.values);
+    if (conditionSwitchColumn.header.units) {
+      conditionSwitchUnits.push(...conditionSwitchColumn.header.units);
+    }
+    return;
+  }
+  const columnStep = conditionSwitchColumn.columnStep || 1;
+  for (let columnIndex = 0; columnIndex < (conditionSwitchColumn.columnCount * columnStep); columnIndex += columnStep) {
     const conditionSwitchValue = SpreadsheetUtils.getCellValue(
       startCellAddress,
       worksheet,
       {
         columnOffset: conditionSwitchColumn.columnOffset + columnIndex,
-        rowOffset: conditionSwitchColumn.absoluteRowOffset
+        rowOffset: conditionSwitchColumn.header.absoluteRowOffset
       });
     conditionSwitchValues.push(conditionSwitchValue);
   }
@@ -2051,10 +2065,10 @@ const addFormulaReferencesFromWorkbook = (workbook, workbookMetadata, bidControl
   }
 }
 
-const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, lookups, parentTemplate, importSet) => {
+const addSubProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, lookups, parentTemplate, importSet) => {
   const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
   if (!workbook) {
-    throw 'workbook must be set in addProductsFromWorkbook';
+    throw 'workbook must be set in addSubProductsFromWorkbook';
   }
   const worksheet = workbook.Sheets[importSet.sheet];
   const {rowCount, startCellAddressString} = SpreadsheetUtils.getCellRangeInfo(importSet.cellRange);
@@ -2080,7 +2094,8 @@ const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, 
   const conditionSwitchColumn = _.find(importSet.columns, (column) => column.header && column.header.conditionSwitchVariable);
   const conditionSwitchVariable = conditionSwitchColumn && conditionSwitchColumn.conditionSwitchVariable;
   const conditionSwitchValues = [];
-  populateConditionSwitchValues(conditionSwitchValues, worksheet, conditionSwitchColumn, startCellAddressObject);
+  const conditionSwitchUnits = [];
+  populateConditionSwitchValues(conditionSwitchValues, conditionSwitchUnits, worksheet, conditionSwitchColumn, startCellAddressObject);
   addProductSkuSelectorTemplate(bidControllerData, newTemplate);
   addPriceTemplate(bidControllerData, newTemplate, importSet.defaultUnits, conditionSwitchVariable);
 
@@ -2100,12 +2115,14 @@ const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, 
       // ToDo: maybe we should update existing template or verify it matches
       continue;
     }
+    const productSku = LookupsHelper.getSquishedKey(newTemplateName, itemName);
 
     let unitsText;
     let description;
+    const lookupSettings = [];
     _.each(importSet.columns, (column) => {
       const columnValue = getColumnValue(column, rowStartCellAddress, worksheet);
-      if (columnValue) {
+      if (columnValue !== undefined && columnValue != null && columnValue !== '') {
         // if (column.header.templateProperty) {
         //   newTemplate[column.header.templateProperty] = columnValue;
         // } else if (column.header.templateSettingKey) {
@@ -2126,23 +2143,37 @@ const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, 
                 throw `a unit customProperty must be defined before a price customProperty`;
               }
               if (conditionSwitchColumn) {
-                for (let columnIndex = 0; columnIndex < conditionSwitchColumn.columnCount; columnIndex++) {
-                  const productSku = `${newTemplate.name}${conditionSwitchValues[columnIndex]}`;
+                const columnStep = conditionSwitchColumn.columnStep || 1;
+                for (let columnIndex = 0; columnIndex < conditionSwitchColumn.columnCount; columnIndex ++) {
+                  const extraColumnOffset = columnIndex * columnStep;
+                  const priceColumn = {...column, columnOffset: column.columnOffset + extraColumnOffset};
+                  const priceValue = getColumnValue(priceColumn, rowStartCellAddress, worksheet);
+                  const productWithOptionSku = LookupsHelper.getSquishedKey(newTemplateName, itemName, conditionSwitchValues[columnIndex]);
                   const productName = `${itemName} - ${conditionSwitchValues[columnIndex]}`;
                   const productDescription = description && `${description} - ${conditionSwitchValues[columnIndex]}`;
-                  LookupsHelper.addPriceLookup(templateLibrary, lookups, newTemplate.name, productSku, productName, description, columnValue, unitsText);
+                  const unitsTextToUse = conditionSwitchUnits.length ? conditionSwitchUnits[columnIndex] : unitsText;
+                  if (priceValue) {
+                    LookupsHelper.addPriceLookup(templateLibrary, lookups, newTemplate.name, productWithOptionSku, productName, description, priceValue, unitsTextToUse);
+                  }
                 }
               } else {
-                LookupsHelper.addPriceLookup(templateLibrary, lookups, newTemplate.name, itemName, itemName, description, columnValue, unitsText);
+                LookupsHelper.addPriceLookup(templateLibrary, lookups, newTemplate.name, productSku, itemName, description, columnValue, unitsText);
               }
               break;
             default:
               throw `'${column.header.customProperty}' is not a valid customProperty`;
           }
+        } else if (column.header.lookupSetting) {
+          const lookupSetting = {
+            id: Random.id(),
+            key: column.header.lookupSetting,
+            value: columnValue,
+          };
+          lookupSettings.push(lookupSetting);
         }
       }
     });
-    LookupsHelper.addProductSkuLookup(templateLibrary, lookups, newTemplate.name, itemName, itemName, description);
+    LookupsHelper.addProductSkuLookup(templateLibrary, lookups, newTemplate.name, productSku, itemName, description, undefined, lookupSettings);
   }
 }
 //
@@ -2189,7 +2220,7 @@ const getTemplateLibraryOptions = ({templateLibraries}, $filter, selectedTemplat
 TemplateLibrariesHelper = {
   addCalculationsFromWorkbook,
   addFormulaReferencesFromWorkbook,
-  addProductsFromWorkbook,
+  addSubProductsFromWorkbook,
   addSpecificationOptionsFromWorkbook,
   addTemplate,
   addTemplateSetting,
