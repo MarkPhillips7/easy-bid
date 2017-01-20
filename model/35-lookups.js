@@ -100,13 +100,6 @@ const getSettingValue = (lookup, settingKey) => {
   return null;
 }
 
-// with keyStrings like ['car key', 'House Key'] expect return like 'carkey|HouseKey'
-const getSquishedKey = (...keyStrings) => {
-  return _.reduce(keyStrings, (memo, keyString) => {
-    return `${memo}${memo.length > 0 ? '|' : ''}${keyString.replace(/\s/g, '')}`;
-  }, '');
-}
-
 const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookupSubType, lookupKey, lookupSetting) => {
   if (!lookupData || !lookupType || !valueToLookUp) {
     return null;
@@ -500,7 +493,6 @@ LookupsHelper = {
   getDateStatusTooltip,
   getIconStack1xClass,
   getIconStack2xClass,
-  getSquishedKey,
   getLookupKeyOptions,
   getLookupValue,
   getLookupSubTypeOptions,

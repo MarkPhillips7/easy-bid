@@ -203,7 +203,7 @@ const replaceIfExpression = (ifExpression) => {
 
 const getReplacementForVLookup = (vLookupParameters, workbook, workbookMetadata) => {
   let [valueToLookUp, rangeSource, columnNumber] = vLookupParameters;
-  columnNumber = Number(columnNumber);
+  // columnNumber = Number(columnNumber);
   // console.log(`rangeSource '${rangeSource}', columnNumber '${columnNumber}'`);
   const importSetSource = _.find(workbookMetadata.importSets, (importSet) => importSet.vLookup
     && importSet.vLookup.definedName === rangeSource);
@@ -212,21 +212,21 @@ const getReplacementForVLookup = (vLookupParameters, workbook, workbookMetadata)
   }
 
   const vLookupColumnNumberCase = importSetSource.vLookup.vLookupColumnNumberCases
-    && importSetSource.vLookup.vLookupColumnNumberCases[columnNumber.toString()];
+    && importSetSource.vLookup.vLookupColumnNumberCases[columnNumber];
   if (vLookupColumnNumberCase) {
-    const {conditionValue, lookupType, lookupSubType, lookupSetting, replacement} = vLookupColumnNumberCase;
+    const {conditionValue, conditionVariable, lookupType, lookupSubType, lookupSetting, replacement} = vLookupColumnNumberCase;
     if (replacement) {
       return replacement.replace(`{valueToLookUp}`, valueToLookUp);
     }
     switch (lookupType) {
       case Constants.lookupTypes.price:
-        // want something like `lookup("Price","Door",doorStyle,"buyout")`
-        const optionalConditionValueText = conditionValue ? `,"${conditionValue}"` : '';
-        return `lookup("${lookupType}",squish("${importSetSource.generalProductName}",${valueToLookUp}${optionalConditionValueText}))`;
+        // want something like `lookup(squish("Door",doorStyle,"buyout"),"Price")`
+        const optionalConditionValueText = conditionValue ? `,"${conditionValue}"` : conditionVariable ? `,${conditionVariable}` : '';
+        return `lookup(squish("${importSetSource.generalProductName}",${valueToLookUp}${optionalConditionValueText}),"${lookupType}")`;
       case Constants.lookupTypes.standard:
-        // want something like `lookup("Standard","Product","Door",doorStyle,"Door Code")`
+        // want something like `lookup(doorStyle,"Standard","Product","Door","Door Code")`
         const optionalLookupSettingText = lookupSetting ? `,"${lookupSetting}"` : '';
-        return `lookup("${lookupType}","${lookupSubType}","${importSetSource.generalProductName}",${valueToLookUp}${optionalLookupSettingText})`;
+        return `lookup(${valueToLookUp},"${lookupType}","${lookupSubType}","${importSetSource.generalProductName}"${optionalLookupSettingText})`;
       default:
         console.log(`Unexpected lookupType '${lookupType}' in vLookupColumnNumberCase`);
         return null;
@@ -235,7 +235,7 @@ const getReplacementForVLookup = (vLookupParameters, workbook, workbookMetadata)
 
   const worksheet = workbook.Sheets[importSetSource.sheet];
   const vLookupColumnOffset = importSetSource.vLookup.columnOffset || 0;
-  const columnOffset = vLookupColumnOffset + columnNumber;
+  const columnOffset = vLookupColumnOffset + Number(columnNumber);
   const {startCellAddressString} = getCellRangeInfo(importSetSource.cellRange);
   const templateName = getCellValue(startCellAddressString, worksheet, {columnOffset});
   if (!templateName || typeof templateName !== 'string') {

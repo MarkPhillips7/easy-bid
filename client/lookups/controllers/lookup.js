@@ -68,7 +68,7 @@ class lookup {
         // supplierId,
         key: this.lookupKey,
         // name: productName,
-        // value: LookupsHelper.getSquishedKey(productSku),
+        // value: StringUtils.squish(productSku),
         effectiveDate: new Date(),
         createdAt: new Date(),
         createdBy: Meteor.userId(),

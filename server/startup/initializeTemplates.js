@@ -476,22 +476,17 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             definedName: 'lookup_doors',
             vLookupColumnNumberCases: {
               '4': {
-                // want something like `lookup("Price","Door",doorStyle,"buyout")`
                 lookupType: 'Price',
                 conditionValue: 'buyout',
-                // replacement: `getLookupPrice("door",{valueToLookUp},"buyout")`,
               },
               '5': {
                 lookupType: 'Price',
                 conditionValue: 'slab',
-                // replacement: `getLookupPrice({valueToLookUp},"slab")`,
               },
               '6': {
-                // want something like `lookup("Standard","Product","Door",doorStyle,"Door Code")`
                 lookupType: 'Standard',
                 lookupSubType: 'Product',
                 lookupSetting: 'Door Code',
-                // replacement: `getLookupStandard({valueToLookUp},"Door Code")`,
               },
             }
           }
@@ -521,7 +516,61 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               '4': {
                 lookupType: 'Price',
                 conditionValue: 'ln-ft',
-                // replacement: `getLookupPrice({valueToLookUp},"ln-ft")`,
+              },
+            }
+          }
+        }, {
+          type: Constants.importSetTypes.subProducts,
+          generalProductName: 'Drawer Box',
+          defaultUnits: 'sq-ft',
+          sheet: 'Price List',
+          cellRange: 'C89:I97',
+          columns: [
+            {
+              header: { customProperty: 'unit', },
+              value: 'sq-ft',
+            }, {
+              header: { lookupSetting: 'Box Code', },
+              columnOffset: 6,
+            }, {
+              header: {
+                conditionSwitchVariable: 'priceType',
+                values: ['buyout', '4-sides', 'bottom', 'back'],
+              },
+              columnOffset: 2,
+              columnCount: 4,
+            }, {
+              // price should be defined after all other column settings
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 2,
+            }
+          ],
+          category: {
+            name: 'Drawer Boxes',
+          },
+          vLookup: {
+            definedName: 'lookup_drwbox',
+            vLookupColumnNumberCases: {
+              '3': {
+                lookupType: 'Price',
+                conditionValue: 'buyout',
+              },
+              '4': {
+                lookupType: 'Price',
+                conditionValue: '4-sides',
+              },
+              '5': {
+                lookupType: 'Price',
+                conditionValue: 'bottom',
+              },
+              '6': {
+                lookupType: 'Price',
+                conditionValue: 'back',
+              },
+              '7': {
+                lookupType: 'Standard',
+                lookupSubType: 'Product',
+                lookupSetting: 'Box Code',
               },
             }
           }
@@ -564,28 +613,23 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               '4': {
                 lookupType: 'Price',
                 conditionValue: 'sq-ft',
-                // replacement: `getLookupPrice({valueToLookUp},"sq-ft")`,
               },
               '6': {
                 lookupType: 'Price',
                 conditionValue: 'sheet',
-                // replacement: `getLookupPrice({valueToLookUp},"sheet")`,
               },
               '7': {
                 lookupType: 'Standard',
                 lookupSubType: 'Product',
                 lookupSetting: 'Density',
-                // replacement: `getLookupStandard({valueToLookUp},"Density")`,
               },
               '12': {
                 lookupType: 'Price',
                 conditionValue: '1/S Laid up',
-                // replacement: `getLookupPrice({valueToLookUp},"1/S Laid up")`,
               },
               '13': {
                 lookupType: 'Price',
                 conditionValue: '2/S Laid up',
-                // replacement: `getLookupPrice({valueToLookUp},"2/S Laid up")`,
               },
             }
           }
@@ -690,28 +734,23 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               '4': {
                 lookupType: 'Price',
                 conditionValue: 'sq-ft',
-                // replacement: `getLookupPrice({valueToLookUp},"sq-ft")`,
               },
               '6': {
                 lookupType: 'Price',
                 conditionValue: 'sheet',
-                // replacement: `getLookupPrice({valueToLookUp},"sheet")`,
               },
               '7': {
                 lookupType: 'Standard',
                 lookupSubType: 'Product',
                 lookupSetting: 'Density',
-                // replacement: `getLookupStandard({valueToLookUp},"Density")`,
               },
               '12': {
                 lookupType: 'Price',
                 conditionValue: '1/S Laid up',
-                // replacement: `getLookupPrice({valueToLookUp},"1/S Laid up")`,
               },
               '13': {
                 lookupType: 'Price',
                 conditionValue: '2/S Laid up',
-                // replacement: `getLookupPrice({valueToLookUp},"2/S Laid up")`,
               },
             }
           }
@@ -815,14 +854,137 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               '4': {
                 lookupType: 'Price',
                 conditionValue: 'ln-ft',
-                // replacement: `getLookupPrice({valueToLookUp},"ln-ft")`,
               },
             }
           }
         }, {
           type: Constants.importSetTypes.subProducts,
+          generalProductName: 'Hardware',
+          defaultUnits: 'each',
+          sheet: 'Price List',
+          cellRange: 'C131:I136',
+          columns: [
+            {
+              header: { customProperty: 'description', },
+              columnOffset: 1,
+            }, {
+              header: { customProperty: 'unit', },
+              columnOffset: 2,
+            }, {
+              header: {
+                conditionSwitchVariable: 'hardwareMaterial',
+                values: ['Chrome', 'Satin nickel', 'Polished brass', 'Dark bronze'],
+              },
+              // header: {
+              //   conditionSwitchVariable: 'hardwareMaterial',
+              //   absoluteRowOffset: -3,
+              // },
+              columnOffset: 3, // 'F$128'
+              columnCount: 4, // F$128, G$128, H$128, I$128
+            }, {
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 3, // 'F139' (and G139, H139, I139)
+            }
+          ],
+          category: {
+            name: 'Hardware',
+          },
+          // expect formula to contain something like `VLOOKUP($DQ$11,lookup_hardware,$DN24,FALSE)`
+          vLookup: {
+            definedName: 'lookup_hardware',
+            vLookupColumnNumberCases: {
+              '$DN24': {
+                lookupType: 'Price',
+                conditionVariable: 'hardwareFinish',
+              },
+              '4': {
+                lookupType: 'Price',
+                conditionValue: 'Chrome',
+              },
+              '5': {
+                lookupType: 'Price',
+                conditionValue: 'Satin nickel',
+              },
+              '6': {
+                lookupType: 'Price',
+                conditionValue: 'Polished brass',
+              },
+              '7': {
+                lookupType: 'Price',
+                conditionValue: 'Dark bronze',
+              },
+            },
+          },
+        }, {
+          type: Constants.importSetTypes.subProducts,
+          generalProductName: 'Hinge',
+          defaultUnits: 'each',
+          sheet: 'Price List',
+          cellRange: 'C139:I141',
+          columns: [
+            {
+              header: { customProperty: 'description', },
+              columnOffset: 1, // D139 since startCell is C139
+            }, {
+              header: { customProperty: 'unit', },
+              columnOffset: 2, // 'E139'
+            }, {
+              header: {
+                conditionSwitchVariable: 'hardwareMaterial',
+                values: ['Chrome', 'Satin nickel', 'Polished brass', 'Dark bronze'],
+              },
+              columnOffset: 3, // 'F$128'
+              columnCount: 4, // F$128, G$128, H$128, I$128
+            }, {
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 3, // 'F139' (and G139, H139, I139)
+            }
+          ],
+          category: {
+            name: 'Hardware',
+            subcategory: {
+              name: 'Hinges',
+            },
+          },
+          // expect formula to contain something like `VLOOKUP($DQ$11,lookup_hardware,$DN24,FALSE)`
+          // but 'Hardware' vLookup is used for 'Hinge' and 'Poll'
+        }, {
+          type: Constants.importSetTypes.subProducts,
+          generalProductName: 'Pull',
+          defaultUnits: 'each',
+          sheet: 'Price List',
+          cellRange: 'C155:I160',
+          columns: [
+            {
+              header: { customProperty: 'description', },
+              columnOffset: 1, // D139 since startCell is C139
+            }, {
+              header: { customProperty: 'unit', },
+              columnOffset: 2, // 'E139'
+            }, {
+              header: {
+                conditionSwitchVariable: 'hardwareMaterial',
+                values: ['Chrome', 'Satin nickel', 'Polished brass', 'Dark bronze'],
+              },
+              columnOffset: 3, // 'F$128'
+              columnCount: 4, // F$128, G$128, H$128, I$128
+            }, {
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 3, // 'F139' (and G139, H139, I139)
+            }
+          ],
+          category: {
+            name: 'Hardware',
+            subcategory: {
+              name: 'Pulls',
+            },
+          },
+          // expect formula to contain something like `VLOOKUP($DQ$11,lookup_hardware,$DN24,FALSE)`
+          // but 'Hardware' vLookup is used for 'Hinge' and 'Poll'
+        }, {
+          type: Constants.importSetTypes.subProducts,
           generalProductName: 'Drawer Slides',
-          defaultUnits: 'pair',
+          defaultUnits: 'Pair',
           sheet: 'Price List',
           cellRange: 'C165:E219',
           columns: [
@@ -837,41 +999,14 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           category: {
             name: 'Hardware',
           },
-        }, {
-          type: Constants.importSetTypes.subProducts,
-          generalProductName: 'Hinge',
-          defaultUnits: 'each',
-          sheet: 'Price List',
-          cellRange: 'C139:I141',
-          columns: [
-            //...priceEachMappings,
-            // name is at columnOffset of 0 by default so commented
-            // {
-            //   header: { templateProperty: 'name', },
-            //   columnOffset: 0,
-            // },
-            {
-              header: { customProperty: 'description', },
-              columnOffset: 1, // D139 since startCell is C139
-            }, {
-              header: { customProperty: 'unit', },
-              columnOffset: 2, // 'E139'
-            }, {
-              header: {
-                conditionSwitchVariable: 'hardwareMaterial',
-                absoluteRowOffset: -11, // 'F$128'
+          // expect formula to contain something like `VLOOKUP($DQ$11,lookup_hardware,$DN24,FALSE)`
+          vLookup: {
+            definedName: 'SLIDES1',
+            vLookupColumnNumberCases: {
+              // 4 really does not look like a valid value, but seems that it should be price
+              '4': {
+                lookupType: 'Price',
               },
-              columnOffset: 3, // 'F$128'
-              columnCount: 4, // F$128, G$128, H$128, I$128
-            }, {
-              header: { customProperty: 'price', }, // override priceEach
-              columnOffset: 3, // 'F139' (and G139, H139, I139)
-            }
-          ],
-          category: {
-            name: 'Hardware',
-            subcategory: {
-              name: 'Hinges',
             },
           },
         }, {
@@ -954,6 +1089,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             category: {
               name: 'Hardware',
             },
+          }, {
+            subsetCellRange: 'DN11:DN24',
+            ignore: true,
           },],
         }
       ],

@@ -1766,7 +1766,7 @@ const addProductSkuSelectorTemplate = (bidControllerData, parentTemplate) => {
   const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.input, parentTemplate);
   newTemplate.name = `${parentTemplate.name} Type`;
   newTemplate.description = newTemplate.name;
-  const lookupKey = parentTemplate.name; // LookupsHelper.getSquishedKey(parentTemplate.name);
+  const lookupKey = parentTemplate.name; // StringUtils.squish(parentTemplate.name);
   const variableName = StringUtils.toVariableName(parentTemplate.name);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.select, order++);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, "Primary", order++);
@@ -1978,6 +1978,9 @@ const addCalculationsFromWorkbook = (workbook, workbookMetadata, bidControllerDa
 
   for (let columnOffset = 0; columnOffset < columnCount; columnOffset++) {
     const subsetOverrides = subsetOverridesByColumnOffset[columnOffset] || {};
+    if (subsetOverrides.ignore) {
+      continue;
+    }
     const formulaRowOffset = subsetOverrides.formulaRowOffset || importSet.formulaRowOffset;
     const formulaCellAddressString = SpreadsheetUtils.getCellAddressString(startCellAddressString, {rowOffset: formulaRowOffset || 0, columnOffset});
     let excelFormula;
@@ -2115,9 +2118,9 @@ const addSubProductsFromWorkbook = (workbook, workbookMetadata, bidControllerDat
       // ToDo: maybe we should update existing template or verify it matches
       continue;
     }
-    const productSku = LookupsHelper.getSquishedKey(newTemplateName, itemName);
+    const productSku = StringUtils.squish(newTemplateName, itemName);
 
-    let unitsText;
+    let unitsText = importSet.defaultUnits;
     let description;
     const lookupSettings = [];
     _.each(importSet.columns, (column) => {
@@ -2148,7 +2151,7 @@ const addSubProductsFromWorkbook = (workbook, workbookMetadata, bidControllerDat
                   const extraColumnOffset = columnIndex * columnStep;
                   const priceColumn = {...column, columnOffset: column.columnOffset + extraColumnOffset};
                   const priceValue = getColumnValue(priceColumn, rowStartCellAddress, worksheet);
-                  const productWithOptionSku = LookupsHelper.getSquishedKey(newTemplateName, itemName, conditionSwitchValues[columnIndex]);
+                  const productWithOptionSku = StringUtils.squish(newTemplateName, itemName, conditionSwitchValues[columnIndex]);
                   const productName = `${itemName} - ${conditionSwitchValues[columnIndex]}`;
                   const productDescription = description && `${description} - ${conditionSwitchValues[columnIndex]}`;
                   const unitsTextToUse = conditionSwitchUnits.length ? conditionSwitchUnits[columnIndex] : unitsText;

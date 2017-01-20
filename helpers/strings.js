@@ -24,8 +24,16 @@ const toVariableName = (text) => {
   return variableName;
 };
 
+// with inputs like ['car key', 'House Key'] expect return like 'carkey|HouseKey'
+const squish = (...inputs) => {
+  return _.reduce(inputs, (memo, input) => {
+    return `${memo}${memo.length > 0 ? '|' : ''}${input.replace(/\s/g, '')}`;
+  }, '');
+}
+
 StringUtils = {
   camelCase,
   charIsDigit,
+  squish,
   toVariableName,
 }
