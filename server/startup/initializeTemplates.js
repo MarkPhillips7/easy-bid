@@ -1010,6 +1010,37 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             },
           },
         }, {
+          type: Constants.importSetTypes.lookups,
+          lookupType: 'Range',
+          lookupSubType: 'Drawer Slide Depths',
+          rangeLabel: 'Cabinet Depth',
+          sheet: '1. Job Info.',
+          cellRange: 'E68:L77',
+          columns: [
+            {
+              header: { lookupSetting: Constants.lookupSettingKeys.min, },
+              columnOffset: 0,
+            }, {
+              header: { lookupSetting: Constants.lookupSettingKeys.max, },
+              columnOffset: 1,
+            }, {
+              header: { lookupKey: 'Std. Epoxy', },
+              columnOffset: 3,
+            }, {
+              header: { lookupKey: 'Full-Extension', },
+              columnOffset: 4,
+            }, {
+              header: { lookupKey: 'Full-ext. soft close', },
+              columnOffset: 5,
+            }, {
+              header: { lookupKey: 'Undermount', },
+              columnOffset: 6,
+            }, {
+              header: { lookupKey: 'Undermount soft close', },
+              columnOffset: 7,
+            }
+          ],
+        }, {
           // formulaReferences only used to identify variables. Should appear before calculations that might reference it
           // same cells can also be used for calculations
           type: Constants.importSetTypes.formulaReferences,
@@ -1090,8 +1121,14 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               name: 'Hardware',
             },
           }, {
-            subsetCellRange: 'DN11:DN24',
+            subsetCellRange: 'BM11:BM24',
             ignore: true,
+          }, {
+            subsetCellRange: 'BN11:BN24',
+            ignore: true,
+          }, {
+            subsetCellRange: 'DN11:DN24',
+            templateFormula: 'lookup(depth,"Range","Drawer Slide Depth",slideType)',
           },],
         }
       ],
@@ -1116,6 +1153,11 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Standard', undefined, Constants.lookupTypes.standard, [
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-arrow-up fa-stack-1x'},
+      ], undefined, undefined, userInfo.systemAdminUserId);
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
+      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Range', undefined, Constants.lookupTypes.range, [
+        {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
+        {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-arrows-h fa-stack-1x'},
       ], undefined, undefined, userInfo.systemAdminUserId);
 
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
@@ -1184,6 +1226,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           break;
         case Constants.importSetTypes.formulaReferences:
           TemplateLibrariesHelper.addFormulaReferencesFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet, replacementsByCell);
+          break;
+        case Constants.importSetTypes.lookups:
+          TemplateLibrariesHelper.addLookupsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet, replacementsByCell);
           break;
       }
     });

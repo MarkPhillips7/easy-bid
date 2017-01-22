@@ -2018,7 +2018,9 @@ const addCalculationsFromWorkbook = (workbook, workbookMetadata, bidControllerDa
         categoryName = SpreadsheetUtils.getCellValue(startCellAddressString, worksheet, {rowOffset: categoryRowOffset, columnOffset});
       }
     }
-    if (excelFormula) {
+    if (subsetOverrides.templateFormula) {
+      templateFormula = subsetOverrides.templateFormula;
+    } else if (excelFormula) {
       templateFormula = SpreadsheetUtils.excelFormulaToParserFormula(excelFormula, workbook, workbookMetadata, formulaCellAddressString);
       templateFormula = SpreadsheetUtils.replaceCellAddressesInFormula(templateFormula, replacementsByCell,
         formulaRowOffset, importSet, subsetOverridesByColumnOffset, workbook,
@@ -2039,6 +2041,55 @@ const addCalculationsFromWorkbook = (workbook, workbookMetadata, bidControllerDa
     }
     addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.variableName, variableName, order++);
     addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.valueFormula, templateFormula, order++);
+  }
+}
+
+const addLookupsFromWorkbook = (workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet, replacementsByCell) => {
+  const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, templateCabinet.id);
+  if (!workbook) {
+    throw 'workbook must be set in addLookupsFromWorkbook';
+  }
+  const worksheet = workbook.Sheets[importSet.sheet];
+  const {columnCount, rowCount, startCellAddressString} = SpreadsheetUtils.getCellRangeInfo(importSet.cellRange);
+  let startCellAddressObject = SpreadsheetUtils.decode_cell(startCellAddressString);
+  const {lookupType, lookupSubType, rangeLabel} = importSet;
+
+  for (let i = 0; i < rowCount; i++) {
+    const rowStartCellAddress = {...startCellAddressObject, r: startCellAddressObject.r + i};
+    const rowStartCell = SpreadsheetUtils.encode_cell(rowStartCellAddress);
+    const rowStartCellValue = worksheet[rowStartCell] && worksheet[rowStartCell].v;
+    // Expect blank rows, just ignore them
+    if (rowStartCellValue === undefined || rowStartCellValue === null || rowStartCellValue === '') {
+      continue;
+    }
+
+    const lookupSettings = [];
+    _.each(importSet.columns, (column) => {
+      const columnValue = getColumnValue(column, rowStartCellAddress, worksheet);
+      if (columnValue !== undefined && columnValue != null && columnValue !== '') {
+        if (column.header.lookupKey) {
+          const lookupKey = column.header.lookupKey;
+          switch (lookupType) {
+            case Constants.lookupTypes.range:
+              const rangeMin = lookupSettings[0].value;
+              const rangeMax = lookupSettings[1].value;
+              LookupsHelper.addRangeLookup(templateLibrary, lookups, lookupSubType, lookupKey,
+                rangeLabel, rangeMin, rangeMax, columnValue, undefined, lookupSettings);
+              break;
+            default:
+              console.log(`Unexpected lookupType '${lookupType}' in addLookupsFromWorkbook`);
+              break;
+          }
+        } else if (column.header.lookupSetting) {
+          const lookupSetting = {
+            id: Random.id(),
+            key: column.header.lookupSetting,
+            value: columnValue,
+          };
+          lookupSettings.push(lookupSetting);
+        }
+      }
+    });
   }
 }
 
@@ -2223,6 +2274,7 @@ const getTemplateLibraryOptions = ({templateLibraries}, $filter, selectedTemplat
 TemplateLibrariesHelper = {
   addCalculationsFromWorkbook,
   addFormulaReferencesFromWorkbook,
+  addLookupsFromWorkbook,
   addSubProductsFromWorkbook,
   addSpecificationOptionsFromWorkbook,
   addTemplate,

@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container-fluid">
   <div class="row">
     <div class="col-sm-12">
       <div class="alert alert-info" ng-hide="$root.currentUser || $root.loggingIn">
@@ -150,7 +150,7 @@
           </div>
           <a href="/lookups/{{lookup._id}}" class="eb-list-group-item-main-a">
             <div class="row">
-              <div class="col-sm-7">
+              <div class="{{lookup.lookupType === 'Price' || lookup.lookupType === 'Range' ? 'col-sm-8' : 'col-sm-6'}}">
                 <span class="eb-list-group-item-main-a-left">
                   <span class="fa-stack">
                     <i class={{lookups.getIconStack2xClass(lookup.lookupType)}}></i>
@@ -161,7 +161,7 @@
                   <strong data-ng-show="lookup.name !== lookup.value">{{lookup.name}}</strong>
                 </span>
               </div>
-              <div class="col-sm-5">
+              <div class="{{lookup.lookupType === 'Price' || lookup.lookupType === 'Range' ? 'col-sm-4' : 'col-sm-6'}}">
                 <span class="eb-price" data-ng-show="lookup.lookupType === 'Price'">
                   {{lookup.value | ebunitsfilter:'$'}}
                 </span>

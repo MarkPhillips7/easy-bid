@@ -40,6 +40,8 @@ Constants.lookupSettingKeys = {
   iconType:"IconType",
   iconStack1xClass:"IconStack1xClass",
   iconStack2xClass:"IconStack2xClass",
+  min:"Min",
+  max:"Max",
   size:"Size",
   unitsText:"UnitsText",
 };
@@ -48,6 +50,7 @@ Constants.lookupTypes = {
   hierarchical:"Hierarchical",
   label:"Label",
   price:"Price",
+  range:"Range", // lookup value within min and max range values
   standard:"Standard",
 };
 
