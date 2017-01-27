@@ -62,10 +62,10 @@ Constants.lookupSubTypes = {
   product: "Product",
 };
 
-Constants.lookupKeys = {
-  // lookupType: "Lookup Type",
-  root: Constants.hierarchyRoot,
-};
+// Constants.lookupKeys = {
+//   // lookupType: "Lookup Type",
+//   root: Constants.hierarchyRoot,
+// };
 
 Constants.noEmailYet = "noemailyet";
 

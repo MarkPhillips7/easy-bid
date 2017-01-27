@@ -422,6 +422,14 @@ const addProductSkuLookup = (templateLibrary, lookups, generalProductName, produ
   });
 }
 
+const addStandardLookup = (templateLibrary, lookups, lookupType, lookupSubType, key, name, description, value,
+    lookupSettings, effectiveDate, expirationDate, userId) => {
+  addLookup(templateLibrary, lookups, Constants.lookupTypes.hierarchical, Constants.lookupSubTypes.lookupSubType,
+    `${Constants.hierarchyRoot}${lookupType}`, lookupSubType, undefined, lookupSubType, undefined, undefined, undefined, userId);
+  addLookup(templateLibrary, lookups, lookupType, lookupSubType, key, name, description, value,
+    lookupSettings, effectiveDate, expirationDate, userId);
+}
+
 const getDateStatus = (lookup) => {
   if (!lookup.effectiveDate) {
     return Constants.dateStatuses.neverEffective;
@@ -524,6 +532,7 @@ LookupsHelper = {
   addPriceLookup,
   addProductSkuLookup,
   addRangeLookup,
+  addStandardLookup,
   getDateStatus,
   getDateStatusIconClass,
   getDateStatusText,

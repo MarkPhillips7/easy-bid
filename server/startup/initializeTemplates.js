@@ -576,6 +576,30 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           }
         }, {
           type: Constants.importSetTypes.subProducts,
+          generalProductName: 'Labor Rate',
+          defaultUnits: 'Minute',
+          sheet: 'Price List',
+          cellRange: 'Q10:S19',
+          columns: [
+            {
+              header: {
+                conditionSwitchVariable: 'priceType',
+                values: ['Minute', 'Hour'],
+                units: ['Minute', 'Hour'],
+              },
+              columnOffset: 1, // R10
+              columnCount: 2, // R10, S10
+            }, {
+              // price should be defined after all other column settings
+              header: { customProperty: 'price', }, // override priceEach
+              columnOffset: 1,
+            }
+          ],
+          category: {
+            name: 'Labor',
+          }
+        }, {
+          type: Constants.importSetTypes.subProducts,
           generalProductName: '.75 Case Material',
           defaultUnits: 'sq-ft',
           sheet: 'Price List',
@@ -1011,7 +1035,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           },
         }, {
           type: Constants.importSetTypes.lookups,
-          lookupType: 'Range',
+          lookupType: Constants.lookupTypes.range,
           lookupSubType: 'Drawer Slide Depths',
           rangeLabel: 'Cabinet Depth',
           sheet: '1. Job Info.',
@@ -1040,6 +1064,124 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               columnOffset: 7,
             }
           ],
+        }, {
+          type: Constants.importSetTypes.lookups,
+          lookupType: Constants.lookupTypes.standard,
+          lookupSubType: 'Material Finish',
+          sheet: '1. Job Info.',
+          cellRange: 'G86:U95',
+          columns: [
+            {
+              header: {
+                lookupKeySuffixes: [
+                  'No|No|No|none',
+                  'Yes|No|No|Laminated',
+                  'No|No|Yes|Laminated',
+                  'Yes|No|Yes|Laminated',
+                  'Yes|No|No|AppliedPanel',
+                  'No|No|Yes|AppliedPanel',
+                  'Yes|No|Yes|AppliedPanel',
+                  'No|Yes|No|none',
+                  'Yes|Yes|No|Laminated',
+                  'No|Yes|Yes|Laminated',
+                  'Yes|Yes|Yes|Laminated',
+                  'Yes|Yes|No|AppliedPanel',
+                  'No|Yes|Yes|AppliedPanel',
+                  'Yes|Yes|Yes|AppliedPanel'
+                ],
+                lookupNameSuffixes: [
+                  'Closed - No finished ends',
+                  'Closed - Left finished end - Laminated',
+                  'Closed - Right finished end - Laminated',
+                  'Closed - Both finished ends - Laminated',
+                  'Closed - Left finished end - Applied Panel',
+                  'Closed - Right finished end - Applied Panel',
+                  'Closed - Both finished ends - Applied Panel',
+                  'Open - No finished ends',
+                  'Open - Left finished end - Laminated',
+                  'Open - Right finished end - Laminated',
+                  'Open - Both finished ends - Laminated',
+                  'Open - Left finished end - Applied Panel',
+                  'Open - Right finished end - Applied Panel',
+                  'Open - Both finished ends - Applied Panel'],
+                lookupDescription: 'Key has these components squished: Case Parts, Left Finished End, Finished Interior, Right Finished End, Finished End Type',
+              },
+              // header: {
+              //   conditionSwitchVariable: 'finishedEndType',
+              //   absoluteRowOffset: -2,
+              //   namePrefix: 'Closed or open????? ',
+              // },
+              columnOffset: 1, // 'H86'
+              columnCount: 14,
+            }
+          ],
+          // expect formula to contain something like `VLOOKUP(BZ$11,Material_matrix,$BW24,FALSE)`
+          // Explicitly replacing each usage of material_matrix so commented this out
+          // vLookup: {
+          //   definedName: 'Material_matrix',
+          //   vLookupColumnNumberCases: {
+          //     // 4 really does not look like a valid value, but seems that it should be price
+          //     '4': {
+          //       lookupType: 'Price',
+          //     },
+          //   },
+          // },
+        }, {
+          type: Constants.importSetTypes.lookups,
+          lookupType: Constants.lookupTypes.standard,
+          lookupSubType: 'Labor Minutes',
+          sheet: 'Price List',
+          cellRange: 'Q23:U32',
+          columns: [
+            {
+            //   header: {
+            //     conditionSwitchVariable: 'calculationUnits',
+            //     values: [`Item`, `Sq.-ft`, `Ln.-Ft`],
+            //     absoluteRowOffset: -2,
+            //     namePrefix: 'Closed or open????? ',
+            //   },
+            //   columnOffset: 1,
+            //   columnCount: 3,
+            // }, {
+              header: { lookupSetting: 'Item' },
+              columnOffset: 1,
+            }, {
+              header: { lookupSetting: 'Sq.-ft' },
+              columnOffset: 2,
+            }, {
+              header: { lookupSetting: 'Ln.-Ft' },
+              columnOffset: 3,
+            }, {
+              header: { customProperty: 'description' },
+              columnOffset: 4,
+            }
+          ],
+        }, {
+          // formulaReferences only used to identify variables. Should appear before calculations that might reference it
+          // same cells can also be used for calculations
+          type: Constants.importSetTypes.formulaReferences,
+          // assumption is that first row represents header (like 'Height'),
+          // but formulaColumnOffset being defined means first column represents header
+          sheet: 'Price List',
+          cellRange: 'Q10:R19',
+          formulaColumnOffset: 1,
+          lookupType: Constants.lookupTypes.price,
+          isVertical: true,
+          lookupKey1: `"Labor Rate"`,
+          lookupKey3: `"Minute"`,
+        }, {
+          // formulaReferences only used to identify variables. Should appear before calculations that might reference it
+          // same cells can also be used for calculations
+          type: Constants.importSetTypes.formulaReferences,
+          // assumption is that first row represents header (like 'Height'),
+          // but formulaColumnOffset being defined means first column represents header
+          sheet: 'Price List',
+          cellRange: 'Q23:T32',
+          formulaColumnOffset: 1,
+          lookupType: Constants.lookupTypes.standard,
+          lookupSubType: `Labor Minutes`,
+          isVertical: true,
+          lookupSettingKeys: [`Item`, `Sq.-ft`, `Ln.-Ft`],
         }, {
           // formulaReferences only used to identify variables. Should appear before calculations that might reference it
           // same cells can also be used for calculations
@@ -1126,6 +1268,27 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           }, {
             subsetCellRange: 'BN11:BN24',
             ignore: true,
+          }, {
+            subsetCellRange: 'BW11:BW24',
+            ignore: true,
+          }, {
+            subsetCellRange: 'BY11:BY24',
+            templateFormula: `lookup(squish("Sides (Left)",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"Standard","Material Finish")`,
+          }, {
+            subsetCellRange: 'CA11:CA24',
+            templateFormula: `lookup(squish("Sides (Right)",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"Standard","Material Finish")`,
+          }, {
+            subsetCellRange: 'CC11:CC24',
+            templateFormula: `lookup(squish("upper top",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"Standard","Material Finish")`,
+          }, {
+            subsetCellRange: 'CE11:CE24',
+            templateFormula: `lookup(squish("upper bottom",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"Standard","Material Finish")`,
+          }, {
+            subsetCellRange: 'CG11:CG24',
+            templateFormula: `lookup(squish("nailers",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"Standard","Material Finish")`,
+          }, {
+            subsetCellRange: 'CI11:CI24',
+            templateFormula: `lookup(squish("upper top",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"Standard","Material Finish")`,
           }, {
             subsetCellRange: 'DN11:DN24',
             templateFormula: 'lookup(depth,"Range","Drawer Slide Depth",slideType)',

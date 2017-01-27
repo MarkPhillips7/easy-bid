@@ -76,7 +76,7 @@ const easyBidFunctions = {
         }
       }
       // from [`Edge Banding`,`.5mm PVC`,`ln-ft`] return something like `"EdgeBanding|.5mmPVC|ln-ft"`]
-      return `"${StringUtils.squish(squishParameters)}"`;
+      return `"${Strings.squish(squishParameters)}"`;
     }
   },
 };

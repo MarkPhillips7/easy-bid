@@ -31,7 +31,7 @@ const squish = (...inputs) => {
   }, '');
 }
 
-StringUtils = {
+Strings = {
   camelCase,
   charIsDigit,
   squish,

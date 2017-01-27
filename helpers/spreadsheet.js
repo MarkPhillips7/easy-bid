@@ -243,7 +243,7 @@ const getReplacementForVLookup = (vLookupParameters, workbook, workbookMetadata)
     return null;
   }
   // console.log(`templateName '${templateName}'`);
-  return StringUtils.toVariableName(templateName);
+  return Strings.toVariableName(templateName);
 }
 
 // replace Excel-style VLOOKUP
@@ -323,7 +323,7 @@ const getVariableNameForCellAddress = (cell, worksheet, formulaRowOffset) => {
     console.log(`expecting something to be a variable name but got '${templateName}' for ${cell}`);
     return cell;
   }
-  return StringUtils.toVariableName(templateName);
+  return Strings.toVariableName(templateName);
 }
 
 const replaceCellAddress = (cellAddressMaybeWithSheetName, replacementsByCell,
@@ -424,7 +424,7 @@ const replaceCellAddressesInFormula = (inputFormula, replacementsByCell,
     // Now that conversions to Parser format are done it is safe to add back the replacement strings.
   	result = restoreReplacementsToRestore(result, replacementsToRestore);
     // result:
-    console.log(`${formulaCellAddressString} ${variableName} = ${result}`);
+    // console.log(`${formulaCellAddressString} ${variableName} = ${result}`);
   	return result;
 }
 
