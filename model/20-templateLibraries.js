@@ -1806,26 +1806,26 @@ const addPriceTemplate = (bidControllerData, parentTemplate, defaultUnitsText, c
 //   return newTemplate;
 // }
 
-const getColumnValue = (column, rowStartCellAddress, worksheet) => {
-  let columnValue;
-  // 'if (column.columnOffset)' did not work because '(0)' is falsy
-  if (typeof column.columnOffset === 'number') {
-    columnValue = SpreadsheetUtils.getCellValue(rowStartCellAddress, worksheet, column);
-  } else if (column.value) {
-    columnValue = column.value;
+const getCellValueFromImportSetRowOrColumn = (importSetRowOrColumn, rowStartCellAddress, worksheet) => {
+  let cellValue;
+  // 'if (importSetRowOrColumn.columnOffset)' did not work because '(0)' is falsy
+  if (typeof importSetRowOrColumn.columnOffset === 'number' || typeof importSetRowOrColumn.rowOffset === 'number') {
+    cellValue = SpreadsheetUtils.getCellValue(rowStartCellAddress, worksheet, importSetRowOrColumn);
+  } else if (importSetRowOrColumn.value) {
+    cellValue = importSetRowOrColumn.value;
   }
-  if (typeof columnValue !== 'undefined' &&
-      column.valueTranslations &&
-      typeof column.valueTranslations[columnValue.toString()] !== 'undefined') {
-    columnValue = column.valueTranslations[columnValue.toString()];
+  if (typeof cellValue !== 'undefined' &&
+      importSetRowOrColumn.valueTranslations &&
+      typeof importSetRowOrColumn.valueTranslations[cellValue.toString()] !== 'undefined') {
+    cellValue = importSetRowOrColumn.valueTranslations[cellValue.toString()];
   }
-  return columnValue;
+  return cellValue;
 }
 
 const getNameColumnValue = (importSet, rowStartCellAddress, worksheet) => {
   const nameColumn = _.find(importSet.columns, (column) => column.header && column.header.templateProperty && column.header.templateProperty === 'name');
   if (nameColumn) {
-    return getColumnValue(nameColumn, rowStartCellAddress, worksheet);
+    return getCellValueFromImportSetRowOrColumn(nameColumn, rowStartCellAddress, worksheet);
   }
   // name is at columnOffset of 0 by default
   return SpreadsheetUtils.getCellValue(rowStartCellAddress, worksheet, {});
@@ -1834,7 +1834,7 @@ const getNameColumnValue = (importSet, rowStartCellAddress, worksheet) => {
 const getConditionColumnValue = (importSet, rowStartCellAddress, worksheet) => {
   const conditionSwitchColumn = _.find(importSet.columns, (column) => column.header && column.header.conditionSwitchVariable);
   if (conditionSwitchColumn) {
-    return getColumnValue(conditionSwitchColumn, rowStartCellAddress, worksheet);
+    return getCellValueFromImportSetRowOrColumn(conditionSwitchColumn, rowStartCellAddress, worksheet);
   }
   // name is at columnOffset of 0 by default
   return SpreadsheetUtils.getCellValue(rowStartCellAddress, worksheet, {});
@@ -1932,11 +1932,9 @@ const getSubsetSettingsByColumnOffset = (importSet) => {
   _.each(importSet.subsetOverrides, (subsetSetting) => {
     const {columnCount: subsetColumnCount, startCellAddressString: subsetStartCellAddressString} =
       SpreadsheetUtils.getCellRangeInfo(subsetSetting.subsetCellRange);
-    console.log(`subsetColumnCount: ${subsetColumnCount}, subsetStartCellAddressString: ${subsetStartCellAddressString}`);
     const subsetOverridesStartCellAddress = SpreadsheetUtils.decode_cell(subsetStartCellAddressString);
     for (let columnCounter = 0; columnCounter < subsetColumnCount; columnCounter++) {
       const columnOffset = columnCounter + subsetOverridesStartCellAddress.c - startCellAddressObject.c;
-      console.log(`columnOffset: ${columnOffset}, subsetOverridesStartCellAddress.c: ${subsetOverridesStartCellAddress.c}, ${startCellAddressObject.c}`);
       if (columnOffset >= 0 && columnOffset < columnCount) {
         // update the subset settings for this columnOffset
         subsetOverridesByColumnOffset[columnOffset] = {...subsetOverridesByColumnOffset[columnOffset], ...subsetSetting};
@@ -1988,9 +1986,9 @@ const addCalculationsFromWorkbook = (workbook, workbookMetadata, bidControllerDa
     // console.log(`formula ${formulaCellAddressString}`);
     let newTemplateName;
     let variableName;
-    if (replacementsByCell[formulaCellAddressString]) {
-      variableName = replacementsByCell[formulaCellAddressString].replacement;
-      newTemplateName = replacementsByCell[formulaCellAddressString].templateName;
+    if (replacementsByCell[formulaCellAddressString.replace(/\$/g, '')]) {
+      variableName = replacementsByCell[formulaCellAddressString.replace(/\$/g, '')].replacement;
+      newTemplateName = replacementsByCell[formulaCellAddressString.replace(/\$/g, '')].templateName;
       if (!newTemplateName) {
         continue;
       }
@@ -2063,68 +2061,141 @@ const addLookupsFromWorkbook = (workbook, workbookMetadata, bidControllerData, l
   if (!workbook) {
     throw 'workbook must be set in addLookupsFromWorkbook';
   }
-  const worksheet = workbook.Sheets[importSet.sheet];
-  const {columnCount, rowCount, startCellAddressString} = SpreadsheetUtils.getCellRangeInfo(importSet.cellRange);
+  const {lookupType, lookupSubType, rangeLabel, columns, rows, cellRange, sheet, lookupKeys, lookupNames} = importSet;
+  const worksheet = workbook.Sheets[sheet];
+  const {columnCount, rowCount, startCellAddressString} = SpreadsheetUtils.getCellRangeInfo(cellRange);
   let startCellAddressObject = SpreadsheetUtils.decode_cell(startCellAddressString);
-  const {lookupType, lookupSubType, rangeLabel} = importSet;
 
-  for (let i = 0; i < rowCount; i++) {
-    const rowStartCellAddress = {...startCellAddressObject, r: startCellAddressObject.r + i};
-    const rowStartCell = SpreadsheetUtils.encode_cell(rowStartCellAddress);
-    const rowStartCellValue = worksheet[rowStartCell] && worksheet[rowStartCell].v;
-    // Expect blank rows, just ignore them
-    if (rowStartCellValue === undefined || rowStartCellValue === null || rowStartCellValue === '') {
-      continue;
+  if (importSet.dataOrientation === Constants.dataOrientations.vertical) {
+    for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+      const rowStartCellAddress = {...startCellAddressObject, r: startCellAddressObject.r + rowIndex};
+      const rowStartCell = SpreadsheetUtils.encode_cell(rowStartCellAddress);
+      const rowStartCellValue = worksheet[rowStartCell] && worksheet[rowStartCell].v;
+      // Expect blank rows, just ignore them
+      if (rowStartCellValue === undefined || rowStartCellValue === null || rowStartCellValue === '') {
+        continue;
+      }
+
+      const lookupSettings = [];
+      _.each(columns, (column) => {
+        const columnValue = getCellValueFromImportSetRowOrColumn(column, rowStartCellAddress, worksheet);
+        if (columnValue !== undefined && columnValue != null && columnValue !== '') {
+          if (column.header.lookupKeySuffixes) {
+            switch (lookupType) {
+              case Constants.lookupTypes.standard:
+                const columnStep = column.columnStep || 1;
+                for (let columnIndex = 0; columnIndex < column.columnCount; columnIndex ++) {
+                  const extraColumnOffset = columnIndex * columnStep;
+                  const lookupKey = Strings.squish(rowStartCellValue, column.header.lookupKeySuffixes[columnIndex]);
+                  const lookupName = column.header.lookupNameSuffixes.length ? `${rowStartCellValue} - ${column.header.lookupNameSuffixes[columnIndex]}` : '???';
+                  const lookupValueColumn = {...column, columnOffset: column.columnOffset + extraColumnOffset};
+                  lookupValue = getCellValueFromImportSetRowOrColumn(lookupValueColumn, rowStartCellAddress, worksheet);
+                  const lookupDescription = column.header.lookupDescription;
+                  LookupsHelper.addStandardLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey,
+                    lookupName, lookupDescription, lookupValue, lookupSettings);
+                }
+                break;
+            }
+          } else if (column.header.lookupKey) {
+            let lookupKey = column.header.lookupKey;
+            switch (lookupType) {
+              case Constants.lookupTypes.range:
+                const rangeMin = lookupSettings[0].value;
+                const rangeMax = lookupSettings[1].value;
+                LookupsHelper.addRangeLookup(templateLibrary, lookups, lookupSubType, lookupKey,
+                  rangeLabel, rangeMin, rangeMax, columnValue, undefined, lookupSettings);
+                break;
+              default:
+                console.log(`Unexpected lookupType '${lookupType}' in addLookupsFromWorkbook`);
+                break;
+            }
+          } else if (column.header.lookupSetting) {
+            const lookupSetting = {
+              id: Random.id(),
+              key: column.header.lookupSetting,
+              value: columnValue,
+            };
+            lookupSettings.push(lookupSetting);
+          } else if (column.header.customProperty === 'description') {
+            const lookupKey = rowStartCellValue;
+            const lookupName = `${rowStartCellValue} - ${columnValue}`;
+            LookupsHelper.addStandardLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey,
+              lookupName, lookupName, lookupName, lookupSettings);
+          }
+        }
+      });
     }
+  } else { // dataOrientation horizontal
+    for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+      const columnStartCellAddress = {...startCellAddressObject, c: startCellAddressObject.c + columnIndex};
+      const columnStartCell = SpreadsheetUtils.encode_cell(columnStartCellAddress);
+      const columnStartCellValue = worksheet[columnStartCell] && worksheet[columnStartCell].v;
+      // Expect blank columns, just ignore them
+      if (columnStartCellValue === undefined || columnStartCellValue === null || columnStartCellValue === '') {
+        continue;
+      }
 
-    const lookupSettings = [];
-    _.each(importSet.columns, (column) => {
-      const columnValue = getColumnValue(column, rowStartCellAddress, worksheet);
-      if (columnValue !== undefined && columnValue != null && columnValue !== '') {
-        if (column.header.lookupKeySuffixes) {
-          switch (lookupType) {
-            case Constants.lookupTypes.standard:
-              const columnStep = column.columnStep || 1;
-              for (let columnIndex = 0; columnIndex < column.columnCount; columnIndex ++) {
-                const extraColumnOffset = columnIndex * columnStep;
-                const lookupKey = Strings.squish(rowStartCellValue, column.header.lookupKeySuffixes[columnIndex]);
-                const lookupName = column.header.lookupNameSuffixes.length ? `${rowStartCellValue} - ${column.header.lookupNameSuffixes[columnIndex]}` : '???';
-                const lookupValueColumn = {...column, columnOffset: column.columnOffset + extraColumnOffset};
-                lookupValue = getColumnValue(lookupValueColumn, rowStartCellAddress, worksheet);
-                const lookupDescription = column.header.lookupDescription;
-                LookupsHelper.addStandardLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey,
-                  lookupName, lookupDescription, lookupValue, lookupSettings);
-              }
-              break;
+      const lookupSettings = [];
+      _.each(rows, (row) => {
+        const rowValue = getCellValueFromImportSetRowOrColumn(row, columnStartCellAddress, worksheet);
+        if (rowValue !== undefined && rowValue != null && rowValue !== '') {
+          if (row.header.lookupKeySuffixes) {
+            switch (lookupType) {
+              case Constants.lookupTypes.standard:
+                const rowStep = row.rowStep || 1;
+                for (let rowIndex = 0; rowIndex < row.rowCount; rowIndex ++) {
+                  const extraRowOffset = rowIndex * rowStep;
+                  const lookupKey = Strings.squish(columnStartCellValue, row.header.lookupKeySuffixes[rowIndex]);
+                  const lookupName = row.header.lookupNameSuffixes.length ? `${columnStartCellValue} - ${row.header.lookupNameSuffixes[rowIndex]}` : '???';
+                  const lookupValueRow = {...row, rowOffset: row.rowOffset + extraRowOffset};
+                  lookupValue = getCellValueFromImportSetRowOrColumn(lookupValueRow, columnStartCellAddress, worksheet);
+                  const lookupDescription = row.header.lookupDescription;
+                  LookupsHelper.addStandardLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey,
+                    lookupName, lookupDescription, lookupValue, lookupSettings);
+                }
+                break;
+            }
+          } else if (row.header.lookupKey) {
+            let lookupKey = row.header.lookupKey;
+            switch (lookupType) {
+              case Constants.lookupTypes.range:
+                const rangeMin = lookupSettings[0].value;
+                const rangeMax = lookupSettings[1].value;
+                LookupsHelper.addRangeLookup(templateLibrary, lookups, lookupSubType, lookupKey,
+                  rangeLabel, rangeMin, rangeMax, rowValue, undefined, lookupSettings);
+                break;
+              default:
+                console.log(`Unexpected lookupType '${lookupType}' in addLookupsFromWorkbook`);
+                break;
+            }
+          } else if (row.header.lookupSetting) {
+            const lookupSetting = {
+              id: Random.id(),
+              key: row.header.lookupSetting,
+              value: rowValue,
+            };
+            lookupSettings.push(lookupSetting);
+          } else if (row.header.customProperty === 'description') {
+            const lookupKey = columnStartCellValue;
+            const lookupName = `${columnStartCellValue} - ${rowValue}`;
+            LookupsHelper.addStandardLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey,
+              lookupName, lookupName, lookupName, lookupSettings);
           }
-        } else if (column.header.lookupKey) {
-          let lookupKey = column.header.lookupKey;
-          switch (lookupType) {
-            case Constants.lookupTypes.range:
-              const rangeMin = lookupSettings[0].value;
-              const rangeMax = lookupSettings[1].value;
-              LookupsHelper.addRangeLookup(templateLibrary, lookups, lookupSubType, lookupKey,
-                rangeLabel, rangeMin, rangeMax, columnValue, undefined, lookupSettings);
-              break;
-            default:
-              console.log(`Unexpected lookupType '${lookupType}' in addLookupsFromWorkbook`);
-              break;
-          }
-        } else if (column.header.lookupSetting) {
-          const lookupSetting = {
-            id: Random.id(),
-            key: column.header.lookupSetting,
-            value: columnValue,
-          };
-          lookupSettings.push(lookupSetting);
-        } else if (column.header.customProperty === 'description') {
-          const lookupKey = rowStartCellValue;
-          const lookupName = `${rowStartCellValue} - ${columnValue}`;
-          LookupsHelper.addStandardLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey,
-            lookupName, lookupName, lookupName, lookupSettings);
+        }
+      });
+      if (lookupKeys) {
+        switch (lookupType) {
+          case Constants.lookupTypes.standard:
+            const lookupKey = lookupKeys[columnIndex];
+            lookupValue = LookupsHelper.getLookupSettingsSummary(lookupSettings);
+            const lookupName = (lookupNames && lookupNames.length) ? lookupNames[columnIndex] : lookupValue;
+            const lookupDescription = undefined;
+            LookupsHelper.addStandardLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey,
+              lookupName, lookupDescription, lookupValue, lookupSettings);
+            break;
         }
       }
-    });
+    }
   }
 }
 
@@ -2136,7 +2207,7 @@ const addFormulaReferencesFromWorkbook = (workbook, workbookMetadata, bidControl
   const worksheet = workbook.Sheets[importSet.sheet];
   const {columnCount, rowCount, startCellAddressString} = SpreadsheetUtils.getCellRangeInfo(importSet.cellRange);
 
-  if (importSet.isVertical) {
+  if (importSet.dataOrientation === Constants.dataOrientations.vertical) {
     // Change this if subsetOverrides ever get used in this case
     const subsetOverrides = {};
     for (let rowOffset = 0; rowOffset < rowCount; rowOffset++) {
@@ -2146,26 +2217,26 @@ const addFormulaReferencesFromWorkbook = (workbook, workbookMetadata, bidControl
         const formulaColumnOffset = subsetOverrides.formulaColumnOffset || importSet.formulaColumnOffset;
         const formulaCellAddressString = SpreadsheetUtils.getCellAddressString(startCellAddressString, {rowOffset, columnOffset: formulaColumnOffset || 0});
         const splitCell = SpreadsheetUtils.split_cell(formulaCellAddressString);
-        const formulaCellAddressStringWithSheet = `'${importSet.sheet}'!$${splitCell[0]}$${splitCell[1]}`;
+        const formulaCellAddressStringWithSheet = `'${importSet.sheet}'!${splitCell[0]}${splitCell[1]}`;
         console.log(`${formulaCellAddressStringWithSheet} => replacement: ${lookupCall}`);
         replacementsByCell[formulaCellAddressStringWithSheet] = {
           replacement: lookupCall,
           // templateName
         };
-      } else {
-        const productName = SpreadsheetUtils.getCellValue(startCellAddressString, worksheet, {rowOffset});
+      } else if (importSet.cellRepresentation === 'lookupSetting'){
+        const lookupKey = importSet.lookupKeys ? importSet.lookupKeys[rowOffset]
+          : SpreadsheetUtils.getCellValue(startCellAddressString, worksheet, {rowOffset});
         let lookupSettingKeyIndex = 0;
         for (let columnOffset = importSet.formulaColumnOffset; columnOffset < columnCount; columnOffset++) {
           const lookupSettingKey = importSet.lookupSettingKeys[lookupSettingKeyIndex++];
-          const lookupCall = `lookup("${productName}","Standard","${importSet.lookupSubType}","${lookupSettingKey}")`;
+          const lookupCall = `lookup("${lookupKey}","Standard","${importSet.lookupSubType}","${lookupSettingKey}")`;
           // const formulaColumnOffset = subsetOverrides.formulaColumnOffset || importSet.formulaColumnOffset;
           const formulaCellAddressString = SpreadsheetUtils.getCellAddressString(startCellAddressString, {rowOffset, columnOffset});
           const splitCell = SpreadsheetUtils.split_cell(formulaCellAddressString);
-          const formulaCellAddressStringWithSheet = `'${importSet.sheet}'!$${splitCell[0]}$${splitCell[1]}`;
+          const formulaCellAddressStringWithSheet = `'${importSet.sheet}'!${splitCell[0]}${splitCell[1]}`;
           console.log(`${formulaCellAddressStringWithSheet} => replacement: ${lookupCall}`);
           replacementsByCell[formulaCellAddressStringWithSheet] = {
             replacement: lookupCall,
-            // templateName
           }
         }
       }
@@ -2173,19 +2244,41 @@ const addFormulaReferencesFromWorkbook = (workbook, workbookMetadata, bidControl
   } else {
     const subsetOverridesByColumnOffset = getSubsetSettingsByColumnOffset(importSet);
     for (let columnOffset = 0; columnOffset < columnCount; columnOffset++) {
-      const subsetOverrides = subsetOverridesByColumnOffset[columnOffset];
-      const templateName = getTemplateName(subsetOverrides, startCellAddressString, worksheet, columnOffset, importSet, replacementsByCell);
-      if (!templateName) {
-        continue;
+      if (importSet.cellRepresentation === 'lookupSetting') {
+        const lookupKey = importSet.lookupKeys ? importSet.lookupKeys[columnOffset]
+          : SpreadsheetUtils.getCellValue(startCellAddressString, worksheet, {columnOffset});
+        let lookupSettingKeyIndex = 0;
+        for (let rowOffset = importSet.formulaRowOffset; rowOffset < rowCount; rowOffset++) {
+          const lookupSettingKey = importSet.lookupSettingKeys[lookupSettingKeyIndex++];
+          const lookupCall = `lookup("${lookupKey}","Standard","${importSet.lookupSubType}","${lookupSettingKey}")`;
+          const formulaCellAddressString = SpreadsheetUtils.getCellAddressString(startCellAddressString, {rowOffset, columnOffset});
+          const splitCell = SpreadsheetUtils.split_cell(formulaCellAddressString);
+          const formulaCellAddressStringWithSheet = `'${importSet.sheet}'!${splitCell[0]}${splitCell[1]}`;
+          console.log(`${formulaCellAddressStringWithSheet} => replacement: ${lookupCall}`);
+          replacementsByCell[formulaCellAddressStringWithSheet] = {
+            replacement: lookupCall,
+          };
+          // should probably include only sheet and then decide whether it's needed when looking it up, but due to laziness...
+          console.log(`${formulaCellAddressString} => replacement: ${lookupCall}`);
+          replacementsByCell[formulaCellAddressString] = {
+            replacement: lookupCall,
+          };
+        }
+      } else {
+        const subsetOverrides = subsetOverridesByColumnOffset[columnOffset];
+        const templateName = getTemplateName(subsetOverrides, startCellAddressString, worksheet, columnOffset, importSet, replacementsByCell);
+        if (!templateName) {
+          continue;
+        }
+        const variableName = Strings.toVariableName(templateName);
+        const formulaRowOffset = subsetOverrides.formulaRowOffset || importSet.formulaRowOffset;
+        const formulaCellAddressString = SpreadsheetUtils.getCellAddressString(startCellAddressString, {rowOffset: formulaRowOffset || 0, columnOffset});
+        console.log(`${formulaCellAddressString} => replacement: ${variableName}, templateName: ${templateName}`);
+        replacementsByCell[formulaCellAddressString] = {
+          replacement: variableName,
+          templateName
+        };
       }
-      const variableName = Strings.toVariableName(templateName);
-      const formulaRowOffset = subsetOverrides.formulaRowOffset || importSet.formulaRowOffset;
-      const formulaCellAddressString = SpreadsheetUtils.getCellAddressString(startCellAddressString, {rowOffset: formulaRowOffset || 0, columnOffset});
-      console.log(`${formulaCellAddressString} => replacement: ${variableName}, templateName: ${templateName}`);
-      replacementsByCell[formulaCellAddressString] = {
-        replacement: variableName,
-        templateName
-      };
     }
   }
 }
@@ -2243,7 +2336,7 @@ const addSubProductsFromWorkbook = (workbook, workbookMetadata, bidControllerDat
     let description;
     const lookupSettings = [];
     _.each(importSet.columns, (column) => {
-      const columnValue = getColumnValue(column, rowStartCellAddress, worksheet);
+      const columnValue = getCellValueFromImportSetRowOrColumn(column, rowStartCellAddress, worksheet);
       if (columnValue !== undefined && columnValue != null && columnValue !== '') {
         // if (column.header.templateProperty) {
         //   newTemplate[column.header.templateProperty] = columnValue;
@@ -2269,7 +2362,7 @@ const addSubProductsFromWorkbook = (workbook, workbookMetadata, bidControllerDat
                 for (let columnIndex = 0; columnIndex < conditionSwitchColumn.columnCount; columnIndex ++) {
                   const extraColumnOffset = columnIndex * columnStep;
                   const priceColumn = {...column, columnOffset: column.columnOffset + extraColumnOffset};
-                  const priceValue = getColumnValue(priceColumn, rowStartCellAddress, worksheet);
+                  const priceValue = getCellValueFromImportSetRowOrColumn(priceColumn, rowStartCellAddress, worksheet);
                   const productWithOptionSku = Strings.squish(newTemplateName, itemName, conditionSwitchValues[columnIndex]);
                   const productName = `${itemName} - ${conditionSwitchValues[columnIndex]}`;
                   const productDescription = description && `${description} - ${conditionSwitchValues[columnIndex]}`;

@@ -2,6 +2,11 @@ Constants.conditionTypes = {
   switch:"Switch",
 }
 
+Constants.dataOrientations = {
+  horizontal: "Horizontal",
+  vertical: "Vertical",
+}
+
 Constants.dateStatuses = {
   neverEffective: "NeverEffective",
   effectiveInPastNoExpiration: "EffectiveInPastNoExpiration",
@@ -29,6 +34,7 @@ Constants.hierarchyRoot = "-";
 Constants.importSetTypes = {
   calculations: 'Calculations',
   formulaReferences: 'FormulaReferences',
+  lookups: 'Lookups',
   products: 'Products',
   specificationOptions: 'SpecificationOptions',
   subProducts: 'SubProducts',

@@ -526,6 +526,10 @@ const getDateStatusOptions = () => {
   ];
 }
 
+const getLookupSettingsSummary = (lookupSettings) => {
+  return _.reduce(lookupSettings, (memo, setting) => `${memo}${memo.length ? ', ' : ''}${setting.key} ${setting.value}`, '');
+}
+
 LookupsHelper = {
   addLookup,
   addOptionLookup,
@@ -541,6 +545,7 @@ LookupsHelper = {
   getIconStack2xClass,
   getLookupKeyOptions,
   getLookupValue,
+  getLookupSettingsSummary,
   getLookupSubTypeOptions,
   getLookupTypeOptions,
   getDateStatusOptions,

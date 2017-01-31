@@ -328,8 +328,8 @@ const getVariableNameForCellAddress = (cell, worksheet, formulaRowOffset) => {
 
 const replaceCellAddress = (cellAddressMaybeWithSheetName, replacementsByCell,
   formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet) => {
-  if (replacementsByCell[cellAddressMaybeWithSheetName]) {
-    return replacementsByCell[cellAddressMaybeWithSheetName].replacement;
+  if (replacementsByCell[cellAddressMaybeWithSheetName.replace(/\$/g, '')]) {
+    return replacementsByCell[cellAddressMaybeWithSheetName.replace(/\$/g, '')].replacement;
   }
 
   let replacement;
@@ -347,7 +347,7 @@ const replaceCellAddress = (cellAddressMaybeWithSheetName, replacementsByCell,
     // for now just return the value in that cell
     replacement = getCellValue(cellAddress, worksheetToUse, {});
   }
-  replacementsByCell[cellAddressMaybeWithSheetName] = {replacement};
+  replacementsByCell[cellAddressMaybeWithSheetName.replace(/\$/g, '')] = {replacement};
   return replacement;
 }
 

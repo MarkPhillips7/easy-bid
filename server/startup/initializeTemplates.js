@@ -1040,6 +1040,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           rangeLabel: 'Cabinet Depth',
           sheet: '1. Job Info.',
           cellRange: 'E68:L77',
+          dataOrientation: Constants.dataOrientations.vertical,
           columns: [
             {
               header: { lookupSetting: Constants.lookupSettingKeys.min, },
@@ -1070,6 +1071,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           lookupSubType: 'Material Finish',
           sheet: '1. Job Info.',
           cellRange: 'G86:U95',
+          dataOrientation: Constants.dataOrientations.vertical,
           columns: [
             {
               header: {
@@ -1132,17 +1134,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           lookupSubType: 'Labor Minutes',
           sheet: 'Price List',
           cellRange: 'Q23:U32',
+          dataOrientation: Constants.dataOrientations.vertical,
           columns: [
             {
-            //   header: {
-            //     conditionSwitchVariable: 'calculationUnits',
-            //     values: [`Item`, `Sq.-ft`, `Ln.-Ft`],
-            //     absoluteRowOffset: -2,
-            //     namePrefix: 'Closed or open????? ',
-            //   },
-            //   columnOffset: 1,
-            //   columnCount: 3,
-            // }, {
               header: { lookupSetting: 'Item' },
               columnOffset: 1,
             }, {
@@ -1157,6 +1151,55 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             }
           ],
         }, {
+          type: Constants.importSetTypes.lookups,
+          lookupType: Constants.lookupTypes.standard,
+          lookupSubType: 'Drawer Heights',
+          sheet: '2. QUOTE SHEET',
+          cellRange: 'AD8:AH9',
+          dataOrientation: Constants.dataOrientations.horizontal,
+          lookupKeys: [
+            'Drawer - 3',
+            'Drawer - 5',
+            'Drawer - 6',
+            'Drawer - 7',
+            'Drawer - 10',
+          ],
+          // lookupNames: [
+          //   'Drawer - 3',
+          //   'Drawer - 5',
+          //   'Drawer - 6',
+          //   'Drawer - 7',
+          //   'Drawer - 10',
+          // ],
+          rows: [
+            {
+              header: { lookupSetting: 'Front Height' },
+              rowOffset: 0,
+            }, {
+              header: { lookupSetting: 'Box Height' },
+              rowOffset: 1,
+            },
+          ],
+        }, {
+          // formulaReferences only used to identify variables. Should appear before calculations that might reference it
+          // same cells can also be used for calculations
+          type: Constants.importSetTypes.formulaReferences,
+          lookupType: Constants.lookupTypes.standard,
+          lookupSubType: 'Drawer Heights',
+          sheet: '2. QUOTE SHEET',
+          cellRange: 'AD8:AH9',
+          cellRepresentation: 'lookupSetting',
+          formulaRowOffset: 0,
+          dataOrientation: Constants.dataOrientations.horizontal,
+          lookupKeys: [
+            'Drawer - 3',
+            'Drawer - 5',
+            'Drawer - 6',
+            'Drawer - 7',
+            'Drawer - 10',
+          ],
+          lookupSettingKeys: [`Front Height`, `Box Height`],
+        }, {
           // formulaReferences only used to identify variables. Should appear before calculations that might reference it
           // same cells can also be used for calculations
           type: Constants.importSetTypes.formulaReferences,
@@ -1166,7 +1209,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           cellRange: 'Q10:R19',
           formulaColumnOffset: 1,
           lookupType: Constants.lookupTypes.price,
-          isVertical: true,
+          dataOrientation: Constants.dataOrientations.vertical,
           lookupKey1: `"Labor Rate"`,
           lookupKey3: `"Minute"`,
         }, {
@@ -1177,10 +1220,11 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           // but formulaColumnOffset being defined means first column represents header
           sheet: 'Price List',
           cellRange: 'Q23:T32',
+          cellRepresentation: 'lookupSetting',
           formulaColumnOffset: 1,
           lookupType: Constants.lookupTypes.standard,
           lookupSubType: `Labor Minutes`,
-          isVertical: true,
+          dataOrientation: Constants.dataOrientations.vertical,
           lookupSettingKeys: [`Item`, `Sq.-ft`, `Ln.-Ft`],
         }, {
           // formulaReferences only used to identify variables. Should appear before calculations that might reference it
