@@ -124,5 +124,6 @@ const replaceFunctionCalls = (bidControllerData, selection, valueFormula, select
 }
 
 Formulas = {
+  easyBidFunctions,
   replaceFunctionCalls,
 }

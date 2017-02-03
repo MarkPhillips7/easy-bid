@@ -183,7 +183,22 @@ const replaceAndOrExpression = (andOrExpression) => {
 	for(let index = 0;index < options.length; index++) {
 		options[index] = options[index].trim();
 	}
-	return options.join(` ${andOr} `);
+  // Since `x==5 AND y==3-1` has a different meaning
+  // than `(x==5 AND y==3)-1` enclose result in parentheses
+	return '(' + options.join(` ${andOr.toLowerCase()} `) + ')';
+}
+
+// replace Excel-style IFERROR([something],[something if the first thing failed]) with just [something]
+// Example input:   IFERROR(VLOOKUP(FK24,lookup_doorbanding,4,FALSE),0)
+// params match:       P24=="" AND FJ24!="" AND FF24=='',3,1
+// Result:          (P24=="" AND FJ24!="" AND FF24==''?3:1)
+const replaceIfErrorExpression = (ifErrorExpression) => {
+  console.log(`ifErrorExpression '${ifErrorExpression}'`);
+	const matchInfo = ifErrorExpression.match(/^IFERROR\s*\((.*)\)$/i);
+	const ifErrorParametersString = matchInfo[1];
+  const indexOfLastComma = ifErrorParametersString.lastIndexOf(',');
+
+	return ifErrorParametersString.substring(0, indexOfLastComma);
 }
 
 // replace Excel-style IF([bool],[true],[false]) expression with Parser [bool] ? [true] : [false] expression
@@ -193,12 +208,22 @@ const replaceAndOrExpression = (andOrExpression) => {
 const replaceIfExpression = (ifExpression) => {
 	const matchInfo = ifExpression.match(/^IF\s*\((.*)\)$/i);
 	const ifParameters = matchInfo[1].split(',');
-  const boolExpression = ifParameters[0];
-  const valueIfTrue = ifParameters[1];
-  const valueIfFalse = ifParameters.length > 2 ? ifParameters[2] : 0;
+  const boolExpression = ifParameters[0].trim();
+  const valueIfTrue = ifParameters[1].trim();
+  const valueIfFalse = ifParameters.length > 2 ? ifParameters[2].trim() : 0;
   // Put result in parentheses for scenarios like if(x,y,z)+if(h,j,k)
   // because x ? y : z + h ? j : k evaluates differently than (x ? y : z) + (h ? j : k)
-	return `(${boolExpression}?${valueIfTrue}:${valueIfFalse})`;
+	return `(${boolExpression} ? ${valueIfTrue} : ${valueIfFalse})`;
+}
+
+// replace Excel-style SUM(thing1, thing2, thing3) expression with (thing1 + thing2 + thing3)
+// Example input:            SUM(thing1, thing2, thing3)
+// parens + params match:       (thing1, thing2, thing3)
+// Result:                      (thing1 + thing2 + thing3)
+const replaceSum= (sumExpression) => {
+	const matchInfo = sumExpression.match(/^SUM\s*(\(.*\))$/i);
+	const parenthesesAndParameters = matchInfo[1];
+  return parenthesesAndParameters.replace(/,/g, ' +');
 }
 
 const getReplacementForVLookup = (vLookupParameters, workbook, workbookMetadata) => {
@@ -221,12 +246,12 @@ const getReplacementForVLookup = (vLookupParameters, workbook, workbookMetadata)
     switch (lookupType) {
       case Constants.lookupTypes.price:
         // want something like `lookup(squish("Door",doorStyle,"buyout"),"Price")`
-        const optionalConditionValueText = conditionValue ? `,"${conditionValue}"` : conditionVariable ? `,${conditionVariable}` : '';
-        return `lookup(squish("${importSetSource.generalProductName}",${valueToLookUp}${optionalConditionValueText}),"${lookupType}")`;
+        const optionalConditionValueText = conditionValue ? `, "${conditionValue}"` : conditionVariable ? `, ${conditionVariable}` : '';
+        return `lookup(squish("${importSetSource.generalProductName}", ${valueToLookUp}${optionalConditionValueText}), "${lookupType}")`;
       case Constants.lookupTypes.standard:
         // want something like `lookup(doorStyle,"Standard","Product","Door","Door Code")`
-        const optionalLookupSettingText = lookupSetting ? `,"${lookupSetting}"` : '';
-        return `lookup(${valueToLookUp},"${lookupType}","${lookupSubType}","${importSetSource.generalProductName}"${optionalLookupSettingText})`;
+        const optionalLookupSettingText = lookupSetting ? `, "${lookupSetting}"` : '';
+        return `lookup(${valueToLookUp}, "${lookupType}", "${lookupSubType}", "${importSetSource.generalProductName}"${optionalLookupSettingText})`;
       default:
         console.log(`Unexpected lookupType '${lookupType}' in vLookupColumnNumberCase`);
         return null;
@@ -278,10 +303,16 @@ const replaceParenthetical = (input, workbook, workbookMetadata) => {
       return replaceAndOrExpression(input);
     case 'IF':
       return replaceIfExpression(input);
+    case 'IFERROR':
+      return replaceIfErrorExpression(input);
+    case 'SUM':
+      return replaceSum(input, workbook, workbookMetadata);
     case 'VLOOKUP':
       return replaceVLookup(input, workbook, workbookMetadata);
     default:
-      return input;
+      // Excel functions usually supported by expression parser, but Parser expects lowercase
+      const leftParenIndex = input.indexOf('(');
+      return `${functionName.toLowerCase()}${input.substring(leftParenIndex)}`;
   }
 }
 
@@ -313,8 +344,9 @@ const replaceParentheticals = (input, replacementsToRestore, workbook, workbookM
   return result;
 }
 
-const shouldGetVariableNameForCellAddress = () => {
-  return true;
+const shouldGetVariableNameForCellAddress = (cellAddress) => {
+  const cellObject = getCellAddressObject(cellAddress, {});
+  return encode_row(cellObject.r) === 24;
 }
 
 const getVariableNameForCellAddress = (cell, worksheet, formulaRowOffset) => {
@@ -332,6 +364,11 @@ const replaceCellAddress = (cellAddressMaybeWithSheetName, replacementsByCell,
     return replacementsByCell[cellAddressMaybeWithSheetName.replace(/\$/g, '')].replacement;
   }
 
+  // Deal with special cases like template with name like `Sq. Ft. 3/4" Case parts (S1)`
+  if (cellAddressMaybeWithSheetName === 'S1' || cellAddressMaybeWithSheetName === 'S2') {
+    return cellAddressMaybeWithSheetName;
+  }
+
   let replacement;
   const cellFinder = /(?:'(.*?)'!)?(\$?[A-Z]+\$?[0-9]+)/;
   const matchInfo = cellAddressMaybeWithSheetName.match(cellFinder);
@@ -341,11 +378,12 @@ const replaceCellAddress = (cellAddressMaybeWithSheetName, replacementsByCell,
   const sheetName = matchInfo[1];
   const cellAddress = matchInfo[2];
   const worksheetToUse = sheetName ? workbook.Sheets[sheetName] : worksheet;
-  if (shouldGetVariableNameForCellAddress()) {
+  if (shouldGetVariableNameForCellAddress(cellAddress)) {
     replacement = getVariableNameForCellAddress(cellAddress, worksheetToUse, formulaRowOffset);
   } else {
     // for now just return the value in that cell
-    replacement = getCellValue(cellAddress, worksheetToUse, {});
+    console.log(`just using cell value as a string for ${cellAddress}`);
+    replacement = `"${getCellValue(cellAddress, worksheetToUse, {})}"`;
   }
   replacementsByCell[cellAddressMaybeWithSheetName.replace(/\$/g, '')] = {replacement};
   return replacement;
@@ -363,10 +401,10 @@ const replaceCellAddresses = (input, replacementsByCell,
     formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet));
 }
 
-// Replace cell range with the appropriate values or variableNames joined by commas
+// Replace cell range with the appropriate values or variableNames joined by ' + ' (was going to be commas, but currently only supporting SUM)
 // Example input:   P24:R24
 // matches:         P24:R24                          (represents P24,Q24,R24)
-// Result:          numShelves,numDrawers,numBoxes
+// Result:          numShelves + numDrawers + numBoxes
 const replaceCellRange = (cellRange, replacementsByCell,
   formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet) => {
   const {columnCount, rowCount, startCellAddressString} = getCellRangeInfo(cellRange);
@@ -379,13 +417,13 @@ const replaceCellRange = (cellRange, replacementsByCell,
       valuesOrVariableNames.push(valueOrVariableName);
     }
   }
-  return valuesOrVariableNames.join(',');
+  return valuesOrVariableNames.join(' + ');
 }
 
-// Replace each cell range with the appropriate values or variableNames joined by commas
+// Replace each cell range with the appropriate values or variableNames joined by ' + ' (was going to be commas, but currently only supporting SUM)
 // Example input:   SUM(P24:R24)+SUM(X24:Z24)
 // matches:             P24:R24      X24:Z24
-// Result:          SUM(numShelves,numDrawers,numBoxes)+SUM(numSlides,numSwings,numSeesaws)
+// Result:          SUM(numShelves + numDrawers + numBoxes)+SUM(numSlides + numSwings + numSeesaws)
 const replaceCellRanges = (input, replacementsByCell,
   formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet) => {
   const cellRangeFinder = /(\$?[A-Z]+\$?[0-9]+:\$?[A-Z]+\$?[0-9]+)/;

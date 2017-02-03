@@ -1303,9 +1303,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             },
           }, {
             subsetCellRange: 'BF11:BK24',
-            category: {
-              name: 'Hardware',
-            },
+            ignore: true,
           }, {
             subsetCellRange: 'BM11:BM24',
             ignore: true,
@@ -1336,6 +1334,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           }, {
             subsetCellRange: 'DN11:DN24',
             templateFormula: 'lookup(depth,"Range","Drawer Slide Depth",slideType)',
+          }, {
+            subsetCellRange: 'EZ11:FC24',
+            ignore: true,
           },],
         }
       ],

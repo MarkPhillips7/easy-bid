@@ -376,6 +376,16 @@ angular.module("app").controller("templateLibraryDetails",
         return;
       }
 
+      const parser = new Parser();
+      // ignore easy bid functions and parser functions
+      if (_.contains(_.keys(Formulas.easyBidFunctions), variableName) ||
+        _.contains(_.keys(parser.unaryOps), variableName) ||
+        _.contains(_.keys(parser.binaryOps), variableName) ||
+        _.contains(_.keys(parser.functions), variableName) ||
+        _.contains(_.keys(parser.consts), variableName)) {
+        return;
+      }
+
       variable = _.find(vm.variables, function (v) {
         return v.variableName.toLowerCase() === variableName.toLowerCase();
       });
