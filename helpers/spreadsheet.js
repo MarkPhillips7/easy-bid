@@ -243,14 +243,20 @@ const getReplacementForVLookup = (vLookupParameters, workbook, workbookMetadata)
     if (replacement) {
       return replacement.replace(`{valueToLookUp}`, valueToLookUp);
     }
+    const optionalLookupSettingText = lookupSetting ? `, "${lookupSetting}"` : '';
     switch (lookupType) {
       case Constants.lookupTypes.price:
-        // want something like `lookup(squish("Door",doorStyle,"buyout"),"Price")`
+        // want something like `lookup(squish([general-product-name],[value-to-look-up],[optional-condition-value]), [lookup-type])`
+        // example: `lookup(squish("Door",doorStyle,"buyout"),"Price")`
         const optionalConditionValueText = conditionValue ? `, "${conditionValue}"` : conditionVariable ? `, ${conditionVariable}` : '';
         return `lookup(squish("${importSetSource.generalProductName}", ${valueToLookUp}${optionalConditionValueText}), "${lookupType}")`;
-      case Constants.lookupTypes.standard:
-        // want something like `lookup(doorStyle,"Standard","Product","Door","Door Code")`
-        const optionalLookupSettingText = lookupSetting ? `, "${lookupSetting}"` : '';
+      case Constants.lookupTypes.basic:
+        // want something like `lookup([value-to-look-up-representing-lookup-key], [lookup-type], [lookup-subtype], [optional-lookup-setting-key])`
+        // examples: `lookup(markupLevel,"Basic","Markup")` or `lookup("Engineering","Basic","Labor Minutes", "Item")`
+        return `lookup(${valueToLookUp}, "${lookupType}", "${lookupSubType}", "${importSetSource.generalProductName}"${optionalLookupSettingText})`;
+      case Constants.lookupTypes.option:
+        // want something like `lookup([value-to-look-up-representing-lookup-name], [lookup-type], [lookup-subtype], [lookup-key], [optional-lookup-setting-key])`
+        // example: `lookup(doorStyle,"Option","Product","Door","Door Code")`
         return `lookup(${valueToLookUp}, "${lookupType}", "${lookupSubType}", "${importSetSource.generalProductName}"${optionalLookupSettingText})`;
       default:
         console.log(`Unexpected lookupType '${lookupType}' in vLookupColumnNumberCase`);

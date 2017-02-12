@@ -309,7 +309,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
   templateLibraryId = initializeBidModelTemplateLibrary();
 
-  _.each(companyInfo.companies, function (company) {
+  const company = companyInfo.companies[0];
+  // _.each(companyInfo.companies, function (company) {
     var companyId = company._id;
 
     var bidModelTemplateLibrary = TemplateLibraries.findOne({"name": "Bid Model"});
@@ -433,6 +434,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           category: {
             name: 'Options',
           },
+          absoluteHeaderRowOffset: -27, // G12:R12
           // expect formula to contain something like `VLOOKUP($E24,spec_lookup,4,FALSE)`
           // For above example variable name is from H39 (by adding third parameter with columnOffset as in 4 + -3 = 1)
           vLookup: {
@@ -484,7 +486,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
                 conditionValue: 'slab',
               },
               '6': {
-                lookupType: 'Standard',
+                lookupType: Constants.lookupTypes.option,
                 lookupSubType: 'Product',
                 lookupSetting: 'Door Code',
               },
@@ -568,7 +570,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
                 conditionValue: 'back',
               },
               '7': {
-                lookupType: 'Standard',
+                lookupType: Constants.lookupTypes.option,
                 lookupSubType: 'Product',
                 lookupSetting: 'Box Code',
               },
@@ -643,7 +645,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
                 conditionValue: 'sheet',
               },
               '7': {
-                lookupType: 'Standard',
+                lookupType: Constants.lookupTypes.option,
                 lookupSubType: 'Product',
                 lookupSetting: 'Density',
               },
@@ -764,7 +766,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
                 conditionValue: 'sheet',
               },
               '7': {
-                lookupType: 'Standard',
+                lookupType: Constants.lookupTypes.option,
                 lookupSubType: 'Product',
                 lookupSetting: 'Density',
               },
@@ -1067,8 +1069,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           ],
         }, {
           type: Constants.importSetTypes.lookups,
-          lookupType: Constants.lookupTypes.standard,
+          lookupType: Constants.lookupTypes.basic,
           lookupSubType: 'Material Finish',
+          lookupValueType: 'string',
           sheet: '1. Job Info.',
           cellRange: 'G86:U95',
           dataOrientation: Constants.dataOrientations.vertical,
@@ -1130,7 +1133,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           // },
         }, {
           type: Constants.importSetTypes.lookups,
-          lookupType: Constants.lookupTypes.standard,
+          lookupType: Constants.lookupTypes.basic,
           lookupSubType: 'Labor Minutes',
           sheet: 'Price List',
           cellRange: 'Q23:U32',
@@ -1152,7 +1155,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           ],
         }, {
           type: Constants.importSetTypes.lookups,
-          lookupType: Constants.lookupTypes.standard,
+          lookupType: Constants.lookupTypes.basic,
           lookupSubType: 'Drawer Heights',
           sheet: '2. QUOTE SHEET',
           cellRange: 'AD8:AH9',
@@ -1184,7 +1187,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           // formulaReferences only used to identify variables. Should appear before calculations that might reference it
           // same cells can also be used for calculations
           type: Constants.importSetTypes.formulaReferences,
-          lookupType: Constants.lookupTypes.standard,
+          lookupType: Constants.lookupTypes.basic,
           lookupSubType: 'Drawer Heights',
           sheet: '2. QUOTE SHEET',
           cellRange: 'AD8:AH9',
@@ -1222,7 +1225,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           cellRange: 'Q23:T32',
           cellRepresentation: 'lookupSetting',
           formulaColumnOffset: 1,
-          lookupType: Constants.lookupTypes.standard,
+          lookupType: Constants.lookupTypes.basic,
           lookupSubType: `Labor Minutes`,
           dataOrientation: Constants.dataOrientations.vertical,
           lookupSettingKeys: [`Item`, `Sq.-ft`, `Ln.-Ft`],
@@ -1246,8 +1249,20 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             subsetCellRange: 'AU11:BD24',
             namePrefix: 'Labor Minutes ',
           }, {
+            subsetCellRange: 'S11:Y24',
+            nameSuffix: ' Count',
+          }, {
+            subsetCellRange: 'AB11:AB24',
+            nameSuffix: ' Count',
+          }, {
+            subsetCellRange: 'AD11:AT24',
+            nameSuffix: ' Count',
+          }, {
             subsetCellRange: 'BE11:BE24',
             namePrefix: 'Labor ',
+          }, {
+            subsetCellRange: 'BF11:BK24',
+            nameSuffix: ' Count',
           }, {
             subsetCellRange: 'BX11:CI24',
             nameSuffixRowOffset: 6,
@@ -1280,14 +1295,67 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             nameBase: 'Cost Labor Total',
           },]
         }, {
+          type: Constants.importSetTypes.products,
+          generalProductName: 'Base Cabinet',
+          defaultUnits: 'each',
+          sheet: 'Products',
+          cellRange: 'B10:AP11',
+          defaultValueIfNone: 0,
+          displayCategories: ['Options'],
+          // headerCellRange: 'B3:AP3',
+          absoluteHeaderRowOffset: -7, // B$3:AP$3
+          imageSource: 'Cabinet.png',
+          subsetOverrides: [{
+            subsetCellRange: 'B10:L11',
+            // headerCellRange: 'B7:L7',
+            absoluteHeaderRowOffset: -3, // B$7:AP$7
+            displayCategories: ['Primary', 'PrimaryTableColumn'],
+          }, {
+            subsetCellRange: 'L10:L11',
+            ignore: true,
+          }, {
+            subsetCellRange: 'O10:U11',
+            nameSuffix: ' Count',
+          }, {
+            subsetCellRange: 'X10:X11',
+            nameSuffix: ' Count',
+          }, {
+            subsetCellRange: 'Z10:AP11',
+            nameSuffix: ' Count',
+          }],
+          columns: [
+            {
+              header: { customProperty: 'description', },
+              columnOffset: 1,
+            }, {
+              header: { customProperty: 'unit', },
+              columnOffset: 2,
+            },
+            // the default is that a column represents a product option
+            // }, {
+            //   header: { customProperty: 'productOption', },
+            //   columnOffset: 3,
+            //   columnCount: 38, // E10, F10... AP10
+            // }
+          ],
+          category: {
+            name: 'Cabinets',
+          },
+        }, {
           type: Constants.importSetTypes.calculations,
           // Each column represents a different calculation
           // assumption is that first row represents header (like 'Edge Banding'),
           sheet: '2. QUOTE SHEET',
-          cellRange: 'AU11:FE24',
+          cellRange: 'P11:FE24',
           categoryRowOffset: -1,
           formulaRowOffset: 13,
           subsetOverrides: [{
+            subsetCellRange: 'P11:Q24',
+            templateFormula: `"No"`,
+          }, {
+            subsetCellRange: 'R11:AT24',
+            ignore: true,
+          }, {
             subsetCellRange: 'AU11:BD24',
             units: [
               {key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.minutes}
@@ -1302,41 +1370,53 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               name: 'Labor',
             },
           }, {
-            subsetCellRange: 'BF11:BK24',
+            subsetCellRange: 'BF11:BH24',
+            ignore: true,
+          }, {
+            subsetCellRange: 'BJ11:BK24',
             ignore: true,
           }, {
             subsetCellRange: 'BM11:BM24',
             ignore: true,
           }, {
             subsetCellRange: 'BN11:BN24',
-            ignore: true,
+            templateFormula: 'lookup(depth,"Range","Drawer Slide Depth",slideType)',
           }, {
             subsetCellRange: 'BW11:BW24',
             ignore: true,
           }, {
             subsetCellRange: 'BY11:BY24',
-            templateFormula: `lookup(squish("Sides (Left)",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"Standard","Material Finish")`,
+            templateFormula: `lookup(squish("Sides Left",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"${Constants.lookupTypes.basic}","Material Finish")`,
           }, {
             subsetCellRange: 'CA11:CA24',
-            templateFormula: `lookup(squish("Sides (Right)",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"Standard","Material Finish")`,
+            templateFormula: `lookup(squish("Sides Right",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"${Constants.lookupTypes.basic}","Material Finish")`,
           }, {
             subsetCellRange: 'CC11:CC24',
-            templateFormula: `lookup(squish("upper top",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"Standard","Material Finish")`,
+            templateFormula: `lookup(squish("upper top",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"${Constants.lookupTypes.basic}","Material Finish")`,
           }, {
             subsetCellRange: 'CE11:CE24',
-            templateFormula: `lookup(squish("upper bottom",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"Standard","Material Finish")`,
+            templateFormula: `lookup(squish("upper bottom",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"${Constants.lookupTypes.basic}","Material Finish")`,
           }, {
             subsetCellRange: 'CG11:CG24',
-            templateFormula: `lookup(squish("nailers",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"Standard","Material Finish")`,
+            templateFormula: `lookup(squish("nailers",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"${Constants.lookupTypes.basic}","Material Finish")`,
           }, {
             subsetCellRange: 'CI11:CI24',
-            templateFormula: `lookup(squish("upper top",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"Standard","Material Finish")`,
+            templateFormula: `lookup(squish("upper top",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"${Constants.lookupTypes.basic}","Material Finish")`,
           }, {
             subsetCellRange: 'DN11:DN24',
-            templateFormula: 'lookup(depth,"Range","Drawer Slide Depth",slideType)',
-          }, {
-            subsetCellRange: 'EZ11:FC24',
             ignore: true,
+          }, {
+            subsetCellRange: 'DT11:DT24',
+            templateFormula: 'lookup(squish("Hinge", hingeType, hardwareFinish), "Price")',
+          }, {
+            subsetCellRange: 'DU11:DU24',
+            templateFormula: 'lookup(squish("Pull", pulls, hardwareFinish), "Price")',
+          }, {
+            subsetCellRange: 'EZ11:FB24',
+            ignore: true,
+          }, {
+            subsetCellRange: 'FC11:FC24',
+            templateFormula: `lookup(markupLevel,"${Constants.lookupTypes.basic}","Markup")`,
           },],
         }
       ],
@@ -1358,9 +1438,14 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-dollar fa-stack-1x'},
       ], undefined, undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
-      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Standard', undefined, Constants.lookupTypes.standard, [
+      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Basic', undefined, Constants.lookupTypes.basic, [
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
         {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-arrow-up fa-stack-1x'},
+      ], undefined, undefined, userInfo.systemAdminUserId);
+    LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
+      Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Option', undefined, Constants.lookupTypes.option, [
+        {id: Random.id(), key: Constants.lookupSettingKeys.iconStack2xClass, value: 'fa fa-square-o fa-stack-2x'},
+        {id: Random.id(), key: Constants.lookupSettingKeys.iconStack1xClass, value: 'fa fa-caret-down fa-stack-1x'},
       ], undefined, undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
       Constants.lookupSubTypes.lookupType, Constants.hierarchyRoot, 'Range', undefined, Constants.lookupTypes.range, [
@@ -1375,8 +1460,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       Constants.lookupSubTypes.lookupSubType, `${Constants.hierarchyRoot}${Constants.lookupTypes.hierarchical}.${Constants.lookupSubTypes.lookupType}`,
       Constants.lookupSubTypes.lookupSubType, undefined, Constants.lookupSubTypes.lookupSubType, undefined, undefined, undefined, userInfo.systemAdminUserId);
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.hierarchical,
-      Constants.lookupSubTypes.lookupSubType, `${Constants.hierarchyRoot}${Constants.lookupTypes.standard}`,
-      Constants.lookupSubTypes.option, undefined, Constants.lookupSubTypes.option, undefined, undefined, undefined, userInfo.systemAdminUserId);
+      Constants.lookupSubTypes.lookupSubType, `${Constants.hierarchyRoot}${Constants.lookupTypes.option}`,
+      Constants.lookupSubTypes.standard, undefined, Constants.lookupSubTypes.standard, undefined, undefined, undefined, userInfo.systemAdminUserId);
 
     // Create lookup records with varying effectiveDate and expirationDate values
     LookupsHelper.addLookup(cabinetryTemplateLibrary, lookups, Constants.lookupTypes.price,
@@ -1420,18 +1505,23 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     const replacementsByCell = {};
     const templateParents = [templateCompany, templateCustomer, templateJob, templateArea, templateCabinet];
+    TemplateLibrariesHelper.addMarkupLevels(bidControllerData, lookups, templateParents);
     _.each(workbookMetadata.importSets, (importSet) => {
       console.log(`Import => ${importSet.type} - ${importSet.sheet} - ${importSet.cellRange}...`);
       switch (importSet.type) {
         case Constants.importSetTypes.subProducts:
           TemplateLibrariesHelper.addSubProductsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateProduct, importSet);
           break;
+        case Constants.importSetTypes.products:
+          TemplateLibrariesHelper.addProductsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateProduct, importSet, replacementsByCell);
+          break;
         case Constants.importSetTypes.specificationOptions:
           TemplateLibrariesHelper.addSpecificationOptionsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateParents, importSet);
           break;
-        case Constants.importSetTypes.calculations:
-          TemplateLibrariesHelper.addCalculationsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet, replacementsByCell);
-          break;
+        // calculations now handled in addProductsFromWorkbook
+        // case Constants.importSetTypes.calculations:
+        //   TemplateLibrariesHelper.addCalculationsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet, replacementsByCell);
+        //   break;
         case Constants.importSetTypes.formulaReferences:
           TemplateLibrariesHelper.addFormulaReferencesFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet, replacementsByCell);
           break;
@@ -2234,5 +2324,5 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     });
 
     templateLibraryId = TemplateLibraries.insert(cabinetryTemplateLibrary);
-  });
+  // });
 }

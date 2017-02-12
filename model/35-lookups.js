@@ -100,13 +100,44 @@ const getSettingValue = (lookup, settingKey) => {
   return null;
 }
 
-const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookupSubType, lookupKey, lookupSetting) => {
+const getSettingValueType = (lookup, settingKey) => {
+  if (lookup && settingKey) {
+    var setting = _.find(lookup.lookupSettings, function (setting) {
+      return (setting.key === `${settingKey}Type`);
+    });
+    if (setting) {
+      return setting.value;
+    }
+  }
+
+  return null;
+}
+
+// remainingLookupKeys will sometimes represent [lookupKey, lookupSettingKey] and sometimes represent just [lookupSettingKey]
+const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookupSubType, ...remainingLookupKeys) => {
+  const getLookupValueResponse = (lookup, lookupSettingKey) => {
+    let lookupValueType;
+    let lookupValue = null;
+    if (!lookup) {
+      return {lookupValue, lookupValueType};
+    }
+    if (lookupSettingKey) {
+      lookupValueType = getSettingValueType(lookup, lookupSettingKey) || 'number';
+      lookupValue = getSettingValue(lookup, lookupSettingKey);
+    } else {
+      lookupValueType = getSettingValue(lookup, Constants.lookupSettingKeys.lookupValueType) || 'number';
+      lookupValue = lookup.value;
+    }
+    return {lookupValue, lookupValueType};
+  };
+
   if (!lookupData || !lookupType || !valueToLookUp) {
-    return null;
+    return getLookupValueResponse(null);
   }
 
   const pricingAtToUse = pricingAt || new Date();
   let lookupRecords;
+  let lookupSettingKey;
   switch (lookupType) {
     case Constants.lookupTypes.price:
       lookupRecords = lookupData && _.filter(lookupData['standard'], (lookup) => {
@@ -116,15 +147,15 @@ const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookup
           && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse)
           && lookup.key === valueToLookUp;
       });
+      lookupSettingKey = remainingLookupKeys[0];
       if (lookupRecords.length) {
-        if (lookupSettingKey) {
-          return getSettingValue(lookupRecords[0], lookupSettingKey);
-        }
-        return lookupRecords.length && lookupRecords[0].value;
+        return getLookupValueResponse(lookupRecords[0], lookupSettingKey);
       }
       break;
     case Constants.lookupTypes.range:
       // valueToLookUp represents value between lookupSettings Min and Max
+      lookupKey = remainingLookupKeys[0];
+      lookupSettingKey = remainingLookupKeys[1];
       lookupRecords = lookupData && _.filter(lookupData['standard'], (lookup) => {
         return lookup.lookupType === lookupType
           && lookup.lookupSubType === lookupSubType
@@ -140,13 +171,14 @@ const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookup
             (maxValue === undefined || maxValue === null || valueToLookUp < maxValue);
         })
         if (lookupWithinRange) {
-          return lookupWithinRange.value;
+          return getLookupValueResponse(lookupWithinRange);
         }
       }
       break;
-    case Constants.lookupTypes.standard:
-    default:
-      // valueToLookUp represents lookup name for standard (and currently all non-price) lookups
+    case Constants.lookupTypes.option:
+      // valueToLookUp represents lookup name
+      lookupKey = remainingLookupKeys[0];
+      lookupSettingKey = remainingLookupKeys[1];
       lookupRecords = lookupData && _.filter(lookupData['standard'], (lookup) => {
         return lookup.lookupType === lookupType
           && lookup.lookupSubType === lookupSubType
@@ -156,14 +188,26 @@ const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookup
           && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse);
       });
       if (lookupRecords.length) {
-        if (lookupSettingKey) {
-          return getSettingValue(lookupRecords[0], lookupSettingKey);
-        }
-        return lookupRecords.length && lookupRecords[0].value;
+        return getLookupValueResponse(lookupRecords[0], lookupSettingKey);
+      }
+      break;
+    case Constants.lookupTypes.basic:
+    default:
+      // valueToLookUp represents lookup key
+      lookupSettingKey = remainingLookupKeys[0];
+      lookupRecords = lookupData && _.filter(lookupData['standard'], (lookup) => {
+        return lookup.lookupType === lookupType
+          && lookup.lookupSubType === lookupSubType
+          && lookup.key === valueToLookUp
+          && lookup.effectiveDate < pricingAtToUse
+          && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse);
+      });
+      if (lookupRecords.length) {
+        return getLookupValueResponse(lookupRecords[0], lookupSettingKey);
       }
       break;
   }
-  return null;
+  return getLookupValueResponse(null);
 }
 
 const isValidLookup = (lookupData, lookupType, lookupKey, lookup, pricingAt) => {
@@ -188,7 +232,9 @@ const getIconStack1xClass = (lookupType) => {
       return "fa fa-sitemap fa-stack-1x";
     case Constants.lookupTypes.range:
       return "fa fa-arrows-h fa-stack-1x";
-    case Constants.lookupTypes.standard:
+    case Constants.lookupTypes.option:
+      return "fa fa-caret-down fa-stack-1x";
+    case Constants.lookupTypes.basic:
     default:
       return "fa fa-arrow-up fa-stack-1x";
   }
@@ -388,8 +434,8 @@ const addRangeLookup = (templateLibrary, lookups, lookupSubType, lookupKey, rang
 
 const addOptionLookup = (templateLibrary, lookups, optionTypeName, optionValue, userId) => {
   const lookupKey = optionTypeName;
-  const lookupType = Constants.lookupTypes.standard;
-  const lookupSubType = Constants.lookupSubTypes.option;
+  const lookupType = Constants.lookupTypes.option;
+  const lookupSubType = Constants.lookupSubTypes.standard;
   addLookup(templateLibrary, lookups, Constants.lookupTypes.hierarchical, Constants.lookupSubTypes.lookupKey,
     `${Constants.hierarchyRoot}${lookupType}.${lookupSubType}`, lookupKey, undefined, lookupKey, undefined, undefined, undefined, userId);
   // console.log(`Adding option lookup key = '${lookupKey}', name = '${optionValue}'`);
@@ -399,7 +445,7 @@ const addOptionLookup = (templateLibrary, lookups, optionTypeName, optionValue, 
 
 const addProductSkuLookup = (templateLibrary, lookups, generalProductName, productSku, productName, productDescription, userId, lookupSettings) => {
   const lookupKey = generalProductName;
-  const lookupType = Constants.lookupTypes.standard;
+  const lookupType = Constants.lookupTypes.option;
   const lookupSubType = 'Product';
   addLookup(templateLibrary, lookups, Constants.lookupTypes.hierarchical, Constants.lookupSubTypes.lookupSubType,
     `${Constants.hierarchyRoot}${lookupType}`, lookupSubType, undefined, lookupSubType, undefined, undefined, undefined, userId);
@@ -422,7 +468,7 @@ const addProductSkuLookup = (templateLibrary, lookups, generalProductName, produ
   });
 }
 
-const addStandardLookup = (templateLibrary, lookups, lookupType, lookupSubType, key, name, description, value,
+const addBasicLookup = (templateLibrary, lookups, lookupType, lookupSubType, key, name, description, value,
     lookupSettings, effectiveDate, expirationDate, userId) => {
   addLookup(templateLibrary, lookups, Constants.lookupTypes.hierarchical, Constants.lookupSubTypes.lookupSubType,
     `${Constants.hierarchyRoot}${lookupType}`, lookupSubType, undefined, lookupSubType, undefined, undefined, undefined, userId);
@@ -531,12 +577,12 @@ const getLookupSettingsSummary = (lookupSettings) => {
 }
 
 LookupsHelper = {
+  addBasicLookup,
   addLookup,
   addOptionLookup,
   addPriceLookup,
   addProductSkuLookup,
   addRangeLookup,
-  addStandardLookup,
   getDateStatus,
   getDateStatusIconClass,
   getDateStatusText,

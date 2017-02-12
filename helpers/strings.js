@@ -27,7 +27,7 @@ const toVariableName = (text) => {
 // with inputs like ['car key', 'House Key'] expect return like 'carkey|HouseKey'
 const squish = (...inputs) => {
   return _.reduce(inputs, (memo, input) => {
-    return `${memo}${memo.length > 0 ? '|' : ''}${input.replace(/\s/g, '')}`;
+    return `${memo}${memo.length > 0 ? '|' : ''}${input ? input.replace(/\s/g, '') : '[oops]'}`;
   }, '');
 }
 

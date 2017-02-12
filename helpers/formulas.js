@@ -3,21 +3,21 @@ const easyBidFunctions = {
   lookup: {
     // Expecting lookupCall to be `lookup` followed by parentheses with 2-5 parameters. Expected parameters:
     //   1) valueToLookUp: the thing to look for, a lookup key for a price lookup or a lookup name for a product lookup (required)
-    //   2) lookupType: one of "Price", "Standard", "Hierarchical", etc. (required)
+    //   2) lookupType: one of "Price", "Option", "Hierarchical", etc. (required)
     //   3) lookupSubType: lookup subtype (not used with price lookups, required for all others)
     //   4) lookupKey: lookup key (not used with price lookups as valueToLookUp represents this, required for all others)
     //   5) lookupSetting: key of a lookup setting to return instead of the normal lookup value (not used with price lookups, optional for all others)
     // Valid examples:
     //   `lookup("EdgeBanding|.5mmPVC|ln-ft","Price")`
     //   `lookup ("DrawerSlides|StdEpoxy-26","Price")`
-    //   `lookup(exteriorExposed,"Standard","Product",".75 Case Material","Density")`
-    //   `lookup(exteriorExposed,"Standard","Product",".75 Case Material")`
+    //   `lookup(exteriorExposed,"Option","Product",".75 Case Material","Density")`
+    //   `lookup(exteriorExposed,"Option","Product",".75 Case Material")`
     replaceCall: (bidControllerData, selection, lookupCall, selectionReferencingVariable) => {
       const parseCall = () => {
-        // expecting lookupCall like `lookup(exteriorExposed,"Standard","Product",".75 Case Material", "Density")`
+        // expecting lookupCall like `lookup(exteriorExposed,"Option","Product",".75 Case Material", "Density")`
         const matchResults = lookupCall.match(/lookup\s*\((.*?)\)/);
         if (matchResults && matchResults.length > 1) {
-          // return something like {lookupParameters: [`exteriorExposed`, `"Standard"`, `"Product"`, `".75 Case Material"`, `"Density"`]}
+          // return something like {lookupParameters: [`exteriorExposed`, `"Option"`, `"Product"`, `".75 Case Material"`, `"Density"`]}
           const lookupParameters = _.map(matchResults[1].split(','), (lookupParameter) => lookupParameter.trim());
           return {lookupParameters};
         }
@@ -27,9 +27,9 @@ const easyBidFunctions = {
       let {lookupParameters} = parseCall(lookupCall);
       // Replace each parameter value if appropriate. Strings get quotes removed, template variables get variable values.
       // Examples (assuming exterior is template variable with value `Melamine`):
-      // lookupCall                                     initial lookupParameters                       final lookupParameters
-      // `lookup(exterior,"Standard","Product",".75")`  [`exterior`,`"Standard"`,`"Product"`,`".75"`]  [`Melamine`,`Standard`,`Product`,`.75`]
-      // `lookup("DrawerSlides|StdEpoxy-26","Price")`   [`"DrawerSlides|StdEpoxy-26"`,`"Price"`]       [`DrawerSlides|StdEpoxy-26`,`Price`]
+      // lookupCall                                   initial lookupParameters                     final lookupParameters
+      // `lookup(exterior,"Option","Product",".75")`  [`exterior`,`"Option"`,`"Product"`,`".75"`]  [`Melamine`,`Option`,`Product`,`.75`]
+      // `lookup("DrawerSlides|StdEpoxy-26","Price")` [`"DrawerSlides|StdEpoxy-26"`,`"Price"`]     [`DrawerSlides|StdEpoxy-26`,`Price`]
       for (let i = 0; i < lookupParameters.length; i++) {
         const lookupParameter = lookupParameters[i];
         if (lookupParameter[0] === `'` || lookupParameter[0] === `"`) {
@@ -37,12 +37,17 @@ const easyBidFunctions = {
         } else {
           const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(lookupParameter);
           if (jsonVariableName) {
-            lookupParameters[i] = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selectionReferencingVariable);
+            lookupParameters[i] = SelectionsHelper.getJsonVariableValue(bidControllerData, selection, jsonVariableName, selectionReferencingVariable);
           }
         }
       }
-      // ToDo: maybe this needs to be put in "" if it's the string?
-      return LookupsHelper.getLookupValue(lookupData, job.pricingAt, ...lookupParameters) || '0';
+      const {lookupValue, lookupValueType} = LookupsHelper.getLookupValue(lookupData, job.pricingAt, ...lookupParameters);
+      switch (lookupValueType) {
+        case 'string':
+          return `"${lookupValue || ''}"`;
+        default:
+          return `${lookupValue || 0}`;
+      }
     },
   },
   squish: {
@@ -71,12 +76,12 @@ const easyBidFunctions = {
         } else {
           const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(squishParameter);
           if (jsonVariableName) {
-            squishParameters[i] = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selectionReferencingVariable);
+            squishParameters[i] = SelectionsHelper.getJsonVariableValue(bidControllerData, selection, jsonVariableName, selectionReferencingVariable);
           }
         }
       }
       // from [`Edge Banding`,`.5mm PVC`,`ln-ft`] return something like `"EdgeBanding|.5mmPVC|ln-ft"`]
-      return `"${Strings.squish(squishParameters)}"`;
+      return `"${Strings.squish(...squishParameters)}"`;
     }
   },
 };

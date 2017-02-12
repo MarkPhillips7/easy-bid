@@ -46,6 +46,7 @@ Constants.lookupSettingKeys = {
   iconType:"IconType",
   iconStack1xClass:"IconStack1xClass",
   iconStack2xClass:"IconStack2xClass",
+  lookupValueType:"LookupValueType",
   min:"Min",
   max:"Max",
   size:"Size",
@@ -53,19 +54,21 @@ Constants.lookupSettingKeys = {
 };
 
 Constants.lookupTypes = {
+  basic:"Basic",
   hierarchical:"Hierarchical",
   label:"Label",
+  option: "Option",
   price:"Price",
   range:"Range", // lookup value within min and max range values
-  standard:"Standard",
+  // standard:"Standard", standard replaced with basic and option
 };
 
 Constants.lookupSubTypes = {
   lookupKey: "Lookup Key",
   lookupType: "Lookup Type",
-  lookupSubType: "Sub Type", // lookupType should be standard, lookupSubType should be this, key should be the lookupType the subtype is under
-  option: "Option",
+  lookupSubType: "Sub Type",
   product: "Product",
+  standard: "Standard", // used to be option (back when the option lookup type used to be standard)
 };
 
 // Constants.lookupKeys = {
