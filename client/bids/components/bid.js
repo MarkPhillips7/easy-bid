@@ -885,7 +885,7 @@ class bid {
           this.areaTemplate);
         SelectionsHelper.initializeSelectionVariables(pendingChanges);
         this.initializeJobVariables(pendingChanges);
-        job.estimateTotal = this.getJobSubtotal(pendingChanges);
+        pendingChanges.job.estimateTotal = this.getJobSubtotal(pendingChanges);
       }
       this.save(pendingChanges);
     }, () => {

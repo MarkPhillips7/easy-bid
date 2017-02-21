@@ -157,7 +157,8 @@ function addSelectionsForChildTemplateRelationship(templateLibrary, jobId, selec
       case Constants.templateTypes.productSelection:
         _.each(TemplateLibrariesHelper.getAllSubTemplatesOfBaseTemplateChild(controllerData, childTemplate),
           (subTemplate, index, list) => {
-            if (subTemplate.name !== 'Lazy Susan Cabinet') {
+            // not adding any product selections at the moment
+            if (true) { //subTemplate.name !== 'Lazy Susan Cabinet') {
               return;
             }
 

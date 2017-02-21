@@ -341,6 +341,15 @@ TemplateTypeInfoList = [{
     canEdit: true,
     viewShow: true,
     editShow: true
+  }, {
+    name: 'Value Type',
+    templateSettingKey: Constants.templateSettingKeys.valueType,
+    minCount: 0,
+    maxCount: 1,
+    canDelete: false,
+    canEdit: true,
+    viewShow: true,
+    editShow: true
   }],
   relevantTemplateTypes: []
 }, {
@@ -2007,7 +2016,9 @@ const getTemplateName = (subsetOverrides, startCellAddressString, worksheet, col
       rowOffset: nameSuffixRowOffset});
   }
   // remove '(' and ')' since they cause parsing problems
-  return `${namePrefix}${nameBase}${nameSuffix}`.replace(/\(/g, ``).replace(/\)/g, ``);
+  // return `${namePrefix}${nameBase}${nameSuffix}`.replace(/\(/g, ``).replace(/\)/g, ``);
+  // fixed the code so that '(' and ')' don't cause problems anymore.
+  return `${namePrefix}${nameBase}${nameSuffix}`;
 }
 
 // replacementsByCell to be like { `BF24`: 'slideQtyPairs', `'1. Job Info.'!$H$105`: `2/S`}
@@ -2118,14 +2129,12 @@ const addLookupsFromWorkbook = (workbook, workbookMetadata, bidControllerData, l
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
       const rowStartCellAddress = {...startCellAddressObject, r: startCellAddressObject.r + rowIndex};
       const rowStartCell = SpreadsheetUtils.encode_cell(rowStartCellAddress);
-      let rowStartCellValue = worksheet[rowStartCell] && worksheet[rowStartCell].v;
+      const rowStartCellValue = worksheet[rowStartCell] && worksheet[rowStartCell].v;
       // Expect blank rows, just ignore them
       if (rowStartCellValue === undefined || rowStartCellValue === null || rowStartCellValue === '') {
         continue;
       }
 
-      // get rid of parentheses as they cause parsing issues
-      rowStartCellValue = typeof rowStartCellValue === 'string' ? rowStartCellValue.replace(/\(/g, ``).replace(/\)/g, ``) : rowStartCellValue;
       const lookupSettings = lookupValueType ? [{
         id: Random.id(),
         key: Constants.lookupSettingKeys.lookupValueType,
@@ -2133,7 +2142,8 @@ const addLookupsFromWorkbook = (workbook, workbookMetadata, bidControllerData, l
       }] : [];
       _.each(columns, (column) => {
         const columnValue = getCellValueFromImportSetRowOrColumn(column, rowStartCellAddress, worksheet);
-        if (columnValue !== undefined && columnValue != null && columnValue !== '') {
+        if (column.header.customProperty === 'description' ||
+          (columnValue !== undefined && columnValue != null && columnValue !== '')) {
           if (column.header.lookupKeySuffixes) {
             switch (lookupType) {
               case Constants.lookupTypes.basic:
@@ -2148,6 +2158,12 @@ const addLookupsFromWorkbook = (workbook, workbookMetadata, bidControllerData, l
                   const lookupDescription = column.header.lookupDescription;
                   LookupsHelper.addBasicLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey,
                     lookupName, lookupDescription, lookupValue, lookupSettings);
+                  if (lookupName.indexOf('No finished ends') > -1) {
+                    LookupsHelper.addBasicLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey.replace(`none`, `Laminated`),
+                      `${lookupName} - Laminated`, lookupDescription, lookupValue, lookupSettings);
+                    LookupsHelper.addBasicLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey.replace(`none`, `AppliedPanel`),
+                      `${lookupName} - Applied Panel`, lookupDescription, lookupValue, lookupSettings);
+                  }
                 }
                 break;
             }
@@ -2173,7 +2189,7 @@ const addLookupsFromWorkbook = (workbook, workbookMetadata, bidControllerData, l
             lookupSettings.push(lookupSetting);
           } else if (column.header.customProperty === 'description') {
             const lookupKey = rowStartCellValue;
-            const lookupName = `${rowStartCellValue} - ${columnValue}`;
+            const lookupName = columnValue ? `${rowStartCellValue} - ${columnValue}` : rowStartCellValue;
             LookupsHelper.addBasicLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey,
               lookupName, lookupName, lookupName, lookupSettings);
           }
@@ -2184,14 +2200,12 @@ const addLookupsFromWorkbook = (workbook, workbookMetadata, bidControllerData, l
     for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
       const columnStartCellAddress = {...startCellAddressObject, c: startCellAddressObject.c + columnIndex};
       const columnStartCell = SpreadsheetUtils.encode_cell(columnStartCellAddress);
-      let columnStartCellValue = worksheet[columnStartCell] && worksheet[columnStartCell].v;
+      const columnStartCellValue = worksheet[columnStartCell] && worksheet[columnStartCell].v;
       // Expect blank columns, just ignore them
       if (columnStartCellValue === undefined || columnStartCellValue === null || columnStartCellValue === '') {
         continue;
       }
 
-      // get rid of parentheses as they cause parsing issues
-      columnStartCellValue = typeof columnStartCellValue === 'string' ? columnStartCellValue.replace(/\(/g, ``).replace(/\)/g, ``) : columnStartCellValue;
       const lookupSettings = [];
       _.each(rows, (row) => {
         const rowValue = getCellValueFromImportSetRowOrColumn(row, columnStartCellAddress, worksheet);
@@ -2353,25 +2367,29 @@ const addSubProductsFromWorkbook = (workbook, workbookMetadata, bidControllerDat
   // console.log(`start cell = ${importSet.startCellAddressString} = {r:${startCellAddressObject.r},c:${startCellAddressObject.c}} = "${worksheet[importSet.startCellAddressObject].v}"`);
 
   const newTemplateName = importSet.generalProductName;
-  if (!newTemplateName ||
-    _.any(templateLibrary.templates, (template) => template.name === newTemplateName)) {
-    // ToDo: maybe we should update existing template or verify it matches
+  if (!newTemplateName) {
+    // _.any(templateLibrary.templates, (template) => template.name === newTemplateName)) {
     return;
   }
 
-  const newTemplate = addTemplate(templateLibrary, Constants.templateTypes.product, parentTemplate);
-  newTemplate.name = newTemplateName;
-  newTemplate.description = newTemplateName;
-  let order = 0;
-  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.selectOption, order++);
-  addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.isASubTemplate, 'true', order++);
-  if (importSet.category && importSet.category.name) {
-    addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, importSet.category.name);
-  }
   const {conditionSwitchColumn, conditionSwitchVariable, conditionSwitchValues, conditionSwitchUnits} =
     getConditionSwitchInfo(importSet, worksheet, startCellAddressObject);
-  addProductSkuSelectorTemplate(bidControllerData, newTemplate);
-  addPriceTemplate(bidControllerData, newTemplate, importSet.defaultUnits, conditionSwitchVariable);
+
+  // Just update existing template if a match is found
+  let newTemplate = _.find(templateLibrary.templates, (template) => template.name === newTemplateName);
+  if (!newTemplate) {
+    newTemplate = addTemplate(templateLibrary, Constants.templateTypes.product, parentTemplate);
+    newTemplate.name = newTemplateName;
+    newTemplate.description = newTemplateName;
+    let order = 0;
+    addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.selectOption, order++);
+    addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.isASubTemplate, 'true', order++);
+    if (importSet.category && importSet.category.name) {
+      addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, importSet.category.name);
+    }
+    addProductSkuSelectorTemplate(bidControllerData, newTemplate);
+    addPriceTemplate(bidControllerData, newTemplate, importSet.defaultUnits, conditionSwitchVariable);
+  }
 
   for (let i = 0; i < rowCount; i++) {
     const rowStartCellAddress = {...startCellAddressObject, r: startCellAddressObject.r + i};
@@ -2389,6 +2407,7 @@ const addSubProductsFromWorkbook = (workbook, workbookMetadata, bidControllerDat
       // ToDo: maybe we should update existing template or verify it matches
       continue;
     }
+    if (itemName === 'Shelf pins') itemName = 'Shelf Pins';
     const productSku = Strings.squish(newTemplateName, itemName);
 
     let unitsText = importSet.defaultUnits;
@@ -2396,7 +2415,8 @@ const addSubProductsFromWorkbook = (workbook, workbookMetadata, bidControllerDat
     const lookupSettings = [];
     _.each(importSet.columns, (column) => {
       const columnValue = getCellValueFromImportSetRowOrColumn(column, rowStartCellAddress, worksheet);
-      if (columnValue !== undefined && columnValue != null && columnValue !== '') {
+      if ((column.header.customProperty === 'price') ||
+        (columnValue !== undefined && columnValue != null && columnValue !== '')) {
         // if (column.header.templateProperty) {
         //   newTemplate[column.header.templateProperty] = columnValue;
         // } else if (column.header.templateSettingKey) {
@@ -2431,7 +2451,9 @@ const addSubProductsFromWorkbook = (workbook, workbookMetadata, bidControllerDat
                   }
                 }
               } else {
-                LookupsHelper.addPriceLookup(templateLibrary, lookups, newTemplate.name, productSku, itemName, description, columnValue, unitsText);
+                if (columnValue) {
+                  LookupsHelper.addPriceLookup(templateLibrary, lookups, newTemplate.name, productSku, itemName, description, columnValue, unitsText);
+                }
               }
               break;
             default:
@@ -2470,14 +2492,13 @@ const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, 
       continue;
     }
 
-    let itemName = getNameColumnValue(importSet, rowStartCellAddress, worksheet);
+    const itemName = getNameColumnValue(importSet, rowStartCellAddress, worksheet);
     if (!itemName) {
       // ||
       // _.any(templateLibrary.templates, (template) => template.name === itemName)) {
       // ToDo: maybe we should update existing template or verify it matches
       continue;
     }
-    itemName = itemName.replace(/\(/g, ``).replace(/\)/g, ``);
 
     const newProductTemplate = addTemplate(templateLibrary, Constants.templateTypes.product, parentTemplate);
     newProductTemplate.name = itemName;
@@ -2505,6 +2526,7 @@ const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, 
       const absoluteHeaderRowOffset = subsetOverrides.absoluteHeaderRowOffset || importSet.absoluteHeaderRowOffset;
       const namePrefix = subsetOverrides.namePrefix || importSet.namePrefix || '';
       const nameSuffix = subsetOverrides.nameSuffix || importSet.nameSuffix || '';
+      const valueType = subsetOverrides.valueType || importSet.valueType || 'string';
       const headerBaseName = SpreadsheetUtils.getCellValue(startCellAddressString, worksheet, {rowOffset: absoluteHeaderRowOffset, columnOffset});
       const headerName = `${namePrefix}${headerBaseName}${nameSuffix}`;
       const columnValue = SpreadsheetUtils.getCellValue(startCellAddressString, worksheet, {rowOffset, columnOffset});
@@ -2525,6 +2547,7 @@ const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, 
         newEntryTemplate.name = headerName;
         newEntryTemplate.description = headerName;
         let order = 0;
+        addTemplateSetting(bidControllerData, newEntryTemplate.id, Constants.templateSettingKeys.valueType, valueType, order++);
         addTemplateSetting(bidControllerData, newEntryTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.entry, order++);
         addTemplateSetting(bidControllerData, newEntryTemplate.id, Constants.templateSettingKeys.variableName, Strings.toVariableName(headerName), order++);
         const defaultValue = columnValue || importSet.defaultValueIfNone;

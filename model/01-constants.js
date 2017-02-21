@@ -164,6 +164,7 @@ Constants.templateSettingKeys = {
   switchVariable:"SwitchVariable",
   unitsText:"UnitsText",
   valueFormula:"ValueFormula",
+  valueType:"valueType",
   variableName:"VariableName",
   variableToDisplay:"VariableToDisplay",
   variableToOverride:"VariableToOverride"

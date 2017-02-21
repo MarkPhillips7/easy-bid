@@ -8,17 +8,22 @@ const easyBidFunctions = {
     //   4) lookupKey: lookup key (not used with price lookups as valueToLookUp represents this, required for all others)
     //   5) lookupSetting: key of a lookup setting to return instead of the normal lookup value (not used with price lookups, optional for all others)
     // Valid examples:
+    //   `lookup(_0_,_1_)` (_0_ and _1_ represent replacementsToRestore so could be like the next line)
     //   `lookup("EdgeBanding|.5mmPVC|ln-ft","Price")`
     //   `lookup ("DrawerSlides|StdEpoxy-26","Price")`
     //   `lookup(exteriorExposed,"Option","Product",".75 Case Material","Density")`
     //   `lookup(exteriorExposed,"Option","Product",".75 Case Material")`
-    replaceCall: (bidControllerData, selection, lookupCall, selectionReferencingVariable) => {
+    replaceCall: (bidControllerData, selection, lookupCall, selectionReferencingVariable, replacementsToRestore) => {
       const parseCall = () => {
         // expecting lookupCall like `lookup(exteriorExposed,"Option","Product",".75 Case Material", "Density")`
         const matchResults = lookupCall.match(/lookup\s*\((.*?)\)/);
         if (matchResults && matchResults.length > 1) {
           // return something like {lookupParameters: [`exteriorExposed`, `"Option"`, `"Product"`, `".75 Case Material"`, `"Density"`]}
-          const lookupParameters = _.map(matchResults[1].split(','), (lookupParameter) => lookupParameter.trim());
+          const lookupParameters = _.map(matchResults[1].split(','), (lookupParameter) => {
+            // Now that parameters have been identified, it is safe to add back the replacement strings.
+            return Strings.restoreReplacementsToRestore(lookupParameter.trim(), replacementsToRestore);
+          });
+
           return {lookupParameters};
         }
         return {};
@@ -52,13 +57,16 @@ const easyBidFunctions = {
   },
   squish: {
     // Expecting squishCall to be `squish` followed by parentheses with 1 or more parameters.
-    replaceCall: (bidControllerData, selection, squishCall, selectionReferencingVariable) => {
+    replaceCall: (bidControllerData, selection, squishCall, selectionReferencingVariable, replacementsToRestore) => {
       const parseCall = () => {
-        // expecting squishCall like `squish("Edge Banding",caseEdge,"ln-ft")`
+        // expecting squishCall like `squish("Edge Banding",caseEdge,"ln-ft")` or `squish(_0_,caseEdge,_1_)`
         const matchResults = squishCall.match(/squish\s*\((.*?)\)/);
         if (matchResults && matchResults.length > 1) {
           // return something like {squishParameters: [`"Edge Banding"`,`caseEdge`,`"ln-ft"`]}
-          const squishParameters = _.map(matchResults[1].split(','), (squishParameter) => squishParameter.trim());
+          const squishParameters = _.map(matchResults[1].split(','), (squishParameter) => {
+            // Now that parameters have been identified, it is safe to add back the replacement strings.
+            return Strings.restoreReplacementsToRestore(squishParameter.trim(), replacementsToRestore);
+          });
           return {squishParameters};
         }
         return {};
@@ -86,7 +94,7 @@ const easyBidFunctions = {
   },
 };
 
-const replaceFunctionCall = (bidControllerData, selection, functionCall, selectionReferencingVariable) => {
+const replaceFunctionCall = (bidControllerData, selection, functionCall, selectionReferencingVariable, replacementsToRestore) => {
   const functionNameFinder = /(\w*)\s*\(.*\)/i;
   const matchInfo = functionCall.match(functionNameFinder);
   if (!matchInfo || matchInfo.length < 2) {
@@ -95,9 +103,9 @@ const replaceFunctionCall = (bidControllerData, selection, functionCall, selecti
   const functionName = matchInfo[1].toUpperCase();
   switch (functionName) {
     case 'LOOKUP':
-      return easyBidFunctions.lookup.replaceCall(bidControllerData, selection, functionCall, selectionReferencingVariable);
+      return easyBidFunctions.lookup.replaceCall(bidControllerData, selection, functionCall, selectionReferencingVariable, replacementsToRestore);
     case 'SQUISH':
-      return easyBidFunctions.squish.replaceCall(bidControllerData, selection, functionCall, selectionReferencingVariable);
+      return easyBidFunctions.squish.replaceCall(bidControllerData, selection, functionCall, selectionReferencingVariable, replacementsToRestore);
     default:
       console.log(`unexpected function '${functionName}' call from '${functionCall}' in replaceFunctionCall`);
       return functionCall;
@@ -114,18 +122,31 @@ const replaceFunctionCall = (bidControllerData, selection, functionCall, selecti
 // final replace:        0.10                                        0.47
 // final result:   (5.00+0.10+0.47)
 const replaceFunctionCalls = (bidControllerData, selection, valueFormula, selectionReferencingVariable) => {
+	// We will keep track of result as we go based on this example:
+	// valueFormula: (5.00+lookup("Price",squish("Edge Banding",caseEdge,"ln-ft"))+lookup("Price",squish("Door Banding",door,"ln-ft")))
+  const replacementsToRestore = [];
   let result = valueFormula;
-  // Finds parentheticals preceded with an easyBidFunction and without a '(' in them.
+
+	// Remove all double quote string content so we don't accidentally replace it. Will add it back later.
+	result = Strings.replaceQuotedStrings(result, replacementsToRestore, true);
+  // result: (5.00+lookup(_0_,squish(_1_,caseEdge,_2_))+lookup(_3_,squish(_4_,door,_5_)))
+  // change:              ^^^        ^^^          ^^^          ^^^        ^^^      ^^^
+  // replacementsToRestore: [`"Price"`, `"Edge Banding"`, `"ln-ft"`, `"Price"`, `"Door Banding"`, `"ln-ft"`]
+
+  // Finds parentheticals preceded with an easyBidFunction and without a '(' in them and then makes the replacement.
   // Examples: 'squish ("Edge Banding",caseEdge,"ln-ft")' but not 'lookup("Price",squish("Edge Banding",caseEdge,"ln-ft"))'
   const innermostFunctionCallFinder = /(?:lookup|squish)\s*\([^\(]*?\)/gi;
   let finished = false;
   while (!finished) {
     result = result.replace(innermostFunctionCallFinder, (functionCall) => {
-      return replaceFunctionCall(bidControllerData, selection, functionCall, selectionReferencingVariable);
+      return replaceFunctionCall(bidControllerData, selection, functionCall, selectionReferencingVariable, replacementsToRestore);
     });
+    // The previous replacement may have added quoted strings, so replace them again
+    result = Strings.replaceQuotedStrings(result, replacementsToRestore, true);
     finished = !result.match(innermostFunctionCallFinder);
   }
-  return result;
+  // result: (5.00+0.10+0.47)
+  return Strings.restoreReplacementsToRestore(result, replacementsToRestore);
 }
 
 Formulas = {

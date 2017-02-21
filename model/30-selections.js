@@ -418,6 +418,20 @@ const addSelectionReferencingVariable = (bidControllerData, jsonVariableName,
   }
 }
 
+const getValueAsType = (value, valueType) => {
+  if (valueType && value !== null && value !== undefined) {
+    switch (valueType) {
+      case 'number':
+        return Number(value);
+      case 'string':
+        return String(value);
+      default:
+        console.log(`getValueAsType currently does not support ${valueType} type.`);
+    }
+  }
+  return value;
+}
+
 // selectionReferencingVariable is optional
 const getJsonVariableValue = (bidControllerData, selection, jsonVariableName, selectionReferencingVariable) => {
   const {metadata} = bidControllerData;
@@ -474,8 +488,8 @@ const calculateFormulaValue = (bidControllerData, selection, valueFormula, selec
     return 0;
   }
 
-  valueFormula = Formulas.replaceFunctionCalls(bidControllerData, selection, valueFormula, selectionReferencingVariable);
-  const expr = Parser.parse(valueFormula);
+  const valueFormulaToUse = Formulas.replaceFunctionCalls(bidControllerData, selection, valueFormula, selectionReferencingVariable);
+  const expr = Parser.parse(valueFormulaToUse);
   let formulaValue = 0;
   let variableValues = {};
   let allVariableValuesFound = true;
@@ -718,6 +732,10 @@ const getSelectionValue = (bidControllerData, selection) => {
       selectionValueSource = Constants.valueSources.userEntry;
     }
 
+    // No longer always storing as strings because type matters
+    const valueType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, Constants.templateSettingKeys.valueType);
+    selectionValue = getValueAsType(selectionValue, valueType);
+
     metadata.variables[variableCollectorSelection._id] = metadata.variables[variableCollectorSelection._id] || {};
     //If VariableName exists, store value in it.
     if (selectionJsonVariableName &&
@@ -885,6 +903,11 @@ const initializeSelectionVariables = (bidControllerData) => {
   createSelectionVariables(bidControllerData, companySelection);
 
   initializeValueToUse(bidControllerData, companySelection);
+  // ToDo: fix this so that it does not have to run twice!!!!!  Running twice does not even always work!!!!!
+  for (let i = 0; metadata.variablesUndefined.length > 0 && i < 10; i++) {
+    console.log(`Calling initializeValueToUse again because ${metadata.variablesUndefined.length} variables are still undefined.`);
+    initializeValueToUse(bidControllerData, companySelection);
+  }
 
   //If any dependent variables are undefined, then something must be wrong.
   if (metadata.variablesUndefined.length > 0) {
@@ -983,9 +1006,12 @@ const setSelectionValue = (bidControllerData, selection, selectionValue, oldValu
   let variableCollectorSelectionVariableSet = false;
   let jsonVariableName;
 
-  if (selectionValue !== null && selectionValue !== undefined) {
-    selectionValue = selectionValue.toString();
-  }
+  // No longer always storing as string because type matters
+  // if (selectionValue !== null && selectionValue !== undefined) {
+  //   selectionValue = selectionValue.toString();
+  // }
+  const valueType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(selectionTemplate, Constants.templateSettingKeys.valueType);
+  selectionValue = getValueAsType(selectionValue, valueType);
 
   if (oldValue !== selectionValue) {
     //This may not be right. May need another mechanism to determine isOverridingDefault.

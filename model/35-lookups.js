@@ -122,6 +122,7 @@ const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookup
       return {lookupValue, lookupValueType};
     }
     if (lookupSettingKey) {
+      // Need to use value types all over the place because "0" != 0 according to expression evaluator
       lookupValueType = getSettingValueType(lookup, lookupSettingKey) || 'number';
       lookupValue = getSettingValue(lookup, lookupSettingKey);
     } else {

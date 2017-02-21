@@ -87,10 +87,6 @@ const getCellFormula = (startCellAddress, worksheet, offsetOptions) => {
   return worksheetCell && worksheetCell.f;
 }
 
-const getReplacementToken = (index) => {
-  return `_${index}_`;
-};
-
 // replace '=' with '==' but not if '=' is the first character and don't replace '<=', '>=', or '!='
 // Example formula: =IF(AND(P24="Yes",FJ27="Type 2",Z24<=7),4)
 // Matches:                   4=         7=
@@ -124,47 +120,6 @@ const removeLeadingEqual = (input) => {
     return input.substring(1);
   }
   return input;
-}
-
-// replace items in quotes with replacement tokens
-// Example formula: =IF(AND(P24="Yes",FJ27="Type 2",Z24<=7),4)
-// Matches:                     "Yes"      "Type 2"
-// Replacements:                _3_        _4_
-// Result:          =IF(AND(P24==_3_,FJ27==_4_,Z24<=7),4)
-const replaceQuotedStrings = (input, replacementsToRestore, useDoubleQuote) => {
-	const stringExpression = useDoubleQuote ? /(".*?")/g : /('.*?')/g;
-	return input.replace(stringExpression, (match) => {
-    replacementsToRestore.push(match);
-    return getReplacementToken(replacementsToRestore.length - 1);
-  });
-}
-
-// Restore replaced strings. Needs to occur 1 at a time and in the opposite
-// order of replacement creations as 1 replacement could contain another 1
-// Example replacementsToRestore:
-//   [`"Yes"`, `"Type 2"`, `" ft"`, `'No'`, `P24==_0_ AND FJ24!=_1_ AND FF24==_3_`,
-//   `(FA24||_2_)`, `(I24*J24)`, `(_4_?3:1)`, `Q24==_5_ OR FJ2>=11`, `(_8_?_6_/144:0)`]
-// Example input: _7_+_9_
-// Result after processing index
-// 9: _7_+(_8_?_6_/144:0)
-// 8: _7_+(Q24==_5_ OR FJ2>=11?_6_/144:0)
-// 7: (_4_?3:1)+(Q24==_5_ OR FJ2>=11?_6_/144:0)
-// 6: (_4_?3:1)+(Q24==_5_ OR FJ2>=11?(I24*J24)/144:0)
-// 5: (_4_?3:1)+(Q24==(FA24||_2_) OR FJ2>=11?(I24*J24)/144:0)
-// 4: (P24==_0_ AND FJ24!=_1_ AND FF24==_3_?3:1)+(Q24==(FA24||_2_) OR FJ2>=11?(I24*J24)/144:0)
-// 3: (P24==_0_ AND FJ24!=_1_ AND FF24=='No'?3:1)+(Q24==(FA24||_2_) OR FJ2>=11?(I24*J24)/144:0)
-// 2: (P24==_0_ AND FJ24!=_1_ AND FF24=='No'?3:1)+(Q24==(FA24||" ft") OR FJ2>=11?(I24*J24)/144:0)
-// 1: (P24==_0_ AND FJ24!="Type 2" AND FF24=='No'?3:1)+(Q24==(FA24||" ft") OR FJ2>=11?(I24*J24)/144:0)
-// 0: (P24=="Yes" AND FJ24!="Type 2" AND FF24=='No'?3:1)+(Q24==(FA24||" ft") OR FJ2>=11?(I24*J24)/144:0)
-const restoreReplacementsToRestore = (input, replacementsToRestore) => {
-  let result = input;
-	for(let index = replacementsToRestore.length - 1;index >= 0; index--) {
-    const replacementToken = getReplacementToken(index);
-    // Each replacement should only occur once
-    const tokenFinder = new RegExp(replacementToken);
-		result = result.replace(tokenFinder, replacementsToRestore[index]);
-	}
-  return result;
 }
 
 // replace Excel-style AND/OR expression with Parser expression
@@ -343,7 +298,7 @@ const replaceParentheticals = (input, replacementsToRestore, workbook, workbookM
   while (!finished) {
     result = result.replace(innermostParentheticalFinder, (match) => {
       replacementsToRestore.push(replaceParenthetical(match, workbook, workbookMetadata));
-      return getReplacementToken(replacementsToRestore.length - 1);
+      return Strings.getReplacementToken(replacementsToRestore.length - 1);
     });
     finished = !result.match(innermostParentheticalFinder);
   }
@@ -451,7 +406,7 @@ const replaceCellAddressesInFormula = (inputFormula, replacementsByCell,
 
   	// Remove all string content so we don't have to worry about accidentally replacing it. Will add it back later.
     // Start with double quotes since they might contain single quotes as apostrophes
-  	result = replaceQuotedStrings(result, replacementsToRestore, true);
+  	result = Strings.replaceQuotedStrings(result, replacementsToRestore, true);
     // result: (P24==_0_ AND FJ24!=_1_ AND FF24=='No'?3:1)+(Q24==(FA24||_2_) OR FJ2>=11?(I24*J24)/144:0)
     // change:       ^^^           ^^^                                  ^^^
     // replacementsToRestore: [`"Yes"`, `"Type 2"`, `" ft"`]
@@ -466,7 +421,7 @@ const replaceCellAddressesInFormula = (inputFormula, replacementsByCell,
       formulaRowOffset, calculationsMappings, subsetOverridesByColumnOffset, workbook, worksheet);
 
     // Now that conversions to Parser format are done it is safe to add back the replacement strings.
-  	result = restoreReplacementsToRestore(result, replacementsToRestore);
+  	result = Strings.restoreReplacementsToRestore(result, replacementsToRestore);
     // result:
     // console.log(`${formulaCellAddressString} ${variableName} = ${result}`);
   	return result;
@@ -486,13 +441,13 @@ const excelFormulaToParserFormula = (excelFormula, workbook, workbookMetadata, f
 
 	// Remove all string content so we don't have to worry about accidentally replacing it. Will add it back later.
   // Start with double quotes since they might contain single quotes as apostrophes
-	result = replaceQuotedStrings(result, replacementsToRestore, true);
+	result = Strings.replaceQuotedStrings(result, replacementsToRestore, true);
   // result: =IF(AND(P24=_0_,FJ24<>_1_,FF24='No'),3,1)+IF(OR(Q24=(FA24&_2_),FJ2>=11),(I24*J24)/144)
   // change:             ^^^       ^^^                                 ^^^
   // replacementsToRestore: [`"Yes"`, `"Type 2"`, `" ft"`]
   // console.log(`1. ${result}`);
 
-  result = replaceQuotedStrings(result, replacementsToRestore, false);
+  result = Strings.replaceQuotedStrings(result, replacementsToRestore, false);
   // result: =IF(AND(P24=_0_,FJ24<>_1_,FF24=_3_),3,1)+IF(OR(Q24=(FA24&_2_),FJ2>=11),(I24*J24)/144)
   // change:                                ^^^
   // replacementsToRestore: [`"Yes"`, `"Type 2"`, `" ft"`, `'No'`]
@@ -526,7 +481,7 @@ const excelFormulaToParserFormula = (excelFormula, workbook, workbookMetadata, f
   // console.log(`7. ${result}`);
 
   // Now that conversions to Parser format are done it is safe to add back the replacement strings.
-	result = restoreReplacementsToRestore(result, replacementsToRestore);
+	result = Strings.restoreReplacementsToRestore(result, replacementsToRestore);
   // result: (P24=="Yes" AND FJ24!="Type 2" AND FF24=='No'?3:1)+(Q24==(FA24||" ft") OR FJ2>=11?(I24*J24)/144:0)
   // console.log(`parserFormula = ${result}`);
 	return result;

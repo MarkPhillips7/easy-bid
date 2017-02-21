@@ -371,58 +371,24 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       childTemplateId: templateLookupData.id
     });
 
-    var templateSheetMaterialData = {
-      id: Random.id(),
-      name: "Sheet Material Data",
-      description: "Sheet material lookup data for quick access",
-      templateType: Constants.templateTypes.lookupData,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "sheetMaterialData"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.lookupKey, value: "sheetMaterialData"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateSheetMaterialData);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCompany.id,
-      childTemplateId: templateSheetMaterialData.id
-    });
-    //
-    //var templateMaterial = {
-    //  id: Random.id(),
-    //  name: "Material",
-    //  description: "Some physical thing",
-    //  templateType: Constants.templateTypes.material
-    //};
-    //cabinetryTemplateLibrary.templates.push(templateMaterial);
-    //cabinetryTemplateLibrary.templateRelationships.push({
-    //  parentTemplateId: templateProduct.id,
-    //  childTemplateId: templateMaterial.id
-    //});
-    //
-    //var templateLabor = {
-    //  id: Random.id(),
-    //  name: "Labor",
-    //  description: "General labor",
-    //  templateType: Constants.templateTypes.labor
-    //};
-    //cabinetryTemplateLibrary.templates.push(templateLabor);
-    //cabinetryTemplateLibrary.templateRelationships.push({
-    //  parentTemplateId: templateProduct.id,
-    //  childTemplateId: templateLabor.id
-    //});
+    // var templateSheetMaterialData = {
+    //   id: Random.id(),
+    //   name: "Sheet Material Data",
+    //   description: "Sheet material lookup data for quick access",
+    //   templateType: Constants.templateTypes.lookupData,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "sheetMaterialData"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.lookupKey, value: "sheetMaterialData"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateSheetMaterialData);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCompany.id,
+    //   childTemplateId: templateSheetMaterialData.id
+    // });
 
-    // const priceEachMappings = [{
-    //   header: { templateSettingKey: Constants.templateSettingKeys.isVariableOverride, },
-    //   value: 'true',
-    // }, {
-    //   header: { templateSettingKey: Constants.templateSettingKeys.variableToOverride, },
-    //   value: 'priceEach',
-    // }, {
-    //   header: { templateSettingKey: Constants.templateSettingKeys.propertyToOverride, },
-    //   value: Constants.templateSettingKeys.valueFormula,
-    // }];
     const workbookMetadata = {
       importSets: [
         {
@@ -517,7 +483,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             vLookupColumnNumberCases: {
               '4': {
                 lookupType: 'Price',
-                conditionValue: 'ln-ft',
+                // conditionValue: 'ln-ft',
               },
             }
           }
@@ -526,7 +492,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           generalProductName: 'Drawer Box',
           defaultUnits: 'sq-ft',
           sheet: 'Price List',
-          cellRange: 'C89:I97',
+          cellRange: 'C114:I119',
           columns: [
             {
               header: { customProperty: 'unit', },
@@ -632,7 +598,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             name: 'Sheet Goods',
           },
           // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
-          // this vLookup is also used for '.75 Finished Material' and '.75 Laminated Material'
+          // this vLookup is also used for next 2 '.75 Case Material' sections
           vLookup: {
             definedName: 'lookup_.75material',
             vLookupColumnNumberCases: {
@@ -661,7 +627,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           }
         }, {
           type: Constants.importSetTypes.subProducts,
-          generalProductName: '.75 Finished Material',
+          generalProductName: '.75 Case Material',
           defaultUnits: 'sq-ft',
           sheet: 'Price List',
           cellRange: 'C21:O25',
@@ -689,10 +655,10 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             name: 'Sheet Goods',
           },
           // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
-          // but '.75 Case Material' vLookup is used for '.75 Finished Material' and '.75 Laminated Material'
+          // but only first '.75 Case Material' section defines vLookup
         }, {
           type: Constants.importSetTypes.subProducts,
-          generalProductName: '.75 Laminated Material',
+          generalProductName: '.75 Case Material',
           defaultUnits: 'sq-ft',
           sheet: 'Price List',
           cellRange: 'C28:O37',
@@ -720,10 +686,10 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             name: 'Sheet Goods',
           },
           // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
-          // but '.75 Case Material' vLookup is used for '.75 Finished Material' and '.75 Laminated Material'
+          // but only first '.75 Case Material' section defines vLookup
         }, {
           type: Constants.importSetTypes.subProducts,
-          generalProductName: '.25 Case Material',
+          generalProductName: '.25 Material',
           defaultUnits: 'sq-ft',
           sheet: 'Price List',
           cellRange: 'C43:I50',
@@ -753,7 +719,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             name: 'Sheet Goods',
           },
           // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
-          // this vLookup is also used for '.25 Finished Material' and '.25 Laminated Material'
+          // this vLookup is also used for next 2 '.25 Material' sections
           vLookup: {
             definedName: 'lookup_.25material',
             vLookupColumnNumberCases: {
@@ -782,7 +748,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           }
         }, {
           type: Constants.importSetTypes.subProducts,
-          generalProductName: '.25 Finished Material',
+          generalProductName: '.25 Material',
           defaultUnits: 'sq-ft',
           sheet: 'Price List',
           cellRange: 'C54:O58',
@@ -810,10 +776,10 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             name: 'Sheet Goods',
           },
           // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
-          // but '.25 Case Material' vLookup is used for '.25 Finished Material' and '.25 Laminated Material'
+          // but only first '.25 Case Material' section defines vLookup
         }, {
           type: Constants.importSetTypes.subProducts,
-          generalProductName: '.25 Laminated Material',
+          generalProductName: '.25 Material',
           defaultUnits: 'sq-ft',
           sheet: 'Price List',
           cellRange: 'C61:O70',
@@ -841,7 +807,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             name: 'Sheet Goods',
           },
           // expect formula to contain something like `VLOOKUP(FI24,lookup_doors,6,FALSE)`
-          // but '.25 Case Material' vLookup is used for '.25 Finished Material' and '.25 Laminated Material'
+          // but only first '.25 Case Material' section defines vLookup
         }, {
           type: Constants.importSetTypes.subProducts,
           generalProductName: 'Edge Banding',
@@ -1080,32 +1046,40 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               header: {
                 lookupKeySuffixes: [
                   'No|No|No|none',
+                  // 'No|No|No|Laminated',
                   'Yes|No|No|Laminated',
                   'No|No|Yes|Laminated',
                   'Yes|No|Yes|Laminated',
+                  // 'No|No|No|AppliedPanel',
                   'Yes|No|No|AppliedPanel',
                   'No|No|Yes|AppliedPanel',
                   'Yes|No|Yes|AppliedPanel',
                   'No|Yes|No|none',
+                  // 'No|Yes|No|Laminated',
                   'Yes|Yes|No|Laminated',
                   'No|Yes|Yes|Laminated',
                   'Yes|Yes|Yes|Laminated',
+                  // 'No|Yes|No|AppliedPanel',
                   'Yes|Yes|No|AppliedPanel',
                   'No|Yes|Yes|AppliedPanel',
                   'Yes|Yes|Yes|AppliedPanel'
                 ],
                 lookupNameSuffixes: [
                   'Closed - No finished ends',
+                  // 'Closed - No finished ends - Laminated',
                   'Closed - Left finished end - Laminated',
                   'Closed - Right finished end - Laminated',
                   'Closed - Both finished ends - Laminated',
+                  // 'Closed - No finished ends - Applied Panel',
                   'Closed - Left finished end - Applied Panel',
                   'Closed - Right finished end - Applied Panel',
                   'Closed - Both finished ends - Applied Panel',
                   'Open - No finished ends',
+                  // 'Open - No finished ends - Laminated',
                   'Open - Left finished end - Laminated',
                   'Open - Right finished end - Laminated',
                   'Open - Both finished ends - Laminated',
+                  // 'Open - No finished ends - Applied Panel',
                   'Open - Left finished end - Applied Panel',
                   'Open - Right finished end - Applied Panel',
                   'Open - Both finished ends - Applied Panel'],
@@ -1305,22 +1279,51 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           // headerCellRange: 'B3:AP3',
           absoluteHeaderRowOffset: -7, // B$3:AP$3
           imageSource: 'Cabinet.png',
+          columnTemplateType: Constants.templateTypes.input,
+          valueType: 'string',
           subsetOverrides: [{
-            subsetCellRange: 'B10:L11',
-            // headerCellRange: 'B7:L7',
+            subsetCellRange: 'B10:D11',
+            absoluteHeaderRowOffset: -3, // B$7:AP$7
+            displayCategories: ['Primary', 'PrimaryTableColumn'],
+          }, {
+            subsetCellRange: 'E10:G11',
+            valueType: 'number',
+            absoluteHeaderRowOffset: -3, // B$7:AP$7
+            displayCategories: ['Primary', 'PrimaryTableColumn'],
+          }, {
+            subsetCellRange: 'H10:H11',
+            absoluteHeaderRowOffset: -3, // B$7:AP$7
+            displayCategories: ['Primary', 'PrimaryTableColumn'],
+          }, {
+            subsetCellRange: 'I10:K11',
+            valueType: 'number',
             absoluteHeaderRowOffset: -3, // B$7:AP$7
             displayCategories: ['Primary', 'PrimaryTableColumn'],
           }, {
             subsetCellRange: 'L10:L11',
             ignore: true,
           }, {
+            subsetCellRange: 'M10:M11',
+            valueType: 'number',
+          }, {
             subsetCellRange: 'O10:U11',
+            valueType: 'number',
             nameSuffix: ' Count',
+          }, {
+            subsetCellRange: 'V10:W11',
+            valueType: 'number',
+            columnTemplateType: Constants.templateTypes.calculation,
           }, {
             subsetCellRange: 'X10:X11',
+            valueType: 'number',
             nameSuffix: ' Count',
           }, {
+            subsetCellRange: 'Y10:Y11',
+            valueType: 'number',
+            columnTemplateType: Constants.templateTypes.calculation,
+          }, {
             subsetCellRange: 'Z10:AP11',
+            valueType: 'number',
             nameSuffix: ' Count',
           }],
           columns: [
@@ -1380,16 +1383,19 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             ignore: true,
           }, {
             subsetCellRange: 'BN11:BN24',
-            templateFormula: 'lookup(depth,"Range","Drawer Slide Depth",slideType)',
+            templateFormula: 'lookup(depth,"Range","Drawer Slide Depths",slideType)',
           }, {
             subsetCellRange: 'BW11:BW24',
             ignore: true,
           }, {
             subsetCellRange: 'BY11:BY24',
-            templateFormula: `lookup(squish("Sides Left",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"${Constants.lookupTypes.basic}","Material Finish")`,
+            templateFormula: `lookup(squish("Sides (left)",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"${Constants.lookupTypes.basic}","Material Finish")`,
           }, {
             subsetCellRange: 'CA11:CA24',
-            templateFormula: `lookup(squish("Sides Right",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"${Constants.lookupTypes.basic}","Material Finish")`,
+            templateFormula: `lookup(squish("Sides (Right)",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"${Constants.lookupTypes.basic}","Material Finish")`,
+          }, {
+            subsetCellRange: 'CB11:CB24', // the spreadsheet actually had an empty cell reference
+            templateFormula: `(baseBottomFullTopCount*(width*depth)/144)+(stretchersCount*(0*width)/144)+(upperTopBottomCount>0 ? (width*depth)/144 : 0)`,
           }, {
             subsetCellRange: 'CC11:CC24',
             templateFormula: `lookup(squish("upper top",leftFinEnd,finishedInterior,rightFinEnd,finishedEndType),"${Constants.lookupTypes.basic}","Material Finish")`,
@@ -1483,28 +1489,28 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     const bidControllerData = {templateLibraries: [cabinetryTemplateLibrary]};
     const workbook = XLSX.readFile(process.env.PWD + '/server/startup/Spreadsheet Estimator V2.1.xlsx');
 
-    var templateCabinet = {
-      id: Random.id(),
-      name: "Cabinet",
-      description: "Cabinet",
-      templateType: Constants.templateTypes.product,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.selectOption
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.isASubTemplate, value: "true"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.imageSource, value: "Cabinet.png"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateCabinet);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateProduct.id,
-      childTemplateId: templateCabinet.id
-    });
+    // var templateCabinet = {
+    //   id: Random.id(),
+    //   name: "Cabinet",
+    //   description: "Cabinet",
+    //   templateType: Constants.templateTypes.product,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.selectOption
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.isASubTemplate, value: "true"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.imageSource, value: "Cabinet.png"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateCabinet);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateProduct.id,
+    //   childTemplateId: templateCabinet.id
+    // });
 
     const replacementsByCell = {};
-    const templateParents = [templateCompany, templateCustomer, templateJob, templateArea, templateCabinet];
+    const templateParents = [templateCompany, templateCustomer, templateJob, templateArea, templateProduct];
     TemplateLibrariesHelper.addMarkupLevels(bidControllerData, lookups, templateParents);
     _.each(workbookMetadata.importSets, (importSet) => {
       console.log(`Import => ${importSet.type} - ${importSet.sheet} - ${importSet.cellRange}...`);
@@ -1523,805 +1529,805 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         //   TemplateLibrariesHelper.addCalculationsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet, replacementsByCell);
         //   break;
         case Constants.importSetTypes.formulaReferences:
-          TemplateLibrariesHelper.addFormulaReferencesFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet, replacementsByCell);
+          TemplateLibrariesHelper.addFormulaReferencesFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateProduct, importSet, replacementsByCell);
           break;
         case Constants.importSetTypes.lookups:
-          TemplateLibrariesHelper.addLookupsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet, replacementsByCell);
+          TemplateLibrariesHelper.addLookupsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateProduct, importSet, replacementsByCell);
           break;
       }
     });
     _.each(lookups, (lookup) => {
       Lookups.insert(lookup);
     });
+    //
+    // var templateDoorStyle = {
+    //   id: Random.id(),
+    //   name: "Door Style",
+    //   description: "Door Style",
+    //   templateType: Constants.templateTypes.input,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Options"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "10"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "doorStyle"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "PLAM - 0.5mm PVC"
+    //   }]
+    //   //, {
+    //     // Can override at customer, job, area but not product (because some products don't have doors).
+    //     // Can also override at cabinet.
+    //     // Seems better to explicitly specify with templateRelationship with optionalOverride
+    //     //id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "3"
+    //   // }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateDoorStyle);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCompany.id,
+    //   childTemplateId: templateDoorStyle.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateCustomer.id,
+    //   childTemplateId: templateDoorStyle.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateJob.id,
+    //   childTemplateId: templateDoorStyle.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateArea.id,
+    //   childTemplateId: templateDoorStyle.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateDoorStyle.id
+    // });
+    //
+    // var templateQualityLevel = {
+    //   id: Random.id(),
+    //   name: "Quality Level",
+    //   description: "Quality Level",
+    //   templateType: Constants.templateTypes.specificationGroup,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.select
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Specifications"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.customOptions, value: "GetSpecificationOptions"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "qualityLevel"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "Economy"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateQualityLevel);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCompany.id,
+    //   childTemplateId: templateQualityLevel.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateCustomer.id,
+    //   childTemplateId: templateQualityLevel.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateJob.id,
+    //   childTemplateId: templateQualityLevel.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateArea.id,
+    //   childTemplateId: templateQualityLevel.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateProduct.id,
+    //   childTemplateId: templateQualityLevel.id
+    // });
+    //
+    // var templateEconomy = {
+    //   id: Random.id(),
+    //   name: "Economy",
+    //   description: "Less expensive options favored",
+    //   templateType: Constants.templateTypes.condition,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.conditionType, value: Constants.conditionTypes.switch
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.switchVariable, value: "qualityLevel"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.switchValue, value: "Economy"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateEconomy);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateQualityLevel.id,
+    //   childTemplateId: templateEconomy.id,
+    // });
+    //
+    // var templateEconomyDoorStyle = {
+    //   id: Random.id(),
+    //   name: "Economy Door Style",
+    //   description: "Economy Door Style",
+    //   templateType: Constants.templateTypes.override,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "doorStyle"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "Wood Veneer"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.overrideType, value: Constants.overrideTypes.fromSpecificationGroup
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateEconomyDoorStyle);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateEconomy.id,
+    //   childTemplateId: templateEconomyDoorStyle.id
+    // });
+    //
+    // var templateEconomyInteriorMaterial = {
+    //   id: Random.id(),
+    //   name: "Interior Material Override",
+    //   description: "Interior (case) material",
+    //   templateType: Constants.templateTypes.override,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "caseMaterialInteriorSku"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "WHTMELAMINE"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.overrideType, value: Constants.overrideTypes.fromSpecificationGroup
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateEconomyInteriorMaterial);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateEconomy.id,
+    //   childTemplateId: templateEconomyInteriorMaterial.id
+    // });
+    //
+    // var templateImperial = {
+    //   id: Random.id(),
+    //   name: "Imperial",
+    //   description: "Highest quality",
+    //   templateType: Constants.templateTypes.condition,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.conditionType, value: Constants.conditionTypes.switch
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.switchVariable, value: "qualityLevel"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.switchValue, value: "Imperial"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateImperial);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateQualityLevel.id,
+    //   childTemplateId: templateImperial.id,
+    // });
+    //
+    // var templateImperialDoorStyle = {
+    //   id: Random.id(),
+    //   name: "Imperial Door Style",
+    //   description: "Imperial Door Style",
+    //   templateType: Constants.templateTypes.override,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "doorStyle"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "PLAM - 0.5mm PVC"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.overrideType, value: Constants.overrideTypes.fromSpecificationGroup
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateImperialDoorStyle);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateImperial.id,
+    //   childTemplateId: templateImperialDoorStyle.id
+    // });
+    //
+    // var templateImperialInteriorMaterial = {
+    //   id: Random.id(),
+    //   name: "Interior Material Override",
+    //   description: "Interior (case) material",
+    //   templateType: Constants.templateTypes.override,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "caseMaterialInteriorSku"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "CHERRY"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.overrideType, value: Constants.overrideTypes.fromSpecificationGroup
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateImperialInteriorMaterial);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateImperial.id,
+    //   childTemplateId: templateImperialInteriorMaterial.id
+    // });
+    //
+    // var templateLaborCostMultiplier = {
+    //   id: Random.id(),
+    //   name: "Labor Cost Multiplier",
+    //   description: "Labor cost multiplier",
+    //   templateType: Constants.templateTypes.input,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Labor"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborCostMultiplier"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "1"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateLaborCostMultiplier);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCompany.id,
+    //   childTemplateId: templateLaborCostMultiplier.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateCustomer.id,
+    //   childTemplateId: templateLaborCostMultiplier.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateJob.id,
+    //   childTemplateId: templateLaborCostMultiplier.id
+    // });
+    //
+    // var templateLaborSawingRate = {
+    //   id: Random.id(),
+    //   name: "Labor Sawing Rate",
+    //   description: "Sawing hourly rate",
+    //   templateType: Constants.templateTypes.input,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.denominatorUnit, value: UnitOfMeasure.units.hours
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Labor"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingRate"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "60"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateLaborSawingRate);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCompany.id,
+    //   childTemplateId: templateLaborSawingRate.id
+    // });
+    //
+    // var templateLaborSawingCost = {
+    //   id: Random.id(),
+    //   name: "Labor Sawing Cost",
+    //   description: "Sawing cost",
+    //   templateType: Constants.templateTypes.calculation,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Labor"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingCost"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "laborCostMultiplier * laborSawingTime * laborSawingRate"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateLaborSawingCost);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateLaborSawingCost.id
+    // });
+    //
+    // var templateLaborSawingTimePerPart = {
+    //   id: Random.id(),
+    //   name: "LaborSawingTimePerPart",
+    //   description: "Sawing time per part",
+    //   templateType: Constants.templateTypes.input,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.minutes
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.denominatorUnit, value: UnitOfMeasure.units.partCount
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Labor"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingTimePerPart"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "0.5"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateLaborSawingTimePerPart);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCompany.id,
+    //   childTemplateId: templateLaborSawingTimePerPart.id
+    // });
+    //
+    // var templateLaborSawingTime = {
+    //   id: Random.id(),
+    //   name: "Labor Sawing Time",
+    //   description: "Sawing time",
+    //   templateType: Constants.templateTypes.calculation,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.hours
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Calculations"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingTime"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "numCaseParts * laborSawingTimePerPart / 60"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateLaborSawingTime);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateLaborSawingTime.id
+    // });
+    //
+    // var templateOneDoorBaseCabinet = {
+    //   id: Random.id(),
+    //   name: "One Door Base Cabinet",
+    //   description: "One door base cabinet",
+    //   templateType: Constants.templateTypes.product,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.selectOption
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.isASubTemplate, value: "true"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Base Cabs"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateOneDoorBaseCabinet);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   relationToItem: Constants.relationToItem.subItem,
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateOneDoorBaseCabinet.id
+    // });
+    //
+    // var templateOneDoorBaseQuantityOverride = {
+    //   id: Random.id(),
+    //   name: "One Door Base Quantity Override",
+    //   description: "Quantity",
+    //   templateType: Constants.templateTypes.override,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "quantity"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "2"//Overrides DefaultValue of Cabinet because templateOneDoorBaseCabinet IsASubTemplate and this DefaultValue gets applied after Cabinet's
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateOneDoorBaseQuantityOverride);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateOneDoorBaseCabinet.id,
+    //   childTemplateId: templateOneDoorBaseQuantityOverride.id
+    // });
+    //
+    // var templateLazySusanCabinet = {
+    //   id: Random.id(),
+    //   name: "Lazy Susan Cabinet",
+    //   description: "Lazy Susan cabinet",
+    //   templateType: Constants.templateTypes.product,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.selectOption
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.isASubTemplate, value: "true"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.imageSource, value: "LazySusan.png"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Base Cabs"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateLazySusanCabinet);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   relationToItem: Constants.relationToItem.subItem,
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateLazySusanCabinet.id
+    // });
+    //
+    // var templateLazySusanNumAdjustableShelvesOverride = {
+    //   id: Random.id(),
+    //   name: "LazySusanNumAdjustableShelvesOverride",
+    //   description: "Number of adjustable shelves",
+    //   templateType: Constants.templateTypes.override,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "numAdjustableShelves"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "0"//Overrides DefaultValue of Cabinet because templateLazySusanCabinet IsASubTemplate and this DefaultValue gets applied after Cabinet's
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateLazySusanNumAdjustableShelvesOverride);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateLazySusanCabinet.id,
+    //   childTemplateId: templateLazySusanNumAdjustableShelvesOverride.id
+    // });
+    //
+    // var templatePriceEachOverride = {
+    //   id: Random.id(),
+    //   name: "Price Each Override",
+    //   description: "Price each",
+    //   templateType: Constants.templateTypes.override,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "priceEach"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.valueFormula
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "laborSawingCost + casePartsCost"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templatePriceEachOverride);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templatePriceEachOverride.id
+    // });
 
-    var templateDoorStyle = {
-      id: Random.id(),
-      name: "Door Style",
-      description: "Door Style",
-      templateType: Constants.templateTypes.input,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Options"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "10"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "doorStyle"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "PLAM - 0.5mm PVC"
-      }]
-      //, {
-        // Can override at customer, job, area but not product (because some products don't have doors).
-        // Can also override at cabinet.
-        // Seems better to explicitly specify with templateRelationship with optionalOverride
-        //id: Random.id(), key: Constants.templateSettingKeys.levelsDeepCanOverride, value: "3"
-      // }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateDoorStyle);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCompany.id,
-      childTemplateId: templateDoorStyle.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateCustomer.id,
-      childTemplateId: templateDoorStyle.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateJob.id,
-      childTemplateId: templateDoorStyle.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateArea.id,
-      childTemplateId: templateDoorStyle.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateDoorStyle.id
-    });
-
-    var templateQualityLevel = {
-      id: Random.id(),
-      name: "Quality Level",
-      description: "Quality Level",
-      templateType: Constants.templateTypes.specificationGroup,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.select
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Specifications"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.customOptions, value: "GetSpecificationOptions"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "qualityLevel"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "Economy"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateQualityLevel);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCompany.id,
-      childTemplateId: templateQualityLevel.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateCustomer.id,
-      childTemplateId: templateQualityLevel.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateJob.id,
-      childTemplateId: templateQualityLevel.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateArea.id,
-      childTemplateId: templateQualityLevel.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateProduct.id,
-      childTemplateId: templateQualityLevel.id
-    });
-
-    var templateEconomy = {
-      id: Random.id(),
-      name: "Economy",
-      description: "Less expensive options favored",
-      templateType: Constants.templateTypes.condition,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.conditionType, value: Constants.conditionTypes.switch
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.switchVariable, value: "qualityLevel"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.switchValue, value: "Economy"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateEconomy);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateQualityLevel.id,
-      childTemplateId: templateEconomy.id,
-    });
-
-    var templateEconomyDoorStyle = {
-      id: Random.id(),
-      name: "Economy Door Style",
-      description: "Economy Door Style",
-      templateType: Constants.templateTypes.override,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "doorStyle"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "Wood Veneer"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.overrideType, value: Constants.overrideTypes.fromSpecificationGroup
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateEconomyDoorStyle);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateEconomy.id,
-      childTemplateId: templateEconomyDoorStyle.id
-    });
-
-    var templateEconomyInteriorMaterial = {
-      id: Random.id(),
-      name: "Interior Material Override",
-      description: "Interior (case) material",
-      templateType: Constants.templateTypes.override,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "caseMaterialInteriorSku"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "WHTMELAMINE"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.overrideType, value: Constants.overrideTypes.fromSpecificationGroup
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateEconomyInteriorMaterial);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateEconomy.id,
-      childTemplateId: templateEconomyInteriorMaterial.id
-    });
-
-    var templateImperial = {
-      id: Random.id(),
-      name: "Imperial",
-      description: "Highest quality",
-      templateType: Constants.templateTypes.condition,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.conditionType, value: Constants.conditionTypes.switch
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.switchVariable, value: "qualityLevel"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.switchValue, value: "Imperial"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateImperial);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateQualityLevel.id,
-      childTemplateId: templateImperial.id,
-    });
-
-    var templateImperialDoorStyle = {
-      id: Random.id(),
-      name: "Imperial Door Style",
-      description: "Imperial Door Style",
-      templateType: Constants.templateTypes.override,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "doorStyle"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "PLAM - 0.5mm PVC"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.overrideType, value: Constants.overrideTypes.fromSpecificationGroup
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateImperialDoorStyle);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateImperial.id,
-      childTemplateId: templateImperialDoorStyle.id
-    });
-
-    var templateImperialInteriorMaterial = {
-      id: Random.id(),
-      name: "Interior Material Override",
-      description: "Interior (case) material",
-      templateType: Constants.templateTypes.override,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "caseMaterialInteriorSku"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "CHERRY"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.overrideType, value: Constants.overrideTypes.fromSpecificationGroup
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateImperialInteriorMaterial);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateImperial.id,
-      childTemplateId: templateImperialInteriorMaterial.id
-    });
-
-    var templateLaborCostMultiplier = {
-      id: Random.id(),
-      name: "Labor Cost Multiplier",
-      description: "Labor cost multiplier",
-      templateType: Constants.templateTypes.input,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Labor"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborCostMultiplier"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "1"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateLaborCostMultiplier);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCompany.id,
-      childTemplateId: templateLaborCostMultiplier.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateCustomer.id,
-      childTemplateId: templateLaborCostMultiplier.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateJob.id,
-      childTemplateId: templateLaborCostMultiplier.id
-    });
-
-    var templateLaborSawingRate = {
-      id: Random.id(),
-      name: "Labor Sawing Rate",
-      description: "Sawing hourly rate",
-      templateType: Constants.templateTypes.input,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.denominatorUnit, value: UnitOfMeasure.units.hours
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Labor"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingRate"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "60"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateLaborSawingRate);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCompany.id,
-      childTemplateId: templateLaborSawingRate.id
-    });
-
-    var templateLaborSawingCost = {
-      id: Random.id(),
-      name: "Labor Sawing Cost",
-      description: "Sawing cost",
-      templateType: Constants.templateTypes.calculation,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Labor"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingCost"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "laborCostMultiplier * laborSawingTime * laborSawingRate"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateLaborSawingCost);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateLaborSawingCost.id
-    });
-
-    var templateLaborSawingTimePerPart = {
-      id: Random.id(),
-      name: "LaborSawingTimePerPart",
-      description: "Sawing time per part",
-      templateType: Constants.templateTypes.input,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.minutes
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.denominatorUnit, value: UnitOfMeasure.units.partCount
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Labor"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingTimePerPart"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "0.5"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateLaborSawingTimePerPart);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCompany.id,
-      childTemplateId: templateLaborSawingTimePerPart.id
-    });
-
-    var templateLaborSawingTime = {
-      id: Random.id(),
-      name: "Labor Sawing Time",
-      description: "Sawing time",
-      templateType: Constants.templateTypes.calculation,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.hours
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Calculations"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "laborSawingTime"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "numCaseParts * laborSawingTimePerPart / 60"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateLaborSawingTime);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateLaborSawingTime.id
-    });
-
-    var templateOneDoorBaseCabinet = {
-      id: Random.id(),
-      name: "One Door Base Cabinet",
-      description: "One door base cabinet",
-      templateType: Constants.templateTypes.product,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.selectOption
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.isASubTemplate, value: "true"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Base Cabs"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateOneDoorBaseCabinet);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      relationToItem: Constants.relationToItem.subItem,
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateOneDoorBaseCabinet.id
-    });
-
-    var templateOneDoorBaseQuantityOverride = {
-      id: Random.id(),
-      name: "One Door Base Quantity Override",
-      description: "Quantity",
-      templateType: Constants.templateTypes.override,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "quantity"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "2"//Overrides DefaultValue of Cabinet because templateOneDoorBaseCabinet IsASubTemplate and this DefaultValue gets applied after Cabinet's
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateOneDoorBaseQuantityOverride);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateOneDoorBaseCabinet.id,
-      childTemplateId: templateOneDoorBaseQuantityOverride.id
-    });
-
-    var templateLazySusanCabinet = {
-      id: Random.id(),
-      name: "Lazy Susan Cabinet",
-      description: "Lazy Susan cabinet",
-      templateType: Constants.templateTypes.product,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.selectOption
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.isASubTemplate, value: "true"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.imageSource, value: "LazySusan.png"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Base Cabs"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateLazySusanCabinet);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      relationToItem: Constants.relationToItem.subItem,
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateLazySusanCabinet.id
-    });
-
-    var templateLazySusanNumAdjustableShelvesOverride = {
-      id: Random.id(),
-      name: "LazySusanNumAdjustableShelvesOverride",
-      description: "Number of adjustable shelves",
-      templateType: Constants.templateTypes.override,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "numAdjustableShelves"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.defaultValue
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "0"//Overrides DefaultValue of Cabinet because templateLazySusanCabinet IsASubTemplate and this DefaultValue gets applied after Cabinet's
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateLazySusanNumAdjustableShelvesOverride);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateLazySusanCabinet.id,
-      childTemplateId: templateLazySusanNumAdjustableShelvesOverride.id
-    });
-
-    var templatePriceEachOverride = {
-      id: Random.id(),
-      name: "Price Each Override",
-      description: "Price each",
-      templateType: Constants.templateTypes.override,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.isVariableOverride, value: "true"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableToOverride, value: "priceEach"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.propertyToOverride, value: Constants.templateSettingKeys.valueFormula
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.overrideValue, value: "laborSawingCost + casePartsCost"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templatePriceEachOverride);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templatePriceEachOverride.id
-    });
-
-    var templateCabinetWidth = {
-      id: Random.id(),
-      name: "Cabinet Width",
-      description: "Cabinet width",
-      templateType: Constants.templateTypes.input,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.inches
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Width"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "4"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "width"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "16"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateCabinetWidth);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateCabinetWidth.id
-    });
-
-    var templateCabinetHeight = {
-      id: Random.id(),
-      name: "Cabinet Height",
-      description: "Cabinet height",
-      templateType: Constants.templateTypes.input,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.inches
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Height"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "5"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "height"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "24"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateCabinetHeight);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateCabinetHeight.id
-    });
-
-    var templateCabinetDepth = {
-      id: Random.id(),
-      name: "Cabinet Depth",
-      description: "Cabinet depth",
-      templateType: Constants.templateTypes.input,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.inches
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Depth"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "6"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "depth"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "36.5"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateCabinetDepth);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateCabinetDepth.id
-    });
-
-    var templateNumAdjustableShelves = {
-      id: Random.id(),
-      name: "Num Adjustable Shelves",
-      description: "Number of adjustable shelves",
-      templateType: Constants.templateTypes.input,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.partCount
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Options"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Num adjustable shelves"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "numAdjustableShelves"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "2"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateNumAdjustableShelves);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateNumAdjustableShelves.id
-    });
-
-    var templateNumCaseParts = {
-      id: Random.id(),
-      name: "NumCaseParts",
-      description: "Number of case parts",
-      templateType: Constants.templateTypes.calculation,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.partCount
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Calculations"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "numCaseParts"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "numAdjustableShelves + 4"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateNumCaseParts);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateNumCaseParts.id
-    });
-
-    var templateInteriorMaterial = {
-      id: Random.id(),
-      name: "Interior Material",
-      description: "Interior (case) material",
-      templateType: Constants.templateTypes.input,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.select
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.customOptions, value: "GetCoreSheetMaterialOptions"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Options"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "7"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "caseMaterialInteriorSku"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "WHTMELAMINE"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateInteriorMaterial);
-
-    //Still need to implement this
-    //context.TemplateLookupTables.Add(new TemplateLookupTable
-    //{
-    //  Template = templateInteriorMaterial,
-    //      LookUpTableName = "SheetMaterial",
-    //      LookupTableKeyColumns = new List<string> { "Sku" },
-    //      LookUpTableKeyValues = new List<string> { null },
-    //      LookupTableDisplayColumns = new List<string> { "Description" },
-    //  //LookUpTableFilter = "CanBeInterior = 1",
-    //});
-
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCompany.id,
-      childTemplateId: templateInteriorMaterial.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateJob.id,
-      childTemplateId: templateInteriorMaterial.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateArea.id,
-      childTemplateId: templateInteriorMaterial.id
-    });
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      dependency: Constants.dependency.optionalOverride,
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateInteriorMaterial.id
-    });
-
-    var templateThreeFourthsSheetMaterialCostPerArea = {
-      id: Random.id(),
-      name: "ThreeFourthsSheetMaterialCostPerArea",
-      description: "3/4 inch sheet material cost per square feet",
-      templateType: Constants.templateTypes.calculation,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.denominatorUnit, value: UnitOfMeasure.units.feet
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.denominatorUnit, value: UnitOfMeasure.units.feet
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Parts"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "threeFourthsSheetMaterialCostPerArea"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.customLookup, value: "GetSheetMaterialCostPerArea"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.caseMaterialInteriorSku, value: "caseMaterialInteriorSku"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.caseMaterialExposedSku, value: "caseMaterialInteriorSku"//Should use "caseMaterialExposedSku" once defined),
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.nominalThickness, value: "0.75"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "3.32"
-        //Could be something like this:
-        //new KeyValuePair<string, string>(Constants.templateSettingKeys.defaultValue, "getSheetMaterialCostPerArea(caseMaterialInteriorSku, 0.75)"),
-        //new KeyValuePair<string, string>("LookUpTableName", "SheetMaterial"),
-        //new KeyValuePair<string, string>("PredicateColumn0", "Sku"),
-        //new KeyValuePair<string, string>("PredicateComparisonOperator0", "=="),
-        //new KeyValuePair<string, string>("PredicateComparisonValue0", "caseMaterialInteriorSku"),
-        //new KeyValuePair<string, string>("PredicateColumn1", "SheetThickness"),
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateThreeFourthsSheetMaterialCostPerArea);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateThreeFourthsSheetMaterialCostPerArea.id
-    });
-
-    var templateThreeFourthsSheetMaterialCasePartsArea = {
-      id: Random.id(),
-      name: "ThreeFourthsSheetMaterialCasePartsArea",
-      description: "3/4 inch sheet material case square footage",
-      templateType: Constants.templateTypes.calculation,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.feet
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.feet
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Calculations"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "threeFourthsSheetMaterialCasePartsArea"
-      }, {
-        id: Random.id(),
-        key: Constants.templateSettingKeys.valueFormula,
-        value: "(2 * height / 12 * depth / 12) + ((numAdjustableShelves + 1) * width / 12 * depth / 12) + (height / 12 * width / 12)"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateThreeFourthsSheetMaterialCasePartsArea);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateThreeFourthsSheetMaterialCasePartsArea.id
-    });
-
-    var templateCasePartsCost = {
-      id: Random.id(),
-      name: "CasePartsCost",
-      description: "Case parts cost",
-      templateType: Constants.templateTypes.calculation,
-      templateSettings: [{
-        id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Calculations"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "10"
-      }, {
-        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "casePartsCost"
-      }, {
-        id: Random.id(),
-        key: Constants.templateSettingKeys.valueFormula,
-        value: "threeFourthsSheetMaterialCasePartsArea * threeFourthsSheetMaterialCostPerArea"
-      }]
-    };
-    cabinetryTemplateLibrary.templates.push(templateCasePartsCost);
-    cabinetryTemplateLibrary.templateRelationships.push({
-      id: Random.id(),
-      parentTemplateId: templateCabinet.id,
-      childTemplateId: templateCasePartsCost.id
-    });
+    // var templateCabinetWidth = {
+    //   id: Random.id(),
+    //   name: "Cabinet Width",
+    //   description: "Cabinet width",
+    //   templateType: Constants.templateTypes.input,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.inches
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Width"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "4"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "width"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "16"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateCabinetWidth);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateCabinetWidth.id
+    // });
+    //
+    // var templateCabinetHeight = {
+    //   id: Random.id(),
+    //   name: "Cabinet Height",
+    //   description: "Cabinet height",
+    //   templateType: Constants.templateTypes.input,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.inches
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Height"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "5"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "height"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "24"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateCabinetHeight);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateCabinetHeight.id
+    // });
+    //
+    // var templateCabinetDepth = {
+    //   id: Random.id(),
+    //   name: "Cabinet Depth",
+    //   description: "Cabinet depth",
+    //   templateType: Constants.templateTypes.input,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.inches
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Primary"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "PrimaryTableColumn"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Depth"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "6"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "depth"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "36.5"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.columnWidth, value: "80"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateCabinetDepth);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateCabinetDepth.id
+    // });
+    //
+    // var templateNumAdjustableShelves = {
+    //   id: Random.id(),
+    //   name: "Num Adjustable Shelves",
+    //   description: "Number of adjustable shelves",
+    //   templateType: Constants.templateTypes.input,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.partCount
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.entry
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Options"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCaption, value: "Num adjustable shelves"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "numAdjustableShelves"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "2"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateNumAdjustableShelves);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateNumAdjustableShelves.id
+    // });
+    //
+    // var templateNumCaseParts = {
+    //   id: Random.id(),
+    //   name: "NumCaseParts",
+    //   description: "Number of case parts",
+    //   templateType: Constants.templateTypes.calculation,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.partCount
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Calculations"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "numCaseParts"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: "numAdjustableShelves + 4"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateNumCaseParts);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateNumCaseParts.id
+    // });
+    //
+    // var templateInteriorMaterial = {
+    //   id: Random.id(),
+    //   name: "Interior Material",
+    //   description: "Interior (case) material",
+    //   templateType: Constants.templateTypes.input,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.select
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.customOptions, value: "GetCoreSheetMaterialOptions"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Options"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "7"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "caseMaterialInteriorSku"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "WHTMELAMINE"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateInteriorMaterial);
+    //
+    // //Still need to implement this
+    // //context.TemplateLookupTables.Add(new TemplateLookupTable
+    // //{
+    // //  Template = templateInteriorMaterial,
+    // //      LookUpTableName = "SheetMaterial",
+    // //      LookupTableKeyColumns = new List<string> { "Sku" },
+    // //      LookUpTableKeyValues = new List<string> { null },
+    // //      LookupTableDisplayColumns = new List<string> { "Description" },
+    // //  //LookUpTableFilter = "CanBeInterior = 1",
+    // //});
+    //
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCompany.id,
+    //   childTemplateId: templateInteriorMaterial.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateJob.id,
+    //   childTemplateId: templateInteriorMaterial.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateArea.id,
+    //   childTemplateId: templateInteriorMaterial.id
+    // });
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   dependency: Constants.dependency.optionalOverride,
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateInteriorMaterial.id
+    // });
+    //
+    // var templateThreeFourthsSheetMaterialCostPerArea = {
+    //   id: Random.id(),
+    //   name: "ThreeFourthsSheetMaterialCostPerArea",
+    //   description: "3/4 inch sheet material cost per square feet",
+    //   templateType: Constants.templateTypes.calculation,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.denominatorUnit, value: UnitOfMeasure.units.feet
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.denominatorUnit, value: UnitOfMeasure.units.feet
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Parts"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "threeFourthsSheetMaterialCostPerArea"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.customLookup, value: "GetSheetMaterialCostPerArea"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.caseMaterialInteriorSku, value: "caseMaterialInteriorSku"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.caseMaterialExposedSku, value: "caseMaterialInteriorSku"//Should use "caseMaterialExposedSku" once defined),
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.nominalThickness, value: "0.75"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.defaultValue, value: "3.32"
+    //     //Could be something like this:
+    //     //new KeyValuePair<string, string>(Constants.templateSettingKeys.defaultValue, "getSheetMaterialCostPerArea(caseMaterialInteriorSku, 0.75)"),
+    //     //new KeyValuePair<string, string>("LookUpTableName", "SheetMaterial"),
+    //     //new KeyValuePair<string, string>("PredicateColumn0", "Sku"),
+    //     //new KeyValuePair<string, string>("PredicateComparisonOperator0", "=="),
+    //     //new KeyValuePair<string, string>("PredicateComparisonValue0", "caseMaterialInteriorSku"),
+    //     //new KeyValuePair<string, string>("PredicateColumn1", "SheetThickness"),
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateThreeFourthsSheetMaterialCostPerArea);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateThreeFourthsSheetMaterialCostPerArea.id
+    // });
+    //
+    // var templateThreeFourthsSheetMaterialCasePartsArea = {
+    //   id: Random.id(),
+    //   name: "ThreeFourthsSheetMaterialCasePartsArea",
+    //   description: "3/4 inch sheet material case square footage",
+    //   templateType: Constants.templateTypes.calculation,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.feet
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.feet
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Calculations"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "1"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "threeFourthsSheetMaterialCasePartsArea"
+    //   }, {
+    //     id: Random.id(),
+    //     key: Constants.templateSettingKeys.valueFormula,
+    //     value: "(2 * height / 12 * depth / 12) + ((numAdjustableShelves + 1) * width / 12 * depth / 12) + (height / 12 * width / 12)"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateThreeFourthsSheetMaterialCasePartsArea);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateThreeFourthsSheetMaterialCasePartsArea.id
+    // });
+    //
+    // var templateCasePartsCost = {
+    //   id: Random.id(),
+    //   name: "CasePartsCost",
+    //   description: "Case parts cost",
+    //   templateType: Constants.templateTypes.calculation,
+    //   templateSettings: [{
+    //     id: Random.id(), key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayCategory, value: "Calculations"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.displayOrder, value: "10"
+    //   }, {
+    //     id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "casePartsCost"
+    //   }, {
+    //     id: Random.id(),
+    //     key: Constants.templateSettingKeys.valueFormula,
+    //     value: "threeFourthsSheetMaterialCasePartsArea * threeFourthsSheetMaterialCostPerArea"
+    //   }]
+    // };
+    // cabinetryTemplateLibrary.templates.push(templateCasePartsCost);
+    // cabinetryTemplateLibrary.templateRelationships.push({
+    //   id: Random.id(),
+    //   parentTemplateId: templateCabinet.id,
+    //   childTemplateId: templateCasePartsCost.id
+    // });
 
     templateLibraryId = TemplateLibraries.insert(cabinetryTemplateLibrary);
   // });
