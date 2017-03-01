@@ -12,7 +12,7 @@
   </form>-->
   <uib-tabset>
     <uib-tab ng-repeat="tab in bid.tabs" heading="{{tab.title}}" active="tab.active" disabled="tab.disabled">
-      <form class="form-horizontal" role="form">
+      <form class="form-horizontal eb-top-buffer" role="form">
         <div class="form-group col-sm-12"
             data-ng-repeat="item in tab.inputSelectionItems">
             <!-- data-ng-show="item.getSelection() && item.template.shouldDisplay"> -->

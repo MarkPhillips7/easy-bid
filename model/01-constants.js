@@ -36,6 +36,7 @@ Constants.importSetTypes = {
   formulaReferences: 'FormulaReferences',
   lookups: 'Lookups',
   products: 'Products',
+  specificationGroups: 'SpecificationGroups',
   specificationOptions: 'SpecificationOptions',
   subProducts: 'SubProducts',
 };
@@ -79,6 +80,7 @@ Constants.lookupSubTypes = {
 Constants.noEmailYet = "noemailyet";
 
 Constants.overrideTypes = {
+  calculation:"Calculation",
   fromSpecificationGroup:"FromSpecificationGroup",
   userEntry:"UserEntry",
 };
@@ -152,7 +154,7 @@ Constants.templateSettingKeys = {
   // Commenting levelsDeepCanOverride because it seems better to explicitly specify with optionalOverride templateRelationship
   // levelsDeepCanOverride:"LevelsDeepCanOverride",
   lookupKey:"LookupKey",
-  lookupKeyVariable:"LookupKeyVariable",
+  // lookupKeyValue:"lookupKeyValue",
   lookupType:"LookupType",
   nominalThickness:"NominalThickness",
   numeratorUnit:"NumeratorUnit",

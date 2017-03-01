@@ -715,7 +715,7 @@ const getSelectionValue = (bidControllerData, selection) => {
     //If no ValueFormula, check for VariableToDisplay.
     else if (variableToDisplay = ItemTemplatesHelper.getTemplateSettingValueForTemplate(
         selectionTemplate, Constants.templateSettingKeys.variableToDisplay)) {
-      const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(selectionTemplate.variableToDisplay);
+      const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(variableToDisplay);
       selectionValue = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selection);
       selectionValueSource = Constants.valueSources.calculatedValue;
     }
@@ -1206,17 +1206,17 @@ const populateTemplateVariables = (templateVariableNames, stringMaybeWithVariabl
 
 // stringMaybeWithVariableBindings expected to be like 'hinge{hardwareMaterial}{lengthInInches}'
 // where hardwareMaterial and lengthInInches are template variable names
-const replaceVariablesWithValues = (bidControllerData, selection, stringMaybeWithVariableBindings) => {
-  let returnString = stringMaybeWithVariableBindings;
-  const templateVariableNames = [];
-  populateTemplateVariables(templateVariableNames, stringMaybeWithVariableBindings, 0);
-  _.each(templateVariableNames, (templateVariableName) => {
-    const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(templateVariableName);
-    const jsonVariableValue = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selection);
-    returnString = returnString.replace(`{${templateVariableName}}`, jsonVariableValue);
-  });
-  return returnString;
-};
+// const replaceVariablesWithValues = (bidControllerData, selection, stringMaybeWithVariableBindings) => {
+//   let returnString = stringMaybeWithVariableBindings;
+//   const templateVariableNames = [];
+//   populateTemplateVariables(templateVariableNames, stringMaybeWithVariableBindings, 0);
+//   _.each(templateVariableNames, (templateVariableName) => {
+//     const jsonVariableName = ItemTemplatesHelper.getJsonVariableNameByTemplateVariableName(templateVariableName);
+//     const jsonVariableValue = getJsonVariableValue(bidControllerData, selection, jsonVariableName, selection);
+//     returnString = returnString.replace(`{${templateVariableName}}`, jsonVariableValue);
+//   });
+//   return returnString;
+// };
 
 const addSelectionsForChildTemplateRelationship = (bidControllerData, selection, template,
     selectionAddingMode, templateRelationship, templateToStopAt) => {
@@ -1254,12 +1254,14 @@ const addSelectionsForChildTemplateRelationship = (bidControllerData, selection,
         let propertyToOverride = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.propertyToOverride);
         let overrideValue = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.overrideValue);
         let jsonVariableName; // gets set if overrideValue determined by lookup
-        if (!overrideValue) {
-          const lookupType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.lookupType);
-          const lookupKeyVariable = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.lookupKeyVariable);
-          const lookupKeyVariableReplaced = replaceVariablesWithValues(bidControllerData, selection, lookupKeyVariable);
-          overrideValue = `getLookup${lookupType}(${lookupKeyVariableReplaced})`;
-        }
+        // if (!overrideValue) {
+        //   const lookupType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.lookupType);
+        //   const lookupKeyValue = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.lookupKeyValue);
+        //   // const lookupKeyValueReplaced = replaceVariablesWithValues(bidControllerData, selection, lookupKeyValue);
+        //   // overrideValue = `getLookup${lookupType}(${lookupKeyValueReplaced})`;
+        //   // want something like `lookup(squish("Pull", pulls, hardwareFinish), "Price")`
+        //   overrideValue = `lookup(${lookupKeyValue}, "${lookupType}")`;
+        // }
         let overrideType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(childTemplate, Constants.templateSettingKeys.overrideType);
         const {selectionToOverride, levelFromHere} =
           getSelectionToOverrideOrAddIfAppropriate(bidControllerData, selection, variableToOverride, [], overrideValue, childTemplate);

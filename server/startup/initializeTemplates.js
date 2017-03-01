@@ -244,8 +244,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
 
     var templateAreaColumn = {
       id: Random.id(),
-      name: "Area Column",
-      description: "Area Column",
+      name: "Area",
+      description: "Area",
       templateType: Constants.templateTypes.variableDisplay,
       templateSettings: [{
         id: Random.id(), key: Constants.templateSettingKeys.selectionType, value: Constants.selectionTypes.notApplicable
@@ -394,7 +394,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         {
           type: Constants.importSetTypes.specificationOptions,
           // Each column represents a different specification option
-          // assumption is that first row represents header (like 'Exterior color') and remaining nonempty rows are the options
+          // assumption is that first row represents header (like 'Door Style') and remaining nonempty rows are the options
           sheet: '1. Job Info.',
           cellRange: 'G39:R63',
           category: {
@@ -407,6 +407,16 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             definedName: 'spec_lookup',
             columnOffset: -3,
           }
+        }, {
+          type: Constants.importSetTypes.specificationGroups,
+          // First column is specification group description, remaining columns represent different specification options
+          // assumption is that first row represents header (like 'Door Style') and remaining nonempty rows each represent a specification group
+          sheet: '1. Job Info.',
+          cellRange: 'E12:R22',
+          specificationGroupName: 'Style',
+          category: {
+            name: 'Primary',
+          },
         }, {
           type: Constants.importSetTypes.subProducts,
           generalProductName: 'Door',
@@ -864,11 +874,11 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               columnOffset: 2,
             }, {
               header: {
-                conditionSwitchVariable: 'hardwareMaterial',
+                conditionSwitchVariable: 'hardwareFinish',
                 values: ['Chrome', 'Satin nickel', 'Polished brass', 'Dark bronze'],
               },
               // header: {
-              //   conditionSwitchVariable: 'hardwareMaterial',
+              //   conditionSwitchVariable: 'hardwareFinish',
               //   absoluteRowOffset: -3,
               // },
               columnOffset: 3, // 'F$128'
@@ -922,7 +932,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               columnOffset: 2, // 'E139'
             }, {
               header: {
-                conditionSwitchVariable: 'hardwareMaterial',
+                conditionSwitchVariable: 'hardwareFinish',
                 values: ['Chrome', 'Satin nickel', 'Polished brass', 'Dark bronze'],
               },
               columnOffset: 3, // 'F$128'
@@ -939,7 +949,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             },
           },
           // expect formula to contain something like `VLOOKUP($DQ$11,lookup_hardware,$DN24,FALSE)`
-          // but 'Hardware' vLookup is used for 'Hinge' and 'Poll'
+          // but 'Hardware' vLookup is used for 'Hinge' and 'Pull'
         }, {
           type: Constants.importSetTypes.subProducts,
           generalProductName: 'Pull',
@@ -955,7 +965,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
               columnOffset: 2, // 'E139'
             }, {
               header: {
-                conditionSwitchVariable: 'hardwareMaterial',
+                conditionSwitchVariable: 'hardwareFinish',
                 values: ['Chrome', 'Satin nickel', 'Polished brass', 'Dark bronze'],
               },
               columnOffset: 3, // 'F$128'
@@ -972,7 +982,7 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             },
           },
           // expect formula to contain something like `VLOOKUP($DQ$11,lookup_hardware,$DN24,FALSE)`
-          // but 'Hardware' vLookup is used for 'Hinge' and 'Poll'
+          // but 'Hardware' vLookup is used for 'Hinge' and 'Pull'
         }, {
           type: Constants.importSetTypes.subProducts,
           generalProductName: 'Drawer Slides',
@@ -1269,6 +1279,37 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             nameBase: 'Cost Labor Total',
           },]
         }, {
+          // formulaReferences only used to identify variables. Should appear before calculations that might reference it
+          // same cells can also be used for calculations
+          type: Constants.importSetTypes.formulaReferences,
+          // assumption is that first row represents header (like 'Height'),
+          sheet: 'Products',
+          cellRange: 'E7:AP10',
+          formulaRowOffset: 3,
+          formulaReferenceRowCount: 2,
+          subsetOverrides: [{
+            subsetCellRange: 'M7:R10',
+            nameRowOffset: -4,
+          }, {
+            subsetCellRange: 'S7:U10',
+            nameRowOffset: -4,
+            nameSuffix: ' Count',
+          }, {
+            subsetCellRange: 'V7:W10',
+            nameRowOffset: -4,
+          }, {
+            subsetCellRange: 'X7:X10',
+            nameRowOffset: -4,
+            nameSuffix: ' Count',
+          }, {
+            subsetCellRange: 'Y7:Y10',
+            nameRowOffset: -4,
+          }, {
+            subsetCellRange: 'Z7:AP10',
+            nameRowOffset: -4,
+            nameSuffix: ' Count',
+          }],
+        }, {
           type: Constants.importSetTypes.products,
           generalProductName: 'Base Cabinet',
           defaultUnits: 'each',
@@ -1325,6 +1366,14 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             subsetCellRange: 'Z10:AP11',
             valueType: 'number',
             nameSuffix: ' Count',
+          }, {
+            subsetCellRange: 'AL10:AL11',
+            valueType: 'number',
+            columnTemplateType: Constants.templateTypes.calculation,
+          }, {
+            subsetCellRange: 'AP10:AP11',
+            valueType: 'number',
+            columnTemplateType: Constants.templateTypes.calculation,
           }],
           columns: [
             {
@@ -1528,6 +1577,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
         // case Constants.importSetTypes.calculations:
         //   TemplateLibrariesHelper.addCalculationsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateCabinet, importSet, replacementsByCell);
         //   break;
+        case Constants.importSetTypes.specificationGroups:
+          TemplateLibrariesHelper.addSpecificationGroupsFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateParents, importSet);
+          break;
         case Constants.importSetTypes.formulaReferences:
           TemplateLibrariesHelper.addFormulaReferencesFromWorkbook(workbook, workbookMetadata, bidControllerData, lookups, templateProduct, importSet, replacementsByCell);
           break;
