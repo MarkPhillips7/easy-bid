@@ -1794,8 +1794,8 @@ const addPriceTemplate = (bidControllerData, parentTemplate, defaultUnitsText, c
   // want something like `lookup(squish(pull, hardwareFinish), "Price")`.
   // variableName should actually have a value like `Pull|Knob`
   const overrideValue = conditionSwitchVariable
-    ? `lookup(squish("${variableName}, ${conditionSwitchVariable}), "Price")`
-    : `lookup(squish("${variableName}), "Price")`;
+    ? `lookup(squish(${variableName}, ${conditionSwitchVariable}), "Price")`
+    : `lookup(squish(${variableName}), "Price")`;
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.isVariableOverride, 'true', order++);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.variableToOverride, 'priceEach', order++);
   addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.propertyToOverride, Constants.templateSettingKeys.valueFormula, order++);
@@ -2669,8 +2669,9 @@ const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, 
         }
         addTemplateSetting(bidControllerData, newEntryTemplate.id, Constants.templateSettingKeys.variableName, Strings.toVariableName(headerName), order++);
 
-        if (importSet.displayCategories) {
-          _.each(importSet.displayCategories, (displayCategory) => {
+        const displayCategories = subsetOverrides.displayCategories || importSet.displayCategories;
+        if (displayCategories) {
+          _.each(displayCategories, (displayCategory) => {
             addTemplateSetting(bidControllerData, newEntryTemplate.id, Constants.templateSettingKeys.displayCategory, displayCategory, order++);
           });
         }

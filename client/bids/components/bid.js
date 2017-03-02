@@ -358,7 +358,8 @@ class bid {
 
       //If there is no selection then just create a blank one
       if (productSelections && productSelections.length === 0) {
-        selection = SelectionsHelper.addSelectionForTemplate(pendingChanges, columnTemplate, '', productSelectionId, 0);
+        // No longer should add a selection...
+        // selection = SelectionsHelper.addSelectionForTemplate(pendingChanges, columnTemplate, '', productSelectionId, 0);
       }
       // Otherwise there must just be one selection or something went wrong
       else if (productSelections && productSelections.length !== 1) {

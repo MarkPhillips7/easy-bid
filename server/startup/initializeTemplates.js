@@ -1324,22 +1324,20 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
           valueType: 'string',
           subsetOverrides: [{
             subsetCellRange: 'B10:D11',
-            absoluteHeaderRowOffset: -3, // B$7:AP$7
+            absoluteHeaderRowOffset: -3, // B$7:D$7
             displayCategories: ['Primary', 'PrimaryTableColumn'],
           }, {
             subsetCellRange: 'E10:G11',
             valueType: 'number',
-            absoluteHeaderRowOffset: -3, // B$7:AP$7
+            absoluteHeaderRowOffset: -3,
             displayCategories: ['Primary', 'PrimaryTableColumn'],
           }, {
             subsetCellRange: 'H10:H11',
-            absoluteHeaderRowOffset: -3, // B$7:AP$7
-            displayCategories: ['Primary', 'PrimaryTableColumn'],
+            absoluteHeaderRowOffset: -3,
           }, {
             subsetCellRange: 'I10:K11',
             valueType: 'number',
-            absoluteHeaderRowOffset: -3, // B$7:AP$7
-            displayCategories: ['Primary', 'PrimaryTableColumn'],
+            absoluteHeaderRowOffset: -3,
           }, {
             subsetCellRange: 'L10:L11',
             ignore: true,
