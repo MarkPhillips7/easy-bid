@@ -1331,11 +1331,21 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             valueType: 'number',
             absoluteHeaderRowOffset: -3,
             displayCategories: ['Primary', 'PrimaryTableColumn'],
+            units: [
+              {key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.inches}
+            ],
           }, {
             subsetCellRange: 'H10:H11',
             absoluteHeaderRowOffset: -3,
           }, {
-            subsetCellRange: 'I10:K11',
+            subsetCellRange: 'I10:J11',
+            valueType: 'number',
+            absoluteHeaderRowOffset: -3,
+            units: [
+              {key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.dollars}
+            ],
+          }, {
+            subsetCellRange: 'K10:K11',
             valueType: 'number',
             absoluteHeaderRowOffset: -3,
           }, {
@@ -1352,6 +1362,9 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
             subsetCellRange: 'V10:W11',
             valueType: 'number',
             columnTemplateType: Constants.templateTypes.calculation,
+            units: [
+              {key: Constants.templateSettingKeys.numeratorUnit, value: UnitOfMeasure.units.inches}
+            ],
           }, {
             subsetCellRange: 'X10:X11',
             valueType: 'number',

@@ -2654,7 +2654,8 @@ const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, 
       } else {
         if (headerName === 'Fixed Price') {
           if (columnValue !== undefined && columnValue != null && columnValue !== '') {
-            LookupsHelper.addPriceLookup(templateLibrary, lookups, newProductTemplate.name, productSku, itemName, newProductTemplate.description, columnValue, unitsText);
+            LookupsHelper.addPriceLookup(templateLibrary, lookups, newProductTemplate.name,
+              productSku, itemName, newProductTemplate.description, columnValue, unitsText);
           }
         }
         const newEntryTemplate = addTemplate(templateLibrary, columnTemplateType, newProductTemplate);
@@ -2668,6 +2669,13 @@ const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, 
           addTemplateSetting(bidControllerData, newEntryTemplate.id, Constants.templateSettingKeys.defaultValue, defaultValue, order++);
         }
         addTemplateSetting(bidControllerData, newEntryTemplate.id, Constants.templateSettingKeys.variableName, Strings.toVariableName(headerName), order++);
+
+        const units = subsetOverrides.units || importSet.units;
+        if (units) {
+          _.each(units, (unit) => {
+            addTemplateSetting(bidControllerData, newEntryTemplate.id, unit.key, unit.value, order++);
+          })
+        }
 
         const displayCategories = subsetOverrides.displayCategories || importSet.displayCategories;
         if (displayCategories) {

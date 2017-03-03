@@ -333,7 +333,15 @@
   </div>
   <span ng-show="!bid.productSelectionIds.length">No matches found</span>
   <dir-pagination-controls on-page-change="bid.pageChanged(newPageNumber)"></dir-pagination-controls>
-  <div class="eb-area-hierarchy">
+  <input type="button"
+         value="Show me the metadata!"
+         ng-show="bid.isSystemAdmin"
+         ng-click="bid.showMetadata()"
+         class="btn btn-primary">
+  <pre ng-bind-html="bid.metadataHtml"
+       ng-show="bid.isSystemAdmin"></pre>
+  <div class="eb-area-hierarchy"
+       ng-show="bid.isSystemAdmin">
     <abn-tree tree-data="bid.fullHierarchyTreeData"
               tree-control="bid.fullHierarchyTree"
               icon-leaf=""
@@ -342,6 +350,4 @@
               expand-level="2">
     </abn-tree>
   </div>
-  <input type="button" value="Show me the metadata!" ng-click="bid.showMetadata()" class="btn btn-primary">
-  <pre ng-bind-html="bid.metadataHtml"></pre>
 </div>

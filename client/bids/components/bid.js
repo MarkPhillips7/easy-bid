@@ -120,6 +120,7 @@ class bid {
       templateLibraries: this._templateLibrariesCollection,
       jobsTemplateLibraries: this._jobsTemplateLibrariesCollection,
       isLoggedIn: this._isLoggedIn,
+      isSystemAdmin: this._isSystemAdmin,
       updateDependencies: this._updateDependencies,
       updateSelectionDependencies: this._updateSelectionDependencies,
     });
@@ -431,6 +432,10 @@ class bid {
 
   _isLoggedIn() {
     return Meteor.userId() !== null;
+  }
+
+  _isSystemAdmin() {
+    return Roles.userIsInRole(this._currentUserId(), [Config.roles.systemAdmin], Roles.GLOBAL_GROUP);
   }
 
   getFirstTreeLeaf(treeItems) {
