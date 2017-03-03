@@ -4,7 +4,7 @@ angular.module("app").controller("templateLibraryList", ['$scope', '$meteor', '$
     vm.clone = clone;
     vm.getCompanyName = getCompanyName;
     vm.page = 1;
-    vm.perPage = 3;
+    vm.perPage = Config.defaultRecordsPerPage;
     vm.sort = {name: 1};
     vm.orderProperty = '1';
     vm.pageChanged = pageChanged;

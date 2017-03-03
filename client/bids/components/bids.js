@@ -18,7 +18,7 @@ class bids {
     this.itemIdsSelected = [];
     this.companyIdToFilterBy = this.$stateParams.c;
     this.customerIdToFilterBy = this.$stateParams.r;
-    this.perPage = 3;
+    this.perPage = Config.defaultRecordsPerPage;
     this.page = 1;
     this.sort = {
       'dueAt': -1,

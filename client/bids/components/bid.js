@@ -16,7 +16,7 @@ SetModule('app');
 class bid {
   constructor($uibModal, $scope, $state, $stateParams, $timeout, bootstrapDialog, toastr) {
     this.itemIdsSelected = [];
-    this.perPage = 50;
+    this.perPage = Config.defaultRecordsPerPage;
     this.page = 1;
 
     this.areaSelectedId = '';

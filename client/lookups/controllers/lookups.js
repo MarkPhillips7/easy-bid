@@ -16,7 +16,7 @@ SetModule('app');
 class lookups {
   constructor($filter, $state, $stateParams) {
     this.itemIdsSelected = [];
-    this.perPage = 3;
+    this.perPage = Config.defaultRecordsPerPage;
     this.page = 1;
     this.searchText = '';
     this.sortOptions = [

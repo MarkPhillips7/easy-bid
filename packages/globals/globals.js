@@ -31,3 +31,5 @@ Config.imageSettings = {
   unknownProductImageSource: 'unknown_product.jpg',
   unknownPersonImageSource: 'unknown_person.jpg'
 };
+
+Config.defaultRecordsPerPage = 15;

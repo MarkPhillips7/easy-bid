@@ -17,7 +17,7 @@ class customers {
   constructor() {
     this.companyIdToFilterBy = this.$stateParams.c;
     this.itemIdsSelected = [];
-    this.perPage = 3;
+    this.perPage = Config.defaultRecordsPerPage;
     this.page = 1;
     this.searchText = '';
     this.sortOptions = [
