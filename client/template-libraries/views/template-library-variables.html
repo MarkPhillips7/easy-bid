@@ -1,18 +1,25 @@
-<h2>Variables</h2>
-<h4 class="sub-header">
-  Key
-  <br/>
-  <span class="label label-success label-spaced">Defined here</span>
-  <span class="label label-default label-spaced">Defined above</span>
-  <!--<span class="label label-warning label-spaced">Defined below</span>-->
-  <span class="label label-danger label-spaced">Not defined</span>
-  <span class="label label-primary label-spaced">Override</span>
-  <br/>
-  <br/>
+<div class="modal-header">
+  <h2>{{vm.selectedTemplate.name}} Variables</h2>
+</div>
+<div class="modal-body">
+  <h4 class="sub-header">
+    Key
+    <br/>
+    <span class="label label-success label-spaced">Defined here</span>
+    <span class="label label-default label-spaced">Defined above</span>
+    <!--<span class="label label-warning label-spaced">Defined below</span>-->
+    <span class="label label-danger label-spaced">Not defined</span>
+    <span class="label label-primary label-spaced">Override</span>
+    <br/>
+    <br/>
 
-  Variables
-  <br/>
-          <span data-ng-repeat="variable in vm.variablesSorted" ng-class="variable.labelClass" class="label-spaced">
-            {{variable.variableName}}
-          </span>
-</h4>
+    Variables
+    <br/>
+    <span data-ng-repeat="variable in vm.variablesSorted" ng-class="variable.labelClass" class="label-spaced">
+      {{variable.variableName}}
+    </span>
+  </h4>
+</div>
+<div class="modal-footer">
+  <button class="btn btn-primary" ng-click="close()">Close</button>
+</div>

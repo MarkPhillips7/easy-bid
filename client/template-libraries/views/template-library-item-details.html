@@ -47,43 +47,52 @@
   <!--</button>-->
 <!--</div>-->
 <div class="row eb-option-buttons">
-  <div class="btn-group pull-right">
-    <!--<button type="button" class="btn btn-default btn-xs"-->
-            <!--data-ng-show="vm.showOption($root.Constants.recordActions.add)"-->
-            <!--data-ng-click="vm.addTemplateAndEditDetails()"-->
-            <!--uib-tooltip="Add">-->
-      <!--<i class="fa fa-plus"></i> Add-->
-    <!--</button>-->
-    <!--<button type="button" class="btn btn-default btn-xs"-->
-            <!--data-ng-show="vm.showOption($root.Constants.recordActions.copy, vm.selectedTemplate)"-->
-            <!--data-ng-click="vm.copyTemplateAndEditDetails(vm.selectedTemplate)"-->
-            <!--uib-tooltip="Copy">-->
-      <!--<i class="fa fa-copy"></i> Copy-->
-    <!--</button>-->
-    <button type="button" class="btn btn-default btn-xs"
-            data-ng-show="vm.showOption($root.Constants.recordActions.edit, vm.selectedTemplate)"
-            data-ng-click="vm.editTemplateDetails(vm.selectedTemplate)"
-            uib-tooltip="Edit">
-      <i class="fa fa-edit"></i> Edit
-    </button>
-    <!--<button type="button" class="btn btn-default btn-xs"-->
-            <!--data-ng-show="vm.showOption($root.Constants.recordActions.delete, vm.selectedTemplate)"-->
-            <!--data-ng-click="vm.deleteTemplate(vm.selectedTemplate)"-->
-            <!--uib-tooltip="Delete">-->
-      <!--<i class="fa fa-times"></i> Delete-->
-    <!--</button>-->
-    <button type="button" class="btn btn-default btn-xs"
-            data-ng-show="vm.showOption($root.Constants.recordActions.save, vm.selectedTemplate)"
-            data-ng-click="vm.save()"
-            uib-tooltip="Save">
-      <i class="fa fa-save"></i> Save
-    </button>
-    <button type="button" class="btn btn-default btn-xs"
-            data-ng-show="vm.showOption($root.Constants.recordActions.cancel, vm.selectedTemplate)"
-            data-ng-click="vm.cancel()"
-            uib-tooltip="Cancel">
-      <i class="fa fa-cancel"></i> Cancel
-    </button>
+  <div class="pull-right">
+    <div class="btn-group eb-btn-group">
+      <!--<button type="button" class="btn btn-default btn-xs"-->
+              <!--data-ng-show="vm.showOption($root.Constants.recordActions.add)"-->
+              <!--data-ng-click="vm.addTemplateAndEditDetails()"-->
+              <!--uib-tooltip="Add">-->
+        <!--<i class="fa fa-plus"></i> Add-->
+      <!--</button>-->
+      <!--<button type="button" class="btn btn-default btn-xs"-->
+              <!--data-ng-show="vm.showOption($root.Constants.recordActions.copy, vm.selectedTemplate)"-->
+              <!--data-ng-click="vm.copyTemplateAndEditDetails(vm.selectedTemplate)"-->
+              <!--uib-tooltip="Copy">-->
+        <!--<i class="fa fa-copy"></i> Copy-->
+      <!--</button>-->
+      <button type="button" class="btn btn-default btn-xs"
+              data-ng-click="vm.showVariablesModal()"
+              uib-tooltip="Display relevant variables">
+        View Variables
+      </button>
+    </div>
+    <div class="btn-group eb-btn-group">
+      <button type="button" class="btn btn-default btn-xs"
+              data-ng-show="vm.showOption($root.Constants.recordActions.edit, vm.selectedTemplate)"
+              data-ng-click="vm.editTemplateDetails(vm.selectedTemplate)"
+              uib-tooltip="Edit">
+        <i class="fa fa-edit"></i> Edit
+      </button>
+      <!--<button type="button" class="btn btn-default btn-xs"-->
+              <!--data-ng-show="vm.showOption($root.Constants.recordActions.delete, vm.selectedTemplate)"-->
+              <!--data-ng-click="vm.deleteTemplate(vm.selectedTemplate)"-->
+              <!--uib-tooltip="Delete">-->
+        <!--<i class="fa fa-times"></i> Delete-->
+      <!--</button>-->
+      <button type="button" class="btn btn-default btn-xs"
+              data-ng-show="vm.showOption($root.Constants.recordActions.save, vm.selectedTemplate)"
+              data-ng-click="vm.save()"
+              uib-tooltip="Save">
+        <i class="fa fa-save"></i> Save
+      </button>
+      <button type="button" class="btn btn-default btn-xs"
+              data-ng-show="vm.showOption($root.Constants.recordActions.cancel, vm.selectedTemplate)"
+              data-ng-click="vm.cancel()"
+              uib-tooltip="Cancel">
+        <i class="fa fa-cancel"></i> Cancel
+      </button>
+    </div>
   </div>
 </div>
 

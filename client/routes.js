@@ -184,9 +184,9 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
           "middle@templateLibraryDetails": {
             templateUrl: 'client/template-libraries/views/template-library-item-details.html'
           },
-          "right@templateLibraryDetails": {
-            templateUrl: 'client/template-libraries/views/template-library-variables.html'
-          }
+          // "right@templateLibraryDetails": {
+          //   templateUrl: 'client/template-libraries/views/template-library-variables.html'
+          // }
         },
         resolve: {
           currentUser: ($q) => {

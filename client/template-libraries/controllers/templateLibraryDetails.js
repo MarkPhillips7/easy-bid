@@ -1,8 +1,8 @@
 import {Parser} from 'expr-eval';
 
 angular.module("app").controller("templateLibraryDetails",
-  ['$scope', '$meteor', '$q', '$rootScope', '$stateParams', '$timeout', 'bootstrap.dialog',
-  function ($scope, $meteor, $q, $rootScope, $stateParams, $timeout, bootstrapDialog) {
+  ['$scope', '$meteor', '$q', '$rootScope', '$stateParams', '$timeout', '$uibModal', 'bootstrap.dialog',
+  function ($scope, $meteor, $q, $rootScope, $stateParams, $timeout, $uibModal, bootstrapDialog) {
     var vm = this;
     vm.addTemplateAndEditDetails = addTemplateAndEditDetails;
     vm.addTemplateSetting = addTemplateSetting;
@@ -21,6 +21,7 @@ angular.module("app").controller("templateLibraryDetails",
     vm.recordAction = Constants.recordActions.view;
     vm.relevantTemplateTypesWithTemplates = [];
     vm.save=save;
+    vm.showVariablesModal=showVariablesModal;
     vm.selectedTemplate;
     vm.selectTemplateId = selectTemplateId;
     vm.setUsageMode = setUsageMode;
@@ -678,4 +679,34 @@ angular.module("app").controller("templateLibraryDetails",
       return treeItem;
     }
 
+    function showVariablesModal() {
+      $uibModal.open({
+        templateUrl: 'client/template-libraries/views/template-library-variables.html',
+        controller: 'templateLibraryVariables',
+        size: 'lg',
+        resolve: {
+          'vm': () => {
+            return vm;
+          },
+        }
+      });
+
+      // modalInstance.result.then((selectedItem) => {
+      //   if (this.isNew) {
+      //     // new job needs a company selection and all of its appropriate children down to but not including an area.
+      //     const companySelection = SelectionsHelper.addSelectionForTemplate(pendingChanges,
+      //       this.companyTemplate, this.company._id, null, 0);
+      //     SelectionsHelper.addSelectionsForTemplateChildren(pendingChanges,
+      //       companySelection, this.companyTemplate, Constants.selectionAddingModes.handleAnything,
+      //       this.areaTemplate);
+      //     SelectionsHelper.initializeSelectionVariables(pendingChanges);
+      //     this.initializeJobVariables(pendingChanges);
+      //     pendingChanges.job.estimateTotal = this.getJobSubtotal(pendingChanges);
+      //   }
+      //   this.save(pendingChanges);
+      // }, () => {
+      //   console.log('Modal dismissed at: ' + new Date());
+      //   this.cancel();
+      // });
+    }
   }]);
