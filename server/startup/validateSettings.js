@@ -1,5 +1,7 @@
 Meteor.startup(function () {
   check(Meteor.settings, {
+    PrerenderIO: Match.Optional(Match.Any),
+    "galaxy.meteor.com": Object,
     private: {
       stripe: {
         secretKey: String

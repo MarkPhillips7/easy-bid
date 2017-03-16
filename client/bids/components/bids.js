@@ -14,7 +14,7 @@ SetModule('app');
 @MeteorReactive
 @LocalInjectables
 class bids {
-  constructor() {
+  constructor($state, $stateParams) {
     this.itemIdsSelected = [];
     this.companyIdToFilterBy = this.$stateParams.c;
     this.customerIdToFilterBy = this.$stateParams.r;

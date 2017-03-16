@@ -1547,7 +1547,8 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
       moment().startOf('day').add(-10, 'days').toDate(), undefined, userInfo.systemAdminUserId);
 
     const bidControllerData = {templateLibraries: [cabinetryTemplateLibrary]};
-    const workbook = XLSX.readFile(process.env.PWD + '/server/startup/Spreadsheet Estimator V2.1.xlsx');
+    const filePath = Assets.absoluteFilePath('Spreadsheet Estimator V2.1.xlsx');
+    const workbook = XLSX.readFile(filePath);
 
     // var templateCabinet = {
     //   id: Random.id(),

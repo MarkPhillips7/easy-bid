@@ -14,7 +14,7 @@ SetModule('app');
 @MeteorReactive
 @LocalInjectables
 class customers {
-  constructor() {
+  constructor($state, $stateParams) {
     this.companyIdToFilterBy = this.$stateParams.c;
     this.itemIdsSelected = [];
     this.perPage = Config.defaultRecordsPerPage;

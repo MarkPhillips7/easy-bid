@@ -14,7 +14,7 @@ SetModule('app');
 @MeteorReactive
 @LocalInjectables
 class customer {
-  constructor() {
+  constructor($state, $stateParams) {
     this.companyId = this.$stateParams.c;
     this.isNew = this.$stateParams.userId.toLowerCase() === 'new';
     this.savedCustomer = null;

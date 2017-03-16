@@ -14,7 +14,7 @@ SetModule('app');
 @MeteorReactive
 @LocalInjectables
 class lookup {
-  constructor() {
+  constructor($filter, $state, $stateParams, $timeout) {
     this.lookupId = this.$stateParams.lookupId;
     this.isNew = this.$stateParams.lookupId.toLowerCase() === 'new';
     this.savedLookup = null;

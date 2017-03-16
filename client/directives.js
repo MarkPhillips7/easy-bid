@@ -18,7 +18,7 @@ angular.module('app')
 //  }
 //}])
 
-  .directive('ebImgProduct', [function (config) {
+  .directive('ebImgProduct', [function () {
     //Usage:
     //<img data-eb-img-product="{{s.product.imageSource}}"/>
     var basePath = Config.imageSettings.imageBasePath;

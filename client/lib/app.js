@@ -39,9 +39,9 @@ angular.module('app', [
 ]);
 
 angular.module('app')
-  .run(function ($state) {
-  })
-  .run(function ($rootScope) {
+  .run(['$state', function ($state) {
+  }])
+  .run(['$rootScope', function ($rootScope) {
     $rootScope.$on("$stateChangeError", console.log.bind(console));
     $rootScope.isInRole = function(role) {
       if (!_.isArray(role)) {
@@ -49,20 +49,20 @@ angular.module('app')
       }
       return Roles.userIsInRole($rootScope.currentUser, role, Roles.GLOBAL_GROUP);
     }
-  })
-  .run(function(formlyConfig, formlyValidationMessages) {
+  }])
+  .run(['formlyConfig', 'formlyValidationMessages', function(formlyConfig, formlyValidationMessages) {
     formlyConfig.extras.errorExistsAndShouldBeVisibleExpression = 'fc.$touched || form.$submitted';
     formlyValidationMessages.addStringMessage('required', 'This field is required');
     formlyValidationMessages.messages.email = '$viewValue + " is not a valid email address"';
     formlyValidationMessages.messages.url = '$viewValue + " is not a valid url (expecting something like http://www.google.com)"';
-  })
-  .config(function (formlyConfigProvider) {
+  }])
+  .config(['formlyConfigProvider', function (formlyConfigProvider) {
     formlyConfigProvider.setWrapper({
       name: 'validation',
       types: ['input'],
       templateUrl: 'client/lib/error-messages.html'
     });
-  })
+  }])
   // .config(['$angularTemplatesSettings', function($angularTemplatesSettings) {
   //   // Turn off throwing errors
   //   $angularTemplatesSettings.error = false;
