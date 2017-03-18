@@ -35,6 +35,9 @@ class bid {
     this.ignoreUpdatesTemporarily = false;
     this.ignoreSelectionUpdatesTemporarily = true;
     this.includeChildAreas = false;
+    this.isAllDataReady = false;
+    this.isJobDataReady = false;
+    this.isTemplateLibraryDataReady = false;
     this.isNew = this.$stateParams.bidId.toLowerCase() === 'new';
     this.jobId = this.$stateParams.bidId;
     this.jobSelection = null;
@@ -140,6 +143,8 @@ class bid {
     if (!this.templateLibraryDataSubscriptionHandle || !this.templateLibraryDataSubscriptionHandle.ready()) {
       return;
     }
+    this.isTemplateLibraryDataReady = true;
+
     SelectionsHelper.initializeMetadata(this.metadata);
     this.initializeTemplateVariables();
 
@@ -149,6 +154,7 @@ class bid {
       ) {
       return;
     }
+    this.isJobDataReady = true;
 
     Meteor.call('loadLookupData', this.templateLibraries, (err, result) => {
       if (err) {
@@ -346,6 +352,7 @@ class bid {
 
     this.setAreaTreeData();
     this.setFullHierarchyTreeData();
+    this.isAllDataReady = true;
   }
 
   setProductSelectionSelections(productSelectionId, pendingChanges) {
@@ -900,6 +907,10 @@ class bid {
     });
   }
 
+  addProductSelectionClicked() {
+    this.toastr.info("Select a product under Available Products to add one to the selected area.");
+  };
+
   addProductSelectionOptionFromInput(option) {
     if (option && option.id) {
       this.addProductSelectionOption(option);
@@ -1024,6 +1035,7 @@ class bid {
     const modalInstance = this.$uibModal.open({
       templateUrl: 'client/product-selections/views/product-selection-edit.html',
       controller: 'productSelection',
+      backdrop: 'static',
       // size: 'lg',
       resolve: {
         'bid': () => {

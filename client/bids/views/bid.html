@@ -11,7 +11,8 @@
     <div class="col-md-4">
         <h4 class="sub-header">
             Areas
-            <div class="btn-group pull-right">
+            <div class="btn-group pull-right"
+                 ng-show="bid.isAllDataReady">
                 <button type="button"
                         class="btn btn-default btn-xs"
                         data-ng-click="bid.deleteArea($event)"
@@ -35,7 +36,10 @@
                 </ul>
             </div>
         </h4>
-        <form class="form-inline no-left-or-right-margin" role="form">
+        <div ng-show="!bid.isAllDataReady">Loading <i class="fa fa-spinner fa-spin fa-2x"></i></div>
+        <form class="form-inline no-left-or-right-margin"
+              role="form"
+              ng-show="bid.isAllDataReady">
             <div class="form-group">
                 <input type="text" class="form-control input-sm" id="BidAreaToAdd"
                        placeholder="Enter area" ng-model="bid.areaToAdd">
@@ -57,7 +61,8 @@
                 </button>
             </div>
         </form>
-        <div class="pre-scrollable eb-area-hierarchy">
+        <div class="pre-scrollable eb-area-hierarchy"
+             ng-show="bid.isAllDataReady">
           <!-- <abn-tree tree-data="bid.areaTreeData"
                     tree-control="bid.areaTree"
                     icon-leaf=""
@@ -161,7 +166,8 @@
     <div class="col-md-4">
         <h4 class="sub-header">
             Job Details
-            <div class="btn-group pull-right">
+            <div class="btn-group pull-right"
+                 ng-show="bid.isJobDataReady">
                 <button type="button" class="btn btn-default btn-xs"
                         data-ng-click="bid.editBidDetails($event)"
                         uib-tooltip="Edit job details">
@@ -169,7 +175,9 @@
                 </button>
             </div>
         </h4>
-        <div class="pre-scrollable">
+        <div ng-show="!bid.isJobDataReady">Loading <i class="fa fa-spinner fa-spin fa-2x"></i></div>
+        <div class="pre-scrollable eb-job-details"
+             ng-show="bid.isJobDataReady">
           <table class="table table-condensed table-striped">
               <tbody>
               <tr>
@@ -221,6 +229,10 @@
         </div>
     </div>
     <div class="col-md-4">
+      <h4 class="sub-header">
+          Available Products
+      </h4>
+      <div ng-show="!bid.isTemplateLibraryDataReady">Loading <i class="fa fa-spinner fa-spin fa-2x"></i></div>
       <div>
         <multi-select input-model="bid.productCategories"
                       button-label="icon name"
@@ -228,7 +240,8 @@
                       tick-property="ticked">
         </multi-select>
       </div>
-      <div class="eb-top-buffer">
+      <div class="eb-top-buffer"
+           ng-show="bid.isTemplateLibraryDataReady">
         <input type="text"
                ng-model="bid.productTypeaheadText"
                uib-typeahead="option.name for option in bid.productOptions | filter:$viewValue"
@@ -237,7 +250,8 @@
                class="form-control"
                placeholder="Enter product to add or click one below"/>
       </div>
-      <div class="pre-scrollable eb-top-buffer">
+      <div class="pre-scrollable eb-top-buffer"
+           ng-show="bid.isTemplateLibraryDataReady">
         <uib-tabset>
           <uib-tab data-ng-repeat="tabPage in bid.metadata.tabPages" heading="{{tabPage.name}}">
             <div class="list-group">
@@ -253,11 +267,9 @@
       </div>
       <div class="clearfix"></div>
     </div>
-
-
-
   </div>
-  <div class="row eb-option-buttons">
+  <div class="row eb-option-buttons"
+       ng-show="bid.isAllDataReady">
     <div class="col-xs-12">
       <h4 class="sub-header">{{bid.selectedAreaBreadcrumbText}}
         <span class="eb-heading-option">
@@ -286,8 +298,8 @@
           <div class="btn-group">
             <a type="button" class="btn btn-default btn-xs"
                     data-ng-show="bid.isLoggedIn"
-                    href="/bids/new?c={{bid.company._id}}"
-                    uib-tooltip="Add">
+                    data-ng-click="bid.addProductSelectionClicked()"
+                    uib-tooltip="Use Available Products to add one to the selected area">
               <i class="fa fa-plus"></i> Add
             </a>
           </div>
@@ -295,7 +307,8 @@
       </h4>
     </div>
   </div>
-  <ul class="list-group">
+  <ul class="list-group"
+      ng-show="bid.isAllDataReady">
     <li dir-paginate="productSelectionId in bid.productSelectionIds | itemsPerPage: bid.perPage track by $index"
         data-ng-show="bid.inSelectedArea(productSelectionId)"
         total-items="bid.productSelectionIds.length"
@@ -327,21 +340,22 @@
       </a>
     </li>
   </ul>
-  <div class="eb-price-subtotal">
+  <div class="eb-price-subtotal"
+       ng-show="bid.isAllDataReady">
     <span class="eb-post-list-label">Subtotal</span>
     <span class="eb-price">{{bid.subtotalSelections(bid.productSelectionIds, true)}}</span>
   </div>
-  <span ng-show="!bid.productSelectionIds.length">No matches found</span>
+  <span ng-show="bid.isAllDataReady && !bid.productSelectionIds.length">No matches found</span>
   <dir-pagination-controls on-page-change="bid.pageChanged(newPageNumber)"></dir-pagination-controls>
   <input type="button"
          value="Show me the metadata!"
-         ng-show="bid.isSystemAdmin"
+         ng-show="bid.isAllDataReady && bid.isSystemAdmin"
          ng-click="bid.showMetadata()"
          class="btn btn-primary">
   <pre ng-bind-html="bid.metadataHtml"
-       ng-show="bid.isSystemAdmin"></pre>
+       ng-show="bid.isAllDataReady && bid.isSystemAdmin"></pre>
   <div class="eb-area-hierarchy"
-       ng-show="bid.isSystemAdmin">
+       ng-show="bid.isAllDataReady && bid.isSystemAdmin">
     <abn-tree tree-data="bid.fullHierarchyTreeData"
               tree-control="bid.fullHierarchyTree"
               icon-leaf=""
