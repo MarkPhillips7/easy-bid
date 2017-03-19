@@ -140,8 +140,7 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
       })
       .state('templateLibraryList', {
         url: '/libraries',
-        templateUrl: 'client/template-libraries/views/template-library-list.html',
-        controller: 'templateLibraryList',
+        template: '<libraries></libraries>',
         resolve: {
           currentUser: ($q) => {
             if (Meteor.userId() == null) {
@@ -153,6 +152,21 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
           }
         }
       })
+      // .state('templateLibraryList', {
+      //   url: '/libraries',
+      //   templateUrl: 'client/template-libraries/views/template-library-list.html',
+      //   controller: 'templateLibraryList',
+      //   resolve: {
+      //     currentUser: ($q) => {
+      //       if (Meteor.userId() == null) {
+      //         return $q.reject('AUTH_REQUIRED');
+      //       }
+      //       else {
+      //         return $q.resolve();
+      //       }
+      //     }
+      //   }
+      // })
       .state('templateLibraryDetails', {
         abstract: true,
         url: '/libraries/:templateLibraryId',

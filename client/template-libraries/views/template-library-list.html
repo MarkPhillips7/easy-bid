@@ -1,70 +1,66 @@
 <div class="container">
   <div class="row">
-    <div ng-controller="templateLibraryList as vm">
-      <div class="row">
-        <div class="col-sm-12">
-          <div class="alert alert-info" ng-hide="$root.currentUser || $root.loggingIn">
-            Log in to view product libraries!
-          </div>
-        </div>
+    <div class="col-sm-12">
+      <div class="alert alert-info" ng-hide="libraries.isLoggedIn">
+        Log in to view product libraries!
       </div>
-
-      <div class="row">
-        <div class="col-sm-12">
-          <form class="form-inline search-form">
-            <div class="form-group">
-              <h2 class="eb-inline">Product Libraries</h2>
-            </div>
-            <div class="form-group">
-              <label class="sr-only" for="search">Search</label>
-              <div class="input-group">
-                <div class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>
-                <input type="text" ng-model="vm.search" placeholder="Search" id="search" class="form-control">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="sr-only" for="sort-order">Sort Order</label>
-              <select ng-model="vm.orderProperty" class="form-control">
-                <option value="1">Ascending</option>
-                <option value="-1">Descending</option>
-              </select>
-            </div>
-          </form>
-        </div>
-      </div>
-      <div class="row eb-option-buttons">
-        <div class="col-sm-12">
-          <div class="pull-right">
-            <div class="btn-group">
-              <a type="button" class="btn btn-default btn-sm"
-                      disabled="true"
-                      href="/libraries/new"
-                      uib-tooltip="Add">
-                <i class="fa fa-plus"></i> Add
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-      <ul class="list-group">
-        <li dir-paginate="templateLibrary in vm.templateLibraries | itemsPerPage: vm.perPage" total-items="vm.templateLibraryListCount.count"
-            class="list-group-item">
-          <div class="row">
-            <div class="col-sm-8">
-              <a href="/libraries/{{templateLibrary._id}}/0">
-                <strong>
-                {{templateLibrary.name}} - {{vm.getCompanyName(templateLibrary.ownerCompanyId)}} - {{templateLibrary.createdAt | amDateFormat:'MMMM Do, YYYY'}}
-                </strong>
-              </a>
-            </div>
-            <div class="col-sm-4">
-              <a href="#" ng-click="vm.clone(templateLibrary)" class="pull-right">Clone</a>
-            </div>
-          </div>
-        </li>
-      </ul>
-      <span ng-show="!vm.templateLibraries.length">No matches found</span>
-      <dir-pagination-controls on-page-change="vm.pageChanged(newPageNumber)"></dir-pagination-controls>
     </div>
   </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+      <form class="form-inline search-form">
+        <div class="form-group">
+          <h2 class="eb-inline">Product Libraries</h2>
+        </div>
+        <div class="form-group">
+          <label class="sr-only" for="search">Search</label>
+          <div class="input-group">
+            <div class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>
+            <input type="text" ng-model="libraries.searchText" placeholder="Search" id="search" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="sr-only" for="sort-order">Sort Order</label>
+          <select ng-model="libraries.orderProperty" class="form-control" ng-change="libraries.updateSort()">
+            <option value="1">Ascending</option>
+            <option value="-1">Descending</option>
+          </select>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row eb-option-buttons">
+    <div class="col-sm-12">
+      <div class="pull-right">
+        <div class="btn-group">
+          <a type="button" class="btn btn-default btn-sm"
+                  disabled="true"
+                  href="/libraries/new"
+                  uib-tooltip="Add">
+            <i class="fa fa-plus"></i> Add
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ul class="list-group">
+    <li dir-paginate="templateLibrary in libraries.templateLibraries | itemsPerPage: libraries.perPage" total-items="libraries.librariesCount.count"
+        class="list-group-item">
+      <div class="row">
+        <div class="col-sm-8">
+          <a href="/libraries/{{templateLibrary._id}}/0">
+            <strong>
+            {{templateLibrary.name}} - {{libraries.getCompanyName(templateLibrary.ownerCompanyId)}} - {{templateLibrary.createdAt | amDateFormat:'MMMM Do, YYYY'}}
+            </strong>
+          </a>
+        </div>
+        <div class="col-sm-4">
+          <a href="#" ng-click="libraries.clone(templateLibrary)" class="pull-right">Clone</a>
+        </div>
+      </div>
+    </li>
+  </ul>
+  <span ng-show="!libraries.templateLibraries.length">No matches found</span>
+  <dir-pagination-controls on-page-change="libraries.pageChanged(newPageNumber)"></dir-pagination-controls>
 </div>
