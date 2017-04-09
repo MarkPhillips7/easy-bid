@@ -197,6 +197,15 @@ TemplateTypeInfoList = [{
     viewShow: false,
     editShow: false
   }, {
+    name: 'Product Tabs',
+    templateSettingKey: Constants.templateSettingKeys.productTab,
+    minCount: 0,
+    maxCount: -1, //allow unlimited number
+    canDelete: true,
+    canEdit: true,
+    viewShow: true,
+    editShow: true
+  }, {
     name: 'Sub Template?',
     templateSettingKey: Constants.templateSettingKeys.isASubTemplate,
     templateSettingValue: 'true',
@@ -1721,7 +1730,7 @@ const populateTabPages = (bidControllerData, template) => {
   _.each(selectOptions, (selectOption) => {
     const selectOptionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, selectOption.id);
     const selectOptionTabPageNames = ItemTemplatesHelper.getTemplateSettingValuesForTemplate(
-      selectOptionTemplate, Constants.templateSettingKeys.displayCategory);
+      selectOptionTemplate, Constants.templateSettingKeys.productTab);
 
     // First put products on the All page
     if (!_.contains(tabPageAll.templateIds, selectOptionTemplate.id)) {
@@ -2490,7 +2499,7 @@ const addSubProductsFromWorkbook = (workbook, workbookMetadata, bidControllerDat
     addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.selectOption, order++);
     addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.isASubTemplate, 'true', order++);
     if (importSet.category && importSet.category.name) {
-      addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.displayCategory, 'Misc');// importSet.category.name);
+      addTemplateSetting(bidControllerData, newTemplate.id, Constants.templateSettingKeys.productTab, 'Misc');// importSet.category.name);
     }
     addProductSkuSelectorTemplate(bidControllerData, newTemplate);
     addPriceTemplate(bidControllerData, newTemplate, importSet.defaultUnits, conditionSwitchVariable);
@@ -2614,7 +2623,7 @@ const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, 
     addTemplateSetting(bidControllerData, newProductTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.selectOption, order++);
     addTemplateSetting(bidControllerData, newProductTemplate.id, Constants.templateSettingKeys.isASubTemplate, 'true', order++);
     if (importSet.category && importSet.category.name) {
-      addTemplateSetting(bidControllerData, newProductTemplate.id, Constants.templateSettingKeys.displayCategory, importSet.category.name, order++);
+      addTemplateSetting(bidControllerData, newProductTemplate.id, Constants.templateSettingKeys.productTab, importSet.category.name, order++);
     }
     if (importSet.imageSource) {
       addTemplateSetting(bidControllerData, newProductTemplate.id, Constants.templateSettingKeys.imageSource, importSet.imageSource, order++);

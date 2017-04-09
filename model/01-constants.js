@@ -160,6 +160,7 @@ Constants.templateSettingKeys = {
   numeratorUnit:"NumeratorUnit",
   overrideType:"OverrideType",
   overrideValue:"OverrideValue",
+  productTab:"ProductTab",
   propertyToOverride:"PropertyToOverride",
   selectionType:"SelectionType",
   switchValue:"SwitchValue",
