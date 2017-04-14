@@ -28,7 +28,7 @@
         data-ng-show="templateSettingInfo.unitsText && templateSettingInfo.unitsText !== '$'"></span>
 
   <span class="input-group-btn"
-        ng-if="templateSettingInfo.canEdit">
+        ng-if="templateSettingInfo.canEdit && templateSettingInfo.minCount < templateSettings.length">
       <button type="button"
               class="btn btn-default"
               data-container="body"
@@ -55,7 +55,7 @@
         id="TemplateSetting{{inputIndex+1}}"></span>
 
   <span class="input-group-btn"
-        ng-if="templateSettingInfo.canEdit">
+        ng-if="templateSettingInfo.canEdit && templateSettingInfo.maxCount === -1 || templateSettingInfo.maxCount > templateSettings.length">
       <button type="button"
               class="btn btn-default"
               data-container="body"
