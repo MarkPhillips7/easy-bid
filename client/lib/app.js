@@ -15,7 +15,8 @@ import 'angular-ui-bootstrap';
 import 'bootstrap-ui-datetime-picker/datetime-picker';
 import 'isteven-angular-multiselect/isteven-multi-select';
 import 'isteven-angular-multiselect/isteven-multi-select.css';
-// import 'isteven-multi-select';
+import 'angular-wizard/dist/angular-wizard';
+import 'angular-wizard/dist/angular-wizard.css';
 
 angular.module('app', [
   'accounts.ui',
@@ -27,6 +28,7 @@ angular.module('app', [
   formly,
   formlyBootstrap,
   'isteven-multi-select',
+  'mgo-angular-wizard',
   // multiSelect,
   ngAnimate,
   ngMessages,

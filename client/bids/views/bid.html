@@ -231,6 +231,14 @@
     <div class="col-md-4">
       <h4 class="sub-header">
           Available Products
+          <div class="btn-group pull-right"
+               ng-show="bid.isJobDataReady">
+              <button type="button" class="btn btn-default btn-xs"
+                      data-ng-click="bid.addNewProductType($event)"
+                      uib-tooltip="Create new product type">
+                New product type
+              </button>
+          </div>
       </h4>
       <div ng-show="!bid.isTemplateLibraryDataReady">Loading <i class="fa fa-spinner fa-spin fa-2x"></i></div>
       <div>

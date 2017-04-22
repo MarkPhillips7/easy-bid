@@ -17,6 +17,7 @@
     "angular-ui-bootstrap": "^2.2.0",
     "angular-ui-router": "^0.3.1",
     "angular-utils-pagination": "^0.11.1",
+    "angular-wizard": "^0.10.0",
     "angular2-now": "^1.1.6",
     "api-check": "^7.5.5",
     "babel-runtime": "^6.23.0",

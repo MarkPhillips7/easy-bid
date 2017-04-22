@@ -1289,4 +1289,30 @@ class bid {
   showMetadata() {
     this.metadataHtml = JSON.stringify(this.metadata, undefined, 2);
   }
+
+  addNewProductType() {
+    const modalInstance = this.$uibModal.open({
+      templateUrl: 'client/product-types/views/product-type-wizard.html',
+      controller: 'productTypeWizard',
+      size: 'lg',
+      resolve: {
+        'templateLibraries': () => {
+          return this.templateLibraries;
+        },
+        'vm': () => {
+          return this;
+        },
+        'lookupData': () => {
+          return this.lookupData;
+        },
+      }
+    });
+
+    modalInstance.result.then((selectedItem) => {
+      console.log('Modal submitted at: ' + new Date());
+    }, () => {
+      console.log('Modal dismissed at: ' + new Date());
+      this.cancel();
+    });
+  }
 }

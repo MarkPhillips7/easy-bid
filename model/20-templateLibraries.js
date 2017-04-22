@@ -2721,6 +2721,65 @@ const getTemplateLibraryOptions = ({templateLibraries}, $filter, selectedTemplat
     .value();
 }
 
+const populateOverridableTemplatesBySelectionType = (bidControllerData, template, selectionType, overridableTemplates,
+    visitedTemplates, ignoreSubTemplates) => {
+  if (!template) {
+    return;
+  }
+
+  //Don't do anything if template has already been visited
+  if (_.contains(visitedTemplates, template)) {
+    return;
+  }
+
+  if (getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.selectionType) === selectionType) {
+    // ToDo: check if really overridable
+    overridableTemplates.push(template);
+  }
+
+  //Necessary to avoid infinite recursive loop
+  visitedTemplates.push(template);
+
+  if (ignoreSubTemplates && ItemTemplatesHelper.isASubTemplate(template)) {
+    return;
+  }
+
+  // SpecificationGroups are like SubTemplates in that they should be ignored when ignoreSubTemplates is true
+  if (ignoreSubTemplates && template.templateType === Constants.templateTypes.specificationGroup) {
+    return;
+  }
+
+  //Now populate children (but ignore sub templates)
+  var templateChildren = TemplateLibrariesHelper.getTemplateChildren(bidControllerData, template, [Constants.dependency.optionalOverride]);
+  for (var i = 0; i < templateChildren.length; i++) {
+    populateOverridableTemplatesBySelectionType(bidControllerData, templateChildren[i], selectionType, overridableTemplates,
+        visitedTemplates, true);
+  }
+
+  //Now populate parent templates
+  var parentTemplates = TemplateLibrariesHelper.getTemplateParents(bidControllerData, template, [Constants.dependency.optionalOverride]);
+  for (var i = 0; i < parentTemplates.length; i++) {
+    populateOverridableTemplatesBySelectionType(bidControllerData, parentTemplates[i], selectionType, overridableTemplates,
+        visitedTemplates, false);
+  }
+};
+
+const getOverridableTemplatesBySelectionType = (bidControllerData, template, selectionType) => {
+  if (!template) {
+    return;
+  }
+
+  const overridableTemplates = [];
+  const visitedTemplates = [template];
+
+  const parentTemplates = TemplateLibrariesHelper.getTemplateParents(bidControllerData, template, [Constants.dependency.optionalOverride]);
+  _.each(parentTemplates, (parentTemplate) => {
+    populateOverridableTemplatesBySelectionType(bidControllerData, parentTemplate, selectionType, overridableTemplates, visitedTemplates, true);
+  });
+
+  return overridableTemplates;
+};
+
 TemplateLibrariesHelper = {
   addCalculationsFromWorkbook,
   addFormulaReferencesFromWorkbook,
@@ -2737,6 +2796,7 @@ TemplateLibrariesHelper = {
   deleteTemplateSetting,
   getAllSubTemplatesOfBaseTemplateChild,
   getChildTemplateRelationships,
+  getOverridableTemplatesBySelectionType,
   getParentTemplateRelationships,
   getRootTemplate,
   getSelectOptions,

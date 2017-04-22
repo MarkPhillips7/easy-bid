@@ -1,0 +1,116 @@
+<div class="modal-header">
+  <h4>Product Type Wizard - {{stepTitle()}}</h4>
+</div>
+<div class="modal-body">
+  <wizard on-finish="finishedWizard()">
+    <wz-step wz-title="Basics" canexit="canExitBasics()">
+      <div class="eb-product-type-wizard-step-content">
+        <p>
+          This wizard will lead you through creating a new product type.
+          Then you can include it in your bids!
+        </p>
+        <p>
+          Choose <strong>Fixed</strong> pricing method to keep it simple and just specify retail prices.
+          Choose <strong>Cost +</strong> to identify the costs to you and apply a markup to obtain retail prices.
+        </p>
+        <formly-form model="model.basics" fields="basicsFields">
+        </formly-form>
+      </div>
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="pull-right">
+            <button class="btn btn-primary" wz-next>Next</button>
+            <button class="btn btn-primary" wz-finish ng-disabled="true">Finish</button>
+            <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </wz-step>
+    <wz-step wz-title="Dependencies">
+      <div class="eb-product-type-wizard-step-content">
+        <p>
+          Identify any inputs or calculations that the {{costOrRetailPrice().toLowerCase()}} should be based on.
+        </p>
+        <formly-form model="model.dependencies" fields="dependenciesFields">
+        </formly-form>
+        <p ng-show="model.dependentTemplates.length > 0">{{costOrRetailPrice()}} Dependencies</p>
+        <form ng-show="model.dependentTemplates.length > 0" class="form-horizontal">
+          <table class="table table-bordered table-condensed table-hover">
+            <thead>
+            <tr>
+              <th>Item</th>
+              <th>Type</th>
+              <th>Variable</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr data-ng-repeat="dependentTemplate in model.dependentTemplates"
+                ng-class="{info: isTemplateSelected(dependentTemplate)}"
+                ng-click="templateHasFocus(dependentTemplate)"
+                ng-focus="templateHasFocus(dependentTemplate)">
+              <td>{{dependentTemplate.name}}</td>
+              <td>{{dependentTemplate.description}}</td>
+              <td data-eb-template-settings="VariableName"
+                  data-vm="vm"
+                  data-template-library="templateLibrary"
+                  data-template-id="dependentTemplate._id"
+                  data-template="dependentTemplate"></td>
+              <td>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-default btn-xs"
+                          data-ng-click="deleteDependentTemplate(dependentTemplate, $event)"
+                          uib-tooltip="Delete">
+                      <i class="fa fa-times"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </form>
+      </div>
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="pull-right">
+            <button class="btn btn-primary" wz-previous>Back</button>
+            <button class="btn btn-primary" wz-next>Next</button>
+            <button class="btn btn-primary" wz-finish ng-disabled="true">Finish</button>
+            <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </wz-step>
+    <wz-step wz-title="Pricing">
+      <div class="eb-product-type-wizard-step-content">
+        <p>Even more steps!!</p>
+      </div>
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="pull-right">
+            <button class="btn btn-primary" wz-previous>Back</button>
+            <button class="btn btn-primary" wz-next>Next</button>
+            <button class="btn btn-primary" wz-finish>Finish</button>
+            <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </wz-step>
+    <wz-step wz-title="Verification">
+      <div class="eb-product-type-wizard-step-content">
+        <p>Even more steps!!</p>
+      </div>
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="pull-right">
+            <button class="btn btn-primary" wz-previous>Back</button>
+            <button class="btn btn-primary" wz-next>Next</button>
+            <button class="btn btn-primary" wz-finish>Finish</button>
+            <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </wz-step>
+  </wizard>
+  <div class="clearfix"></div>
+</div>
