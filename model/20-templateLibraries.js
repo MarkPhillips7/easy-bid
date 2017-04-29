@@ -2814,6 +2814,7 @@ TemplateLibrariesHelper = {
   getTemplateSettingsForTabs,
   getTemplateParent,
   getTemplateParents,
+  populateLookupOptions,
   populateSelectOptions,
   populateTabPages,
 }

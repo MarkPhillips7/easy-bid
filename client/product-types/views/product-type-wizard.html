@@ -1,10 +1,10 @@
 <div class="modal-header">
-  <h4>Product Type Wizard - {{stepTitle()}}</h4>
+  <h4>Product Type Wizard {{minusName()}}- {{stepTitle()}}</h4>
 </div>
 <div class="modal-body">
   <wizard on-finish="finishedWizard()">
     <wz-step wz-title="Basics" canexit="canExitBasics()">
-      <div class="eb-product-type-wizard-step-content">
+      <div class="eb-product-type-wizard-step-content pre-scrollable">
         <p>
           This wizard will lead you through creating a new product type.
           Then you can include it in your bids!
@@ -27,48 +27,89 @@
       </div>
     </wz-step>
     <wz-step wz-title="Dependencies">
-      <div class="eb-product-type-wizard-step-content">
+      <div class="eb-product-type-wizard-step-content pre-scrollable">
         <p>
-          Identify any inputs or calculations that the {{costOrRetailPrice().toLowerCase()}} should be based on.
+          Identify any settings that the {{costOrRetailPrice().toLowerCase()}} should be based on.
         </p>
-        <formly-form model="model.dependencies" fields="dependenciesFields">
-        </formly-form>
-        <p ng-show="model.dependentTemplates.length > 0">{{costOrRetailPrice()}} Dependencies</p>
-        <form ng-show="model.dependentTemplates.length > 0" class="form-horizontal">
-          <table class="table table-bordered table-condensed table-hover">
-            <thead>
-            <tr>
-              <th>Item</th>
-              <th>Type</th>
-              <th>Variable</th>
-              <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr data-ng-repeat="dependentTemplate in model.dependentTemplates"
-                ng-class="{info: isTemplateSelected(dependentTemplate)}"
-                ng-click="templateHasFocus(dependentTemplate)"
-                ng-focus="templateHasFocus(dependentTemplate)">
-              <td>{{dependentTemplate.name}}</td>
-              <td>{{dependentTemplate.description}}</td>
-              <td data-eb-template-settings="VariableName"
-                  data-vm="vm"
-                  data-template-library="templateLibrary"
-                  data-template-id="dependentTemplate._id"
-                  data-template="dependentTemplate"></td>
-              <td>
-                <div class="btn-group">
-                  <button type="button" class="btn btn-default btn-xs"
-                          data-ng-click="deleteDependentTemplate(dependentTemplate, $event)"
-                          uib-tooltip="Delete">
-                      <i class="fa fa-times"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </form>
+        <div class="row eb-bottom-margin">
+          <div class="col-sm-12">
+            <form class="form-inline"
+                  role="form">
+              <div class="input-group">
+                <select class="form-control"
+                       ng-model="model.dependencies.existingTemplateToAdd"
+                       ng-change="addExistingDependentTemplate()"
+                       ng-options="setting as setting.name for setting in model.availableTemplates">
+                </select>
+              </div>
+              or
+              <div class="form-group">
+                <input type="text" class="form-control input" id="NewSettingToAdd"
+                       placeholder="Enter new setting" ng-model="model.dependencies.newSettingToAdd">
+                <button type="submit"
+                        class="btn btn-default"
+                        data-ng-click="addNewDependentTemplate()"
+                        uib-tooltip="Add new setting">
+                  <i class="fa fa-plus"></i>
+                </button>
+              </div>
+              or just continue to the next step
+            </form>
+          </div>
+        </div>
+
+        <div class="row" ng-show="model.dependentTemplates.length > 0">
+          <div class="col-md-6">
+            <h4>{{costOrRetailPrice()}} Dependencies</h4>
+            <div class="list-group">
+              <a class="list-group-item clearfix"
+                 data-ng-repeat="dependentTemplate in model.dependentTemplates"
+                 ng-class="{'list-group-item-info': isDependentTemplateSelected(dependentTemplate)}"
+                 ng-click="selectDependentTemplate(dependentTemplate)"
+                 ng-focus="selectDependentTemplate(dependentTemplate)">
+                {{dependentTemplate.name}}
+                <span class="pull-right">
+                  <span class="btn btn-xs btn-default"
+                        data-ng-click="removeDependentTemplate(dependentTemplate)"
+                        uib-tooltip="Remove Dependency">
+                    <i class="fa fa-times"></i>
+                  </span>
+                </span>
+              </a>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <h4>{{model.selectedDependentTemplate.name}} Options</h4>
+
+            <form ng-show="!model.selectedDependentTemplate.id" class="form-inline eb-bottom-margin"
+                  role="form">
+              <div class="form-group">
+                <input type="text" class="form-control input" id="NewOptionToAdd"
+                       placeholder="Enter new option" ng-model="model.dependencies.newOptionToAdd">
+                <button type="submit"
+                        class="btn btn-default"
+                        data-ng-click="addNewOption()"
+                        uib-tooltip="Add new setting">
+                  <i class="fa fa-plus"></i>
+                </button>
+              </div>
+            </form>
+            <div class="list-group">
+              <a class="list-group-item clearfix"
+                 data-ng-repeat="option in model.selectedDependentTemplateOptions">
+                {{option}}
+                <span ng-show="!model.selectedDependentTemplate.id" class="pull-right">
+                  <span class="btn btn-xs btn-default"
+                        data-ng-click="removeOption(option)"
+                        uib-tooltip="Remove Option">
+                    <i class="fa fa-times"></i>
+                  </span>
+                </span>
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="row">
         <div class="col-sm-12">
@@ -81,9 +122,51 @@
         </div>
       </div>
     </wz-step>
-    <wz-step wz-title="Pricing">
-      <div class="eb-product-type-wizard-step-content">
-        <p>Even more steps!!</p>
+    <wz-step wz-title="Pricing" canenter="enterPricing">
+      <div class="eb-product-type-wizard-step-content pre-scrollable">
+        <p>
+          <span ng-if="model.dependentTemplates.length === 0">
+            Specify {{costOrRetailPrice().toLowerCase()}}.
+          </span>
+          <span ng-if="model.dependentTemplates.length > 0">
+            Specify {{costOrRetailPrice().toLowerCase()}}s.
+            <em>A price does not need to be specified for every option if a price is specified for '[Default]'.</em>
+            If you specify a price for '[Default]' then that price will get used when no price is found for the lookup value.
+          </span>
+        </p>
+        <form class="form-horizontal">
+          <table class="table table-bordered table-condensed table-hover">
+            <thead>
+            <tr>
+              <th data-ng-repeat="dependentTemplate in model.dependentTemplates">
+                {{dependentTemplate.name}}
+              </th>
+              <th>{{costOrRetailPrice()}}</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr data-ng-repeat="pricingRecord in model.pricingData track by $index">
+              <td data-ng-repeat="settingOption in pricingRecord.settingOptions track by $index">{{settingOption}}</td>
+              <td>
+                <div class="hide-inputbtns">
+                  <div class="input-group">
+                    <span class="input-group-addon">$</span>
+                    <input type="number"
+                           min="0"
+                           step="0.01"
+                           data-number-to-fixed="2"
+                           data-number-stepfactor="100"
+                           class="form-control currency"
+                           aria-label="Enter amount"
+                           placeholder="Enter amount"
+                           ng-model="pricingRecord.price">
+                  </div>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </form>
       </div>
       <div class="row">
         <div class="col-sm-12">
@@ -97,7 +180,7 @@
       </div>
     </wz-step>
     <wz-step wz-title="Verification">
-      <div class="eb-product-type-wizard-step-content">
+      <div class="eb-product-type-wizard-step-content pre-scrollable">
         <p>Even more steps!!</p>
       </div>
       <div class="row">

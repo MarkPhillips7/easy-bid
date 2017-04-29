@@ -877,6 +877,7 @@ class bid {
     const modalInstance = this.$uibModal.open({
       templateUrl: 'client/bids/views/bid-details-edit.html',
       controller: 'bidDetails',
+      backdrop: 'static',
       size: 'lg',
       resolve: {
         'bid': () => {
@@ -1294,12 +1295,13 @@ class bid {
     const modalInstance = this.$uibModal.open({
       templateUrl: 'client/product-types/views/product-type-wizard.html',
       controller: 'productTypeWizard',
+      backdrop: 'static',
       size: 'lg',
       resolve: {
         'templateLibraries': () => {
           return this.templateLibraries;
         },
-        'vm': () => {
+        'bid': () => {
           return this;
         },
         'lookupData': () => {
