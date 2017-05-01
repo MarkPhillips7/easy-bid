@@ -2,10 +2,13 @@
   'use strict';
   var controllerId = 'productTypeWizard';
   angular.module('app').controller(controllerId,
-      ['$uibModalInstance', '$reactive', '$scope', 'lookupData', 'templateLibraries', 'bid', 'WizardHandler', productTypeWizard]);
+      ['$filter', '$reactive', '$scope', '$uibModalInstance', 'lookupData', 'templateLibraries', 'bid', 'WizardHandler', productTypeWizard]);
 
-  function productTypeWizard($uibModalInstance, $reactive, $scope, lookupData, templateLibraries, bid, WizardHandler) {
+  function productTypeWizard($filter, $reactive, $scope, $uibModalInstance, lookupData, templateLibraries, bid, WizardHandler) {
     $reactive(this).attach($scope);
+    const defaultText = '[Default]';
+    const pricingMethodFixed = 'Fixed';
+    const pricingMethodCostPlus = 'Cost +';
 
     $scope.lookupData = lookupData;
     $scope.templateLibraries = templateLibraries;
@@ -24,7 +27,8 @@
     $scope.bidControllerData = bid.getPendingChanges();
     $scope.model = {
       basics: {
-        pricingMethod: 'Fixed',
+        category: 'Misc',
+        pricingMethod: pricingMethodFixed,
         unitOfMeasure: 'Each',
       },
       dependencies: {
@@ -46,6 +50,8 @@
       ],
       pricingData: [],
       selectedDependentTemplate: undefined,
+      exampleAddDeduct: -2,
+      exampleMarkup: 0.5,
     };
     $scope.basicsFields = [
       {
@@ -171,6 +177,9 @@
     $scope.selectDependentTemplate = selectDependentTemplate;
     $scope.enterPricing = enterPricing;
     $scope.minusName = minusName;
+    $scope.nonEmptyPricingData = nonEmptyPricingData;
+    $scope.sellPriceExampleConditions = sellPriceExampleConditions;
+    $scope.sellPriceExampleResult = sellPriceExampleResult;
 
     this.lookupData = lookupData;
     this.templateLibraries = templateLibraries;
@@ -191,6 +200,61 @@
     this.selectDependentTemplate = selectDependentTemplate;
     this.enterPricing = enterPricing;
     this.minusName = minusName;
+    this.nonEmptyPricingData = nonEmptyPricingData;
+    this.sellPriceExampleConditions = sellPriceExampleConditions;
+    this.sellPriceExampleResult = sellPriceExampleResult;
+
+    const getExamplePricingRecord = () => {
+      // get first pricing record with the fewest [Default]s
+      return _.sortBy(this.nonEmptyPricingData(), (pricingRecord) => {
+        return _.filter(pricingRecord.settingOptions, (settingOption) => settingOption === defaultText).length;
+      })[0];
+    };
+
+    const getConditionStrings = () => {
+      const examplePricingRecord = getExamplePricingRecord();
+      const markupArray = $scope.model.basics.pricingMethod === pricingMethodCostPlus
+      ? ['Markup = ' + $scope.model.exampleMarkup]
+      : [];
+      return examplePricingRecord
+      ? [
+        ..._.map(examplePricingRecord.settingOptions, (settingOption, index) => {
+          return $scope.model.dependentTemplates[index].name + ' = ' + settingOption;
+        }),
+        'Addition/Deduction = ' + $filter('currency')($scope.model.exampleAddDeduct),
+        ...markupArray,
+      ]
+      : [];
+    };
+
+    function sellPriceExampleResult() {
+      const examplePricingRecord = getExamplePricingRecord();
+      if ($scope.model.basics.pricingMethod === pricingMethodFixed) {
+        return examplePricingRecord
+        ? '[Sell Price] = [' + costOrRetailPrice() + '] + [Addition/Deduction] = ' +
+          $filter('currency')(examplePricingRecord.price) + ' + ' +
+          $filter('currency')($scope.model.exampleAddDeduct) + ' = ' +
+          $filter('currency')(examplePricingRecord.price + $scope.model.exampleAddDeduct)
+        : '';
+      }
+      if ($scope.model.basics.pricingMethod === pricingMethodCostPlus) {
+        return examplePricingRecord
+        ? '[Sell Price] = [' + costOrRetailPrice() + '] + ([' + costOrRetailPrice() +
+          '] * [Markup]) + [Addition/Deduction] = ' +
+          $filter('currency')(examplePricingRecord.price) + ' + (' + $filter('currency')(examplePricingRecord.price) +
+          ' * ' + $scope.model.exampleMarkup + ') + ' + $filter('currency')($scope.model.exampleAddDeduct) + ' = ' +
+          $filter('currency')(examplePricingRecord.price + (examplePricingRecord.price * $scope.model.exampleMarkup) + $scope.model.exampleAddDeduct)
+        : '';
+      }
+    }
+
+    function sellPriceExampleConditions() {
+      return 'Suppose ' + getConditionStrings().join(', ');
+    }
+
+    function nonEmptyPricingData() {
+      return _.filter($scope.model.pricingData, (pricingRecord) => !!pricingRecord.price);
+    }
 
     // settingOptions is an array of the setting options set so far
     // remainingOptionArrays is an array of arrays of remaining options that have not been added to pricingData
@@ -212,7 +276,7 @@
       let remainingOptionArrays = [];
       for (var i = 0; i < $scope.model.dependentTemplates.length; i++) {
         remainingOptionArrays.push([
-          '[Default]',
+          defaultText,
           ...$scope.model.dependentTemplateOptions[i]
         ]);
       }
@@ -302,7 +366,7 @@
     }
 
     function costOrRetailPrice() {
-      return $scope.model.basics.pricingMethod === 'Fixed' ? 'Retail Price' : 'Cost';
+      return $scope.model.basics.pricingMethod === pricingMethodFixed ? 'Retail Price' : 'Cost';
     }
 
     function minusName(){
