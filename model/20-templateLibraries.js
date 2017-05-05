@@ -2589,6 +2589,96 @@ const addSubProductsFromWorkbook = (workbook, workbookMetadata, bidControllerDat
   }
 }
 
+const addProductFromWizard = (bidControllerData, lookups, wizardData) => {
+  const templateBaseProduct = getTemplateByType(bidControllerData, Constants.templateTypes.baseProduct);
+  const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, templateBaseProduct.id);
+  const newProductTemplate = addTemplate(templateLibrary, Constants.templateTypes.product, templateBaseProduct);
+  const {
+    basics: {
+      name,
+      description,
+      category,
+      pricingMethod,
+      unitOfMeasure,
+    },
+    dependentTemplates,
+    dependentTemplateOptions,
+    availableTemplates,
+    pricingData,
+  } = wizardData;
+  newProductTemplate.name = name;
+  newProductTemplate.description = description;
+  let order = 0;
+  addTemplateSetting(bidControllerData, newProductTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.selectOption, order++);
+  addTemplateSetting(bidControllerData, newProductTemplate.id, Constants.templateSettingKeys.isASubTemplate, 'true', order++);
+  addTemplateSetting(bidControllerData, newProductTemplate.id, Constants.templateSettingKeys.productTab, category, order++);
+  // if (imageSource) {
+  //   addTemplateSetting(bidControllerData, newProductTemplate.id, Constants.templateSettingKeys.imageSource, importSet.imageSource, order++);
+  // }
+  _.each(dependentTemplates, (dependentTemplate, index) => {
+    if (dependentTemplate.id) {
+      // Existing template, just need to reference the variable name
+    } else {
+      // New template needs to be created
+      const newEntryTemplate = addTemplate(templateLibrary, Constants.templateTypes.input, newProductTemplate);
+      newEntryTemplate.name = dependentTemplate.name;
+      // newEntryTemplate.description = ;
+      let order = 0;
+      // addTemplateSetting(bidControllerData, newEntryTemplate.id, Constants.templateSettingKeys.valueType, 'string', order++);
+      addTemplateSetting(bidControllerData, newEntryTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.entry, order++);
+      const defaultValue = dependentTemplateOptions[index][0];
+      if (defaultValue !== undefined && defaultValue != null && defaultValue !== '') {
+        addTemplateSetting(bidControllerData, newEntryTemplate.id, Constants.templateSettingKeys.defaultValue, defaultValue, order++);
+      }
+      addTemplateSetting(bidControllerData, newEntryTemplate.id, Constants.templateSettingKeys.variableName, Strings.toVariableName(dependentTemplate.name), order++);
+    }
+  });
+  addDeductTemplate = addTemplate(templateLibrary, Constants.templateTypes.input, newProductTemplate);
+  addDeductTemplate.name = 'Add / Deduct';
+  order = 0;
+  addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.valueType, 'number', order++);
+  addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.entry, order++);
+  addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.defaultValue, 0, order++);
+  addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.variableName, 'addDeduct', order++);
+
+  if (pricingMethod === Constants.pricingMethods.fixed) {
+    _.each(pricingData, (pricingRecord) => {
+      const productSku = Strings.squish(name, ...pricingRecord.settingOptions);
+      LookupsHelper.addProductSkuLookup(templateLibrary, lookups, category, productSku, name, description, undefined, []);
+      LookupsHelper.addPriceLookup(templateLibrary, lookups, newProductTemplate.name,
+        productSku, itemName, newProductTemplate.description, pricingRecord.price, unitOfMeasure);
+    });
+    // addCalculationTemplate(workbook, {}, bidControllerData, lookups,
+    //   parentTemplate, importSet, replacementsByCell, worksheet, subsetOverridesByColumnOffset,
+    //   startCellAddressString, columnOffset);
+
+    const productSkuParameters = [
+      `"${name}"`,
+      ..._.map(dependentTemplates, (dependentTemplate) => Strings.toVariableName(dependentTemplate.name))
+    ].join(', ');
+    const priceEachOverrideTemplate = addTemplate(templateLibrary, Constants.templateTypes.override, newProductTemplate);
+    const priceEachName = 'Price Each';
+    priceEachOverrideTemplate.name = priceEachName;
+    priceEachOverrideTemplate.description = priceEachName;
+    let overrideOrder = 0;
+    addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.isVariableOverride, true, overrideOrder++);
+    addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.variableToOverride, 'priceEach', overrideOrder++);
+    addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.propertyToOverride, Constants.templateSettingKeys.valueFormula, overrideOrder++);
+    addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.overrideValue,
+      `fixedPrice + addDeduct`, overrideOrder++);
+    addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.overrideType, Constants.overrideTypes.calculation, overrideOrder++);
+
+    const fixedPriceTemplate = addTemplate(templateLibrary, Constants.templateTypes.calculation, newProductTemplate);
+    fixedPriceTemplate.name = 'Fixed Price';
+    fixedPriceTemplate.description = 'Fixed Price';
+    order = 0;
+    // addTemplateSetting(bidControllerData, fixedPriceTemplate.id, unit.key, unit.value, order++);
+    addTemplateSetting(bidControllerData, fixedPriceTemplate.id, Constants.templateSettingKeys.variableName, 'fixedPrice', order++);
+    addTemplateSetting(bidControllerData, fixedPriceTemplate.id, Constants.templateSettingKeys.valueFormula,
+      `lookup(squish(${productSkuParameters}), "Price")`, order++);
+  }
+};
+
 const addProductsFromWorkbook = (workbook, workbookMetadata, bidControllerData, lookups, parentTemplate, importSet, replacementsByCell) => {
   const templateLibrary = getTemplateLibraryWithTemplate(bidControllerData, parentTemplate.id);
   if (!workbook) {
@@ -2785,6 +2875,7 @@ TemplateLibrariesHelper = {
   addFormulaReferencesFromWorkbook,
   addLookupsFromWorkbook,
   addMarkupLevels,
+  addProductFromWizard,
   addProductsFromWorkbook,
   addSubProductsFromWorkbook,
   addSpecificationGroupsFromWorkbook,

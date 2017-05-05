@@ -85,6 +85,12 @@ Constants.overrideTypes = {
   userEntry:"UserEntry",
 };
 
+Constants.pricingMethods = {
+  fixed: 'Fixed',
+  costPlus: 'Cost +',
+  materialAndLabor: 'M&L',
+};
+
 Constants.recordActions = {
   add:"Add",
   copy:"Copy",

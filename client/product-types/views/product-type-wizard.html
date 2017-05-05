@@ -123,7 +123,7 @@
         </div>
       </div>
     </wz-step>
-    <wz-step wz-title="Pricing" canenter="enterPricing">
+    <wz-step wz-title="Pricing" canenter="enterPricing" canexit="canExitPricing">
       <div class="eb-product-type-wizard-step-content pre-scrollable">
         <p>
           <span ng-if="model.dependentTemplates.length === 0">
@@ -131,9 +131,16 @@
           </span>
           <span ng-if="model.dependentTemplates.length > 0">
             Specify {{costOrRetailPrice().toLowerCase()}}s.
-            <em>A price does not need to be specified for every option if a price is specified for '[Default]'.</em>
-            If you specify a price for '[Default]' then that price will get used when no price is found for the lookup value.
+            <em>
+              A {{costOrRetailPrice().toLowerCase()}} amount does not need to be
+              specified for every option if one is specified for '[Default]'.
+            </em>
+            If you specify an amount for '[Default]' then that amount will get used
+            when no {{costOrRetailPrice().toLowerCase()}} is found for a lookup value.
           </span>
+          <div ng-if="model.showPriceValidationMessage" class="alert alert-danger" role="alert">
+            At least one {{costOrRetailPrice().toLowerCase()}} must be specified.
+          </div>
         </p>
         <form class="form-horizontal">
           <table class="table table-bordered table-condensed table-hover">
