@@ -2,15 +2,16 @@
   'use strict';
   var controllerId = 'productTypeWizard';
   angular.module('app').controller(controllerId,
-      ['$filter', '$reactive', '$scope', '$uibModalInstance', 'lookupData', 'templateLibraries', 'bid', 'WizardHandler', productTypeWizard]);
+      ['$filter', '$meteor', '$reactive', '$scope', '$uibModalInstance', 'lookupData', 'templateLibraries', 'bid', 'WizardHandler', productTypeWizard]);
 
-  function productTypeWizard($filter, $reactive, $scope, $uibModalInstance, lookupData, templateLibraries, bid, WizardHandler) {
+  function productTypeWizard($filter, $meteor, $reactive, $scope, $uibModalInstance, lookupData, templateLibraries, bid, WizardHandler) {
     $reactive(this).attach($scope);
     const defaultText = '[Default]';
 
     $scope.lookupData = lookupData;
     $scope.templateLibraries = templateLibraries;
-    $scope.templateLibrary = templateLibraries[0];
+    // $scope.templateLibrary = templateLibraries[0];
+    $scope.templateLibrary = $meteor.object(TemplateLibraries, templateLibraries[0]._id, false);
 
     $scope.bid = bid;
     $scope.vm = this;
@@ -23,6 +24,7 @@
     $scope.costOrRetailPrice = costOrRetailPrice;
     $scope.existingTemplateToAddDefault = {name: 'Select existing setting to add'};
     $scope.bidControllerData = bid.getPendingChanges();
+    $scope.bidControllerData.templateLibraries = [$scope.templateLibrary];
     $scope.model = {
       basics: {
         category: 'Misc',
@@ -145,6 +147,8 @@
     $scope.sellPriceExampleConditions = sellPriceExampleConditions;
     $scope.sellPriceExampleResult = sellPriceExampleResult;
     $scope.canExitPricing = canExitPricing;
+    $scope.finishWizard = finishWizard;
+    $scope.saving = false;
 
     this.lookupData = lookupData;
     this.templateLibraries = templateLibraries;
@@ -169,6 +173,44 @@
     this.sellPriceExampleConditions = sellPriceExampleConditions;
     this.sellPriceExampleResult = sellPriceExampleResult;
     this.canExitPricing = canExitPricing;
+    this.finishWizard = finishWizard;
+    this.saving = $scope.saving;
+
+    const saveLookup = (lookup, isInsert) => {
+      Meteor.call('saveLookup', lookup, isInsert,
+        (err, result) => {
+        if (err) {
+          console.log('failed to save lookup', err);
+        } else {
+          console.log('success saving lookup', result);
+        }
+      });
+    }
+
+    function finishWizard() {
+      $scope.saving = true;
+      const lookups = [];
+
+      TemplateLibrariesHelper.addProductFromWizard($scope.bidControllerData, lookups, $scope.model);
+
+      _.each(lookups, (lookup) => {
+        saveLookup(lookup, true);
+      });
+      $scope.templateLibrary.save()
+        .then((result) => {
+          console.log('success saving template library', result);
+          $uibModalInstance.dismiss();
+        })
+        .catch((err) => console.log('failed to save template library', err));
+      // Meteor.call('saveTemplateLibrary', $scope.templateLibrary, false,
+      //   (err, result) => {
+      //   if (err) {
+      //     console.log('failed to save template library', err);
+      //   } else {
+      //     console.log('success saving template library', result);
+      //   }
+      // });
+    }
 
     const getExamplePricingRecord = () => {
       // get first pricing record with the fewest [Default]s

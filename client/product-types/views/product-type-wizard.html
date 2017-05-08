@@ -2,7 +2,7 @@
   <h4>Product Type Wizard {{minusName()}}- {{stepTitle()}}</h4>
 </div>
 <div class="modal-body">
-  <wizard on-finish="finishedWizard()">
+  <wizard on-finish="finishWizard()">
     <wz-step wz-title="Basics" canexit="canExitBasics()">
       <div class="eb-product-type-wizard-step-content pre-scrollable">
         <p>
@@ -39,7 +39,7 @@
                 <select class="form-control"
                        ng-model="model.dependencies.existingTemplateToAdd"
                        ng-change="addExistingDependentTemplate()"
-                       ng-options="setting as setting.name for setting in model.availableTemplates">
+                       ng-options="setting as setting.name for setting in model.availableTemplates track by setting.id">
                 </select>
               </div>
               or
@@ -63,7 +63,7 @@
             <h4>{{costOrRetailPrice()}} Dependencies</h4>
             <div class="list-group">
               <a class="list-group-item clearfix"
-                 data-ng-repeat="dependentTemplate in model.dependentTemplates"
+                 data-ng-repeat="dependentTemplate in model.dependentTemplates track by $index"
                  ng-class="{'list-group-item-info': isDependentTemplateSelected(dependentTemplate)}"
                  ng-click="selectDependentTemplate(dependentTemplate)"
                  ng-focus="selectDependentTemplate(dependentTemplate)">
@@ -98,7 +98,7 @@
             </form>
             <div class="list-group">
               <a class="list-group-item clearfix"
-                 data-ng-repeat="option in model.selectedDependentTemplateOptions">
+                 data-ng-repeat="option in model.selectedDependentTemplateOptions track by $index">
                 {{option}}
                 <span ng-show="!model.selectedDependentTemplate.id" class="pull-right">
                   <span class="btn btn-xs btn-default"
@@ -146,7 +146,7 @@
           <table class="table table-bordered table-condensed table-hover">
             <thead>
             <tr>
-              <th data-ng-repeat="dependentTemplate in model.dependentTemplates">
+              <th data-ng-repeat="dependentTemplate in model.dependentTemplates track by $index">
                 {{dependentTemplate.name}}
               </th>
               <th>{{costOrRetailPrice()}}</th>
@@ -183,6 +183,7 @@
             <button class="btn btn-primary" wz-next>Next</button>
             <button class="btn btn-primary" wz-finish>Finish</button>
             <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+            <div ng-show="saving">Saving <i class="fa fa-spinner fa-spin fa-2x"></i></div>
           </div>
         </div>
       </div>
@@ -221,7 +222,7 @@
               <table class="table table-bordered table-condensed table-hover">
                 <thead>
                 <tr>
-                  <th data-ng-repeat="dependentTemplate in model.dependentTemplates">
+                  <th data-ng-repeat="dependentTemplate in model.dependentTemplates track by $index">
                     {{dependentTemplate.name}}
                   </th>
                   <th>{{costOrRetailPrice()}}</th>
@@ -263,6 +264,7 @@
             <button class="btn btn-primary" wz-next ng-disabled="true">Next</button>
             <button class="btn btn-primary" wz-finish>Finish</button>
             <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+            <div ng-show="saving">Saving <i class="fa fa-spinner fa-spin fa-2x"></i></div>
           </div>
         </div>
       </div>

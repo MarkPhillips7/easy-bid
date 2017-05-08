@@ -144,7 +144,7 @@ const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookup
       lookupRecords = lookupData && _.filter(lookupData['standard'], (lookup) => {
         // valueToLookUp represents lookup key for price lookups
         return lookup.lookupType === lookupType
-          && lookup.effectiveDate < pricingAtToUse
+          && lookup.effectiveDate <= pricingAtToUse
           && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse)
           && lookup.key === valueToLookUp;
       });
@@ -161,7 +161,7 @@ const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookup
         return lookup.lookupType === lookupType
           && lookup.lookupSubType === lookupSubType
           && lookup.key === lookupKey
-          && lookup.effectiveDate < pricingAtToUse
+          && lookup.effectiveDate <= pricingAtToUse
           && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse);
       });
       if (lookupRecords.length) {
@@ -185,7 +185,7 @@ const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookup
           && lookup.lookupSubType === lookupSubType
           && lookup.key === lookupKey
           && lookup.name === valueToLookUp
-          && lookup.effectiveDate < pricingAtToUse
+          && lookup.effectiveDate <= pricingAtToUse
           && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse);
       });
       if (lookupRecords.length) {
@@ -200,7 +200,7 @@ const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookup
         return lookup.lookupType === lookupType
           && lookup.lookupSubType === lookupSubType
           && lookup.key === valueToLookUp
-          && lookup.effectiveDate < pricingAtToUse
+          && lookup.effectiveDate <= pricingAtToUse
           && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse);
       });
       if (lookupRecords.length) {
@@ -215,7 +215,7 @@ const isValidLookup = (lookupData, lookupType, lookupKey, lookup, pricingAt) => 
   const pricingAtToUse = pricingAt || new Date();
   return lookup.lookupType === lookupType
     && lookup.key === lookupKey
-    && lookup.effectiveDate < pricingAtToUse
+    && lookup.effectiveDate <= pricingAtToUse
     && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse);
 }
 
@@ -385,7 +385,7 @@ const addLookup = (templateLibrary, lookups, lookupType, lookupSubType, key, nam
 }
 
 const addPriceLookup = (templateLibrary, lookups, generalProductName, productSku,
-  productName, description, price, unitsText, userId) => {
+  productName, description, price, unitsText, userId, effectiveDate) => {
   const lookupKey = productSku;
   const lookupType = Constants.lookupTypes.price;
   const lookupSubType = generalProductName;
@@ -399,7 +399,7 @@ const addPriceLookup = (templateLibrary, lookups, generalProductName, productSku
       id: Random.id(),
       key: Constants.lookupSettingKeys.unitsText,
       value: unitsText,
-    }], undefined, undefined, userId);
+    }], effectiveDate, undefined, userId);
     // lookups.push({
     //   lookupType,
     //   lookupSubType,
@@ -433,7 +433,7 @@ const addRangeLookup = (templateLibrary, lookups, lookupSubType, lookupKey, rang
     lookupSettings, undefined, undefined, userId);
 };
 
-const addOptionLookup = (templateLibrary, lookups, optionTypeName, optionValue, userId) => {
+const addOptionLookup = (templateLibrary, lookups, optionTypeName, optionValue, userId, effectiveDate) => {
   const lookupKey = optionTypeName;
   const lookupType = Constants.lookupTypes.option;
   const lookupSubType = Constants.lookupSubTypes.standard;
@@ -441,7 +441,7 @@ const addOptionLookup = (templateLibrary, lookups, optionTypeName, optionValue, 
     `${Constants.hierarchyRoot}${lookupType}.${lookupSubType}`, lookupKey, undefined, lookupKey, undefined, undefined, undefined, userId);
   // console.log(`Adding option lookup key = '${lookupKey}', name = '${optionValue}'`);
   addLookup(templateLibrary, lookups, lookupType, lookupSubType, lookupKey, optionValue, undefined, optionValue,
-    undefined, undefined, undefined, userId);
+    undefined, effectiveDate, undefined, userId);
 };
 
 const addProductSkuLookup = (templateLibrary, lookups, generalProductName, productSku, productName, productDescription, userId, lookupSettings) => {
