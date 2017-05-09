@@ -2646,37 +2646,37 @@ const addProductFromWizard = (bidControllerData, lookups, wizardData) => {
   });
   addDeductTemplate = addTemplate(templateLibrary, Constants.templateTypes.input, newProductTemplate);
   addDeductTemplate.name = 'Add / Deduct';
+  addDeductTemplate.description = 'Add / Deduct';
   order = 0;
   addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.valueType, 'number', order++);
   addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.entry, order++);
   addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.defaultValue, '0', order++);
   addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.variableName, 'addDeduct', order++);
+  addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.displayCategory, 'Primary', order++);
+
+  _.each(pricingDataToUse, (pricingRecord) => {
+    const productSku = Strings.squish(name, ...pricingRecord.settingOptions);
+    const lookupName = pricingRecord.settingOptions.join(' - ');
+    LookupsHelper.addProductSkuLookup(templateLibrary, lookups, name, productSku, lookupName, undefined, undefined, []);
+    LookupsHelper.addPriceLookup(templateLibrary, lookups, name,
+      productSku, lookupName, undefined, pricingRecord.price.toString(),
+      unitOfMeasure, undefined, effectiveDate);
+  });
+
+  const productSkuParameters = [
+    `"${name}"`,
+    ..._.map(dependentTemplates, (dependentTemplate) => Strings.toVariableName(dependentTemplate.name))
+  ].join(', ');
+  const priceEachOverrideTemplate = addTemplate(templateLibrary, Constants.templateTypes.override, newProductTemplate);
+  const priceEachName = 'Price Each';
+  priceEachOverrideTemplate.name = priceEachName;
+  priceEachOverrideTemplate.description = priceEachName;
+  let overrideOrder = 0;
+  addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.isVariableOverride, 'true', overrideOrder++);
+  addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.variableToOverride, 'priceEach', overrideOrder++);
+  addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.propertyToOverride, Constants.templateSettingKeys.valueFormula, overrideOrder++);
 
   if (pricingMethod === Constants.pricingMethods.fixed) {
-    _.each(pricingDataToUse, (pricingRecord) => {
-      const productSku = Strings.squish(name, ...pricingRecord.settingOptions);
-      const lookupName = pricingRecord.settingOptions.join(' - ');
-      LookupsHelper.addProductSkuLookup(templateLibrary, lookups, name, productSku, lookupName, undefined, undefined, []);
-      LookupsHelper.addPriceLookup(templateLibrary, lookups, name,
-        productSku, lookupName, undefined, pricingRecord.price.toString(),
-        unitOfMeasure, undefined, effectiveDate);
-    });
-    // addCalculationTemplate(workbook, {}, bidControllerData, lookups,
-    //   parentTemplate, importSet, replacementsByCell, worksheet, subsetOverridesByColumnOffset,
-    //   startCellAddressString, columnOffset);
-
-    const productSkuParameters = [
-      `"${name}"`,
-      ..._.map(dependentTemplates, (dependentTemplate) => Strings.toVariableName(dependentTemplate.name))
-    ].join(', ');
-    const priceEachOverrideTemplate = addTemplate(templateLibrary, Constants.templateTypes.override, newProductTemplate);
-    const priceEachName = 'Price Each';
-    priceEachOverrideTemplate.name = priceEachName;
-    priceEachOverrideTemplate.description = priceEachName;
-    let overrideOrder = 0;
-    addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.isVariableOverride, 'true', overrideOrder++);
-    addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.variableToOverride, 'priceEach', overrideOrder++);
-    addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.propertyToOverride, Constants.templateSettingKeys.valueFormula, overrideOrder++);
     addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.overrideValue,
       `fixedPrice + addDeduct`, overrideOrder++);
     addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.overrideType, Constants.overrideTypes.calculation, overrideOrder++);
@@ -2688,6 +2688,19 @@ const addProductFromWizard = (bidControllerData, lookups, wizardData) => {
     // addTemplateSetting(bidControllerData, fixedPriceTemplate.id, unit.key, unit.value, order++);
     addTemplateSetting(bidControllerData, fixedPriceTemplate.id, Constants.templateSettingKeys.variableName, 'fixedPrice', order++);
     addTemplateSetting(bidControllerData, fixedPriceTemplate.id, Constants.templateSettingKeys.valueFormula,
+      `lookup(squish(${productSkuParameters}), "Price")`, order++);
+  } else if (pricingMethod === Constants.pricingMethods.costPlus) {
+    addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.overrideValue,
+      `cost + (cost * markup) + addDeduct`, overrideOrder++);
+    addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.overrideType, Constants.overrideTypes.calculation, overrideOrder++);
+
+    const costTemplate = addTemplate(templateLibrary, Constants.templateTypes.calculation, newProductTemplate);
+    costTemplate.name = 'Cost';
+    costTemplate.description = 'Cost';
+    order = 0;
+    // addTemplateSetting(bidControllerData, costTemplate.id, unit.key, unit.value, order++);
+    addTemplateSetting(bidControllerData, costTemplate.id, Constants.templateSettingKeys.variableName, 'cost', order++);
+    addTemplateSetting(bidControllerData, costTemplate.id, Constants.templateSettingKeys.valueFormula,
       `lookup(squish(${productSkuParameters}), "Price")`, order++);
   }
 };

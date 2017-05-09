@@ -21,7 +21,7 @@
     $scope.cancel = cancel;
     $scope.canExitBasics = canExitBasics;
     $scope.changePricingMethodId = changePricingMethodId;
-    $scope.costOrRetailPrice = costOrRetailPrice;
+    $scope.costOrFixedPrice = costOrFixedPrice;
     $scope.existingTemplateToAddDefault = {name: 'Select existing setting to add'};
     $scope.bidControllerData = bid.getPendingChanges();
     $scope.bidControllerData.templateLibraries = [$scope.templateLibrary];
@@ -162,7 +162,7 @@
     this.canExitBasics = canExitBasics;
     this.cancel = cancel;
     this.changePricingMethodId = changePricingMethodId;
-    this.costOrRetailPrice = costOrRetailPrice;
+    this.costOrFixedPrice = costOrFixedPrice;
     this.model = $scope.model;
     this.isDependentTemplateSelected = isDependentTemplateSelected;
     this.removeDependentTemplate = removeDependentTemplate;
@@ -239,7 +239,7 @@
       const examplePricingRecord = getExamplePricingRecord();
       if ($scope.model.basics.pricingMethod === Constants.pricingMethods.fixed) {
         return examplePricingRecord
-        ? '[Sell Price] = [' + costOrRetailPrice() + '] + [Addition/Deduction] = ' +
+        ? '[Sell Price] = [' + costOrFixedPrice() + '] + [Addition/Deduction] = ' +
           $filter('currency')(examplePricingRecord.price) + ' + ' +
           $filter('currency')($scope.model.exampleAddDeduct) + ' = ' +
           $filter('currency')(examplePricingRecord.price + $scope.model.exampleAddDeduct)
@@ -247,7 +247,7 @@
       }
       if ($scope.model.basics.pricingMethod === Constants.pricingMethods.costPlus) {
         return examplePricingRecord
-        ? '[Sell Price] = [' + costOrRetailPrice() + '] + ([' + costOrRetailPrice() +
+        ? '[Sell Price] = [' + costOrFixedPrice() + '] + ([' + costOrFixedPrice() +
           '] * [Markup]) + [Addition/Deduction] = ' +
           $filter('currency')(examplePricingRecord.price) + ' + (' + $filter('currency')(examplePricingRecord.price) +
           ' * ' + $scope.model.exampleMarkup + ') + ' + $filter('currency')($scope.model.exampleAddDeduct) + ' = ' +
@@ -379,8 +379,8 @@
 
     }
 
-    function costOrRetailPrice() {
-      return $scope.model.basics.pricingMethod === Constants.pricingMethods.fixed ? 'Retail Price' : 'Cost';
+    function costOrFixedPrice() {
+      return $scope.model.basics.pricingMethod === Constants.pricingMethods.fixed ? 'Fixed Price' : 'Cost';
     }
 
     function minusName(){

@@ -10,8 +10,8 @@
           Then you can include it in your bids!
         </p>
         <p>
-          Choose <strong>Fixed</strong> pricing method to keep it simple and just specify retail prices.
-          Choose <strong>Cost +</strong> to identify the costs to you and apply a markup to obtain retail prices.
+          Choose <strong>Fixed</strong> pricing method to keep it simple and just specify fixed prices.
+          Choose <strong>Cost +</strong> to identify the costs to you and apply a markup to obtain sell prices.
         </p>
         <formly-form model="model.basics" fields="basicsFields">
         </formly-form>
@@ -29,7 +29,7 @@
     <wz-step wz-title="Dependencies">
       <div class="eb-product-type-wizard-step-content pre-scrollable">
         <p>
-          Identify any settings that the {{costOrRetailPrice().toLowerCase()}} should be based on.
+          Identify any settings that the {{costOrFixedPrice().toLowerCase()}} should be based on.
         </p>
         <div class="row eb-bottom-margin">
           <div class="col-sm-12">
@@ -48,6 +48,7 @@
                        placeholder="Enter new setting" ng-model="model.dependencies.newSettingToAdd">
                 <button type="submit"
                         class="btn btn-default"
+                        ng-disabled="!model.dependencies.newSettingToAdd"
                         data-ng-click="addNewDependentTemplate()"
                         uib-tooltip="Add new setting">
                   <i class="fa fa-plus"></i>
@@ -60,7 +61,7 @@
 
         <div class="row" ng-show="model.dependentTemplates.length > 0">
           <div class="col-md-6">
-            <h4>{{costOrRetailPrice()}} Dependencies</h4>
+            <h4>{{costOrFixedPrice()}} Dependencies</h4>
             <div class="list-group">
               <a class="list-group-item clearfix"
                  data-ng-repeat="dependentTemplate in model.dependentTemplates track by $index"
@@ -90,6 +91,7 @@
                        placeholder="Enter new option" ng-model="model.dependencies.newOptionToAdd">
                 <button type="submit"
                         class="btn btn-default"
+                        ng-disabled="!model.dependencies.newOptionToAdd"
                         data-ng-click="addNewOption()"
                         uib-tooltip="Add new setting">
                   <i class="fa fa-plus"></i>
@@ -127,19 +129,19 @@
       <div class="eb-product-type-wizard-step-content pre-scrollable">
         <p>
           <span ng-if="model.dependentTemplates.length === 0">
-            Specify {{costOrRetailPrice().toLowerCase()}}.
+            Specify {{costOrFixedPrice().toLowerCase()}}.
           </span>
           <span ng-if="model.dependentTemplates.length > 0">
-            Specify {{costOrRetailPrice().toLowerCase()}}s.
+            Specify {{costOrFixedPrice().toLowerCase()}}s.
             <em>
-              A {{costOrRetailPrice().toLowerCase()}} amount does not need to be
+              A {{costOrFixedPrice().toLowerCase()}} amount does not need to be
               specified for every option if one is specified for '[Default]'.
             </em>
             If you specify an amount for '[Default]' then that amount will get used
-            when no {{costOrRetailPrice().toLowerCase()}} is found for a lookup value.
+            when no {{costOrFixedPrice().toLowerCase()}} is found for a lookup value.
           </span>
           <div ng-if="model.showPriceValidationMessage" class="alert alert-danger" role="alert">
-            At least one {{costOrRetailPrice().toLowerCase()}} must be specified.
+            At least one {{costOrFixedPrice().toLowerCase()}} must be specified.
           </div>
         </p>
         <form class="form-horizontal">
@@ -149,7 +151,7 @@
               <th data-ng-repeat="dependentTemplate in model.dependentTemplates track by $index">
                 {{dependentTemplate.name}}
               </th>
-              <th>{{costOrRetailPrice()}}</th>
+              <th>{{costOrFixedPrice()}}</th>
             </tr>
             </thead>
             <tbody>
@@ -217,7 +219,7 @@
             <td>{{model.basics.unitOfMeasure}}</td>
           </tr>
           <tr>
-            <td><b>{{costOrRetailPrice()}}<span ng-if="model.dependentTemplates.length > 0">s</span></b></td>
+            <td><b>{{costOrFixedPrice()}}<span ng-if="model.dependentTemplates.length > 0">s</span></b></td>
             <td>
               <table class="table table-bordered table-condensed table-hover">
                 <thead>
@@ -225,7 +227,7 @@
                   <th data-ng-repeat="dependentTemplate in model.dependentTemplates track by $index">
                     {{dependentTemplate.name}}
                   </th>
-                  <th>{{costOrRetailPrice()}}</th>
+                  <th>{{costOrFixedPrice()}}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -241,7 +243,7 @@
             <td><b>Sell Price Example</b></td>
             <td ng-if="model.basics.pricingMethod === 'Fixed'">
               <span>
-                Sell price is determined by retail price plus an optional addition/deduction amount.<br/>
+                Sell price is determined by fixed price plus an optional addition/deduction amount.<br/>
                 {{sellPriceExampleConditions()}}<br/>
                 <strong>{{sellPriceExampleResult()}}</strong>
               </span>
