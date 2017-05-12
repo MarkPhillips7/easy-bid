@@ -1603,6 +1603,24 @@ Initialization.initializeTemplates = function(companyInfo, userInfo) {
     _.each(lookups, (lookup) => {
       Lookups.insert(lookup);
     });
+
+    var templateMarkup = {
+      id: Random.id(),
+      name: "Markup",
+      description: "Markup",
+      templateType: Constants.templateTypes.calculation,
+      templateSettings: [{
+        id: Random.id(), key: Constants.templateSettingKeys.variableName, value: "markup"
+      }, {
+        id: Random.id(), key: Constants.templateSettingKeys.valueFormula, value: `lookup(markupLevel,"Basic","Markup")`
+      }]
+    };
+    cabinetryTemplateLibrary.templates.push(templateMarkup);
+    cabinetryTemplateLibrary.templateRelationships.push({
+      id: Random.id(),
+      parentTemplateId: templateCompany.id,
+      childTemplateId: templateMarkup.id
+    });
     //
     // var templateDoorStyle = {
     //   id: Random.id(),
