@@ -113,6 +113,29 @@ const getSettingValueType = (lookup, settingKey) => {
   return null;
 }
 
+// returns true if items from the squished valueToLookUp match items from the
+// lookupPattern or the lookupPattern items are wildcard text. Examples:
+// lookupPattern       valueToLookUp         returns
+// red|square          red|square            true
+// red|square          green|square          false
+// *|square            red|square            true
+// *|square            red|circle            false
+// red|*               red|square            true
+// *|*                 red|square            true
+// red|*               green|square          false
+// *|*|*               green|square|dog      true
+// *|*|*               green|square          false
+const isWildcardMatch = (lookupPattern, valueToLookUp) => {
+  const patternItems = lookupPattern.split('|');
+  const valueItems = valueToLookUp.split('|');
+  return patternItems.length === valueItems.length &&
+    _.every(patternItems, (patternItem, index) => patternItem === Constants.lookupWildcardText || patternItem === valueItems[index]);
+}
+
+const isMatchOrWildcardMatch = (lookupPattern, valueToLookUp) => {
+  return lookupPattern === valueToLookUp || isWildcardMatch(lookupPattern, valueToLookUp);
+}
+
 // remainingLookupKeys will sometimes represent [lookupKey, lookupSettingKey] and sometimes represent just [lookupSettingKey]
 const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookupSubType, ...remainingLookupKeys) => {
   const getLookupValueResponse = (lookup, lookupSettingKey) => {
@@ -132,6 +155,13 @@ const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookup
     return {lookupValue, lookupValueType};
   };
 
+  const getLookupValueResponseFromArray = (lookupRecords, lookupProperty, lookupSettingKey) => {
+    // return the lookup record with the fewest '*'s in it
+    return getLookupValueResponse(
+      _.sortBy(lookupRecords, (lookupRecord) => (lookupRecord[lookupProperty].match(/\*/g) || []).length)[0],
+      lookupSettingKey);
+  }
+
   if (!lookupData || !lookupType || !valueToLookUp) {
     return getLookupValueResponse(null);
   }
@@ -146,11 +176,11 @@ const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookup
         return lookup.lookupType === lookupType
           && lookup.effectiveDate <= pricingAtToUse
           && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse)
-          && lookup.key === valueToLookUp;
+          && isMatchOrWildcardMatch(lookup.key, valueToLookUp);
       });
       lookupSettingKey = remainingLookupKeys[0];
       if (lookupRecords.length) {
-        return getLookupValueResponse(lookupRecords[0], lookupSettingKey);
+        return getLookupValueResponseFromArray(lookupRecords, 'key', lookupSettingKey);
       }
       break;
     case Constants.lookupTypes.range:
@@ -184,12 +214,12 @@ const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookup
         return lookup.lookupType === lookupType
           && lookup.lookupSubType === lookupSubType
           && lookup.key === lookupKey
-          && lookup.name === valueToLookUp
+          && isMatchOrWildcardMatch(lookup.name, valueToLookUp)
           && lookup.effectiveDate <= pricingAtToUse
           && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse);
       });
       if (lookupRecords.length) {
-        return getLookupValueResponse(lookupRecords[0], lookupSettingKey);
+        return getLookupValueResponseFromArray(lookupRecords, 'name', lookupSettingKey);
       }
       break;
     case Constants.lookupTypes.basic:
@@ -199,12 +229,12 @@ const getLookupValue = (lookupData, pricingAt, valueToLookUp, lookupType, lookup
       lookupRecords = lookupData && _.filter(lookupData['standard'], (lookup) => {
         return lookup.lookupType === lookupType
           && lookup.lookupSubType === lookupSubType
-          && lookup.key === valueToLookUp
+          && isMatchOrWildcardMatch(lookup.key, valueToLookUp)
           && lookup.effectiveDate <= pricingAtToUse
           && (!lookup.expirationDate || lookup.expirationDate > pricingAtToUse);
       });
       if (lookupRecords.length) {
-        return getLookupValueResponse(lookupRecords[0], lookupSettingKey);
+        return getLookupValueResponseFromArray(lookupRecords, 'key', lookupSettingKey);
       }
       break;
   }

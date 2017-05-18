@@ -41,6 +41,8 @@ Constants.importSetTypes = {
   subProducts: 'SubProducts',
 };
 
+Constants.lookupWildcardText = "*";
+
 Constants.lookupSettingKeys = {
   hardwareMaterial:"HardwareMaterial",
   iconHtml:"IconHtml",
@@ -83,6 +85,10 @@ Constants.overrideTypes = {
   calculation:"Calculation",
   fromSpecificationGroup:"FromSpecificationGroup",
   userEntry:"UserEntry",
+};
+
+Constants.patternTypes = {
+  currency:"Currency",
 };
 
 Constants.pricingMethods = {
@@ -166,6 +172,7 @@ Constants.templateSettingKeys = {
   numeratorUnit:"NumeratorUnit",
   overrideType:"OverrideType",
   overrideValue:"OverrideValue",
+  patternType:"PatternType",
   productTab:"ProductTab",
   propertyToOverride:"PropertyToOverride",
   selectionType:"SelectionType",

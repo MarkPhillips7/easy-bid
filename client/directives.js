@@ -454,6 +454,10 @@ angular.module('app')
           if (selectionType === Constants.selectionTypes.selectOption || selectionType === Constants.selectionTypes.select) {
             scope.contentUrl = 'client/layout/views/tab-selector-select.html';
           } else if (selectionType === Constants.selectionTypes.entry) {
+            const patternType = ItemTemplatesHelper.getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.patternType);
+            if (patternType === Constants.patternTypes.currency) {
+              scope.pattern = /^-?\d*(\.\d{0,2})?$/;
+            }
             scope.contentUrl = 'client/layout/views/tab-selector-input.html';
           }
         }

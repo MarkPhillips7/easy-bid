@@ -2648,7 +2648,8 @@ const addProductFromWizard = (bidControllerData, lookups, wizardData) => {
   addDeductTemplate.name = 'Add / Deduct';
   addDeductTemplate.description = 'Add / Deduct';
   order = 0;
-  addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.valueType, 'number', order++);
+  addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.patternType, Constants.patternTypes.currency, order++);
+  addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.numeratorUnit, UnitOfMeasure.units.dollars, order++);
   addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.selectionType, Constants.selectionTypes.entry, order++);
   addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.defaultValue, '0', order++);
   addTemplateSetting(bidControllerData, addDeductTemplate.id, Constants.templateSettingKeys.variableName, 'addDeduct', order++);

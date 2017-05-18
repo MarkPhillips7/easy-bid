@@ -6,7 +6,7 @@
 
   function productTypeWizard($filter, $meteor, $reactive, $scope, $uibModalInstance, lookupData, templateLibraries, bid, WizardHandler) {
     $reactive(this).attach($scope);
-    const defaultText = '[Default]';
+    const defaultText = Constants.lookupWildcardText;
 
     $scope.lookupData = lookupData;
     $scope.templateLibraries = templateLibraries;
