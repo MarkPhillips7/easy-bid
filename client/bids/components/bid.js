@@ -1128,7 +1128,8 @@ class bid {
         + ' x ' + SelectionsHelper.getDisplayValue(pendingChanges, _.find(selections, (selection) => selection._id === columnSelectionIds[6]))
         + ' x ' + SelectionsHelper.getDisplayValue(pendingChanges, _.find(selections, (selection) => selection._id === columnSelectionIds[7]));
     }
-    return '';
+    const productTemplate = TemplateLibrariesHelper.getProductTemplate(pendingChanges, productSelectionId);
+    return productTemplate ? productTemplate.description : '';
   }
 
   getPriceTotal(productSelectionId, pendingChanges = {}) {

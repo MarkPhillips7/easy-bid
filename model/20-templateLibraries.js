@@ -909,10 +909,10 @@ TemplateLibraries.allow({
   }
 });
 
-function isABaseTemplate(template) {
+const isABaseTemplate = (template) => {
   check(template, Schema.ItemTemplate);
   return getTemplateSettingValueForTemplate(template, Constants.templateSettingKeys.isABaseTemplate);
-}
+};
 
 function isASubTemplate(template) {
   //check(template, Schema.ItemTemplate);
@@ -2916,6 +2916,7 @@ TemplateLibrariesHelper = {
   getChildTemplateRelationships,
   getOverridableTemplatesBySelectionType,
   getParentTemplateRelationships,
+  getProductTemplate,
   getRootTemplate,
   getSelectOptions,
   getTemplateById,
