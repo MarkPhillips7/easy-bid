@@ -95,6 +95,7 @@ Constants.pricingMethods = {
   fixed: 'Fixed',
   costPlus: 'Cost +',
   materialAndLabor: 'M&L',
+  variable: 'Variable',
 };
 
 Constants.recordActions = {

@@ -2677,7 +2677,20 @@ const addProductFromWizard = (bidControllerData, lookups, wizardData) => {
   addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.variableToOverride, 'priceEach', overrideOrder++);
   addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.propertyToOverride, Constants.templateSettingKeys.valueFormula, overrideOrder++);
 
-  if (pricingMethod === Constants.pricingMethods.fixed) {
+  if (pricingMethod === Constants.pricingMethods.variable) {
+    addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.overrideValue,
+      `variablePrice + addDeduct`, overrideOrder++);
+    addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.overrideType, Constants.overrideTypes.calculation, overrideOrder++);
+
+    const variablePriceTemplate = addTemplate(templateLibrary, Constants.templateTypes.calculation, newProductTemplate);
+    variablePriceTemplate.name = 'Variable Price';
+    variablePriceTemplate.description = 'Variable Price';
+    order = 0;
+    // addTemplateSetting(bidControllerData, variablePriceTemplate.id, unit.key, unit.value, order++);
+    addTemplateSetting(bidControllerData, variablePriceTemplate.id, Constants.templateSettingKeys.variableName, 'variablePrice', order++);
+    addTemplateSetting(bidControllerData, variablePriceTemplate.id, Constants.templateSettingKeys.valueFormula,
+      `lookup(squish(${productSkuParameters}), "Price")`, order++);
+  } else if (pricingMethod === Constants.pricingMethods.fixed) {
     addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.overrideValue,
       `fixedPrice + addDeduct`, overrideOrder++);
     addTemplateSetting(bidControllerData, priceEachOverrideTemplate.id, Constants.templateSettingKeys.overrideType, Constants.overrideTypes.calculation, overrideOrder++);

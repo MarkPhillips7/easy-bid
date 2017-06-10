@@ -10,8 +10,9 @@
           Then you can include it in your bids!
         </p>
         <p>
-          Choose <strong>Fixed</strong> pricing method to keep it simple and just specify fixed prices.
-          Choose <strong>Cost +</strong> to identify the costs to you and apply a markup to obtain sell prices.
+          Choose <strong>Fixed</strong> pricing method to keep it simple and just specify the fixed price.
+          Choose <strong>Cost +</strong> to identify the cost to you and apply a markup to obtain the sell price.
+          Choose <strong>Variable</strong> to identify dependencies and specify prices for various scenarios.
         </p>
         <formly-form model="model.basics" fields="basicsFields">
         </formly-form>
@@ -26,7 +27,7 @@
         </div>
       </div>
     </wz-step>
-    <wz-step wz-title="Dependencies">
+    <wz-step wz-title="Dependencies" wz-disabled="{{model.basics.pricingMethod !== 'Variable'}}">
       <div class="eb-product-type-wizard-step-content pre-scrollable">
         <p>
           Identify any settings that the {{costOrFixedPrice().toLowerCase()}} should be based on.
@@ -251,6 +252,13 @@
             <td ng-if="model.basics.pricingMethod === 'Cost +'">
               <span>
                 Sell price is determined by cost plus cost times markup plus an optional addition/deduction amount.<br/>
+                {{sellPriceExampleConditions()}}<br/>
+                <strong>{{sellPriceExampleResult()}}</strong>
+              </span>
+            </td>
+            <td ng-if="model.basics.pricingMethod === 'Variable'">
+              <span>
+                Sell price is determined by the appropriate variable price plus an optional addition/deduction amount.<br/>
                 {{sellPriceExampleConditions()}}<br/>
                 <strong>{{sellPriceExampleResult()}}</strong>
               </span>

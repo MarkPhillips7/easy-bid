@@ -99,10 +99,11 @@
               "valueProp": "name",
               "options": [
                 {
-                  "name": "Fixed"
-                },
-                {
-                  "name": "Cost +"
+                  "name": Constants.pricingMethods.fixed
+                }, {
+                  "name": Constants.pricingMethods.costPlus
+                }, {
+                  "name": Constants.pricingMethods.variable
                 },
               ],
             }
@@ -237,22 +238,24 @@
 
     function sellPriceExampleResult() {
       const examplePricingRecord = getExamplePricingRecord();
-      if ($scope.model.basics.pricingMethod === Constants.pricingMethods.fixed) {
-        return examplePricingRecord
-        ? '[Sell Price] = [' + costOrFixedPrice() + '] + [Addition/Deduction] = ' +
-          $filter('currency')(examplePricingRecord.price) + ' + ' +
-          $filter('currency')($scope.model.exampleAddDeduct) + ' = ' +
-          $filter('currency')(examplePricingRecord.price + $scope.model.exampleAddDeduct)
-        : '';
-      }
-      if ($scope.model.basics.pricingMethod === Constants.pricingMethods.costPlus) {
-        return examplePricingRecord
-        ? '[Sell Price] = [' + costOrFixedPrice() + '] + ([' + costOrFixedPrice() +
-          '] * [Markup]) + [Addition/Deduction] = ' +
-          $filter('currency')(examplePricingRecord.price) + ' + (' + $filter('currency')(examplePricingRecord.price) +
-          ' * ' + $scope.model.exampleMarkup + ') + ' + $filter('currency')($scope.model.exampleAddDeduct) + ' = ' +
-          $filter('currency')(examplePricingRecord.price + (examplePricingRecord.price * $scope.model.exampleMarkup) + $scope.model.exampleAddDeduct)
-        : '';
+      switch ($scope.model.basics.pricingMethod) {
+        case Constants.pricingMethods.fixed:
+        case Constants.pricingMethods.variable:
+          return examplePricingRecord
+          ? '[Sell Price] = [' + costOrFixedPrice() + '] + [Addition/Deduction] = ' +
+            $filter('currency')(examplePricingRecord.price) + ' + ' +
+            $filter('currency')($scope.model.exampleAddDeduct) + ' = ' +
+            $filter('currency')(examplePricingRecord.price + $scope.model.exampleAddDeduct)
+          : '';
+        case Constants.pricingMethods.costPlus:
+        default:
+          return examplePricingRecord
+          ? '[Sell Price] = [' + costOrFixedPrice() + '] + ([' + costOrFixedPrice() +
+            '] * [Markup]) + [Addition/Deduction] = ' +
+            $filter('currency')(examplePricingRecord.price) + ' + (' + $filter('currency')(examplePricingRecord.price) +
+            ' * ' + $scope.model.exampleMarkup + ') + ' + $filter('currency')($scope.model.exampleAddDeduct) + ' = ' +
+            $filter('currency')(examplePricingRecord.price + (examplePricingRecord.price * $scope.model.exampleMarkup) + $scope.model.exampleAddDeduct)
+          : '';
       }
     }
 
@@ -380,7 +383,15 @@
     }
 
     function costOrFixedPrice() {
-      return $scope.model.basics.pricingMethod === Constants.pricingMethods.fixed ? 'Fixed Price' : 'Cost';
+      switch ($scope.model.basics.pricingMethod) {
+        case Constants.pricingMethods.fixed:
+          return 'Fixed Price';
+        case Constants.pricingMethods.variable:
+          return 'Variable Price';
+        case Constants.pricingMethods.costPlus:
+        default:
+          return 'Cost';
+      }
     }
 
     function minusName(){
