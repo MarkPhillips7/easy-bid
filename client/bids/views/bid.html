@@ -355,6 +355,13 @@
   </div>
   <span ng-show="bid.isAllDataReady && !bid.productSelectionIds.length">No matches found</span>
   <dir-pagination-controls on-page-change="bid.pageChanged(newPageNumber)"></dir-pagination-controls>
+  <div ng-if="bid.reportContent !== null">
+    <object data="{{bid.reportContent}}" type="application/pdf" style="width:100%;height:80%"></object>
+  </div>
+  <input type="button"
+         value="View Quote"
+         ng-click="bid.generateReport()"
+         class="btn btn-primary">
   <input type="button"
          value="Show me the metadata!"
          ng-show="bid.isAllDataReady && bid.isSystemAdmin"

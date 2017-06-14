@@ -1,3 +1,4 @@
+// import {getReportData} from 'helpers/reports';
 import {
   Component, View, SetModule, Inject, MeteorReactive, LocalInjectables, init
 } from 'angular2-now';
@@ -10,11 +11,11 @@ SetModule('app');
 @View({
   templateUrl: () => 'client/bids/views/bid.html'
 })
-@Inject('$uibModal', '$scope', '$state', '$stateParams', '$timeout', 'bootstrap.dialog', 'toastr')
+@Inject('$uibModal', '$sce', '$scope', '$state', '$stateParams', '$timeout', 'bootstrap.dialog', 'toastr')
 @MeteorReactive
 @LocalInjectables
 class bid {
-  constructor($uibModal, $scope, $state, $stateParams, $timeout, bootstrapDialog, toastr) {
+  constructor($uibModal, $sce, $scope, $state, $stateParams, $timeout, bootstrapDialog, toastr) {
     this.itemIdsSelected = [];
     this.perPage = Config.defaultRecordsPerPage;
     this.page = 1;
@@ -53,6 +54,7 @@ class bid {
     this.productTemplate = null;
     this.productToAdd = null;
     this.productTypeaheadText = '';
+    this.reportContent = null;
     this.selectedAreaBreadcrumbText = '[No Areas]';
     this.selectedProductSelectionId = '';
     this.productSelectionIds = [];
@@ -1316,6 +1318,22 @@ class bid {
     }, () => {
       console.log('Modal dismissed at: ' + new Date());
       this.cancel();
+    });
+  }
+
+  generateReport() {
+    const pendingChanges = this.getPendingChanges();
+    const productSelections = SelectionsHelper.getSelectionsBySelectionParentAndTemplate(pendingChanges, this.jobSelection, this.productSelectionTemplate);
+    const reportData = ReportsHelper.getReportData({job: pendingChanges.job, productSelections});
+    Meteor.call('generateReport', reportData, (err, result) => {
+      if (err) {
+        console.log('failed to generateReport', err);
+      } else {
+        var file = new Blob([result], {type: 'application/pdf'});
+        var fileURL = URL.createObjectURL(file);
+        this.reportContent = this.$sce.trustAsResourceUrl(fileURL);
+        // this.reportContent = fileURL;
+      }
     });
   }
 }

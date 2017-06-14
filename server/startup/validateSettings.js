@@ -3,6 +3,10 @@ Meteor.startup(function () {
     PrerenderIO: Match.Optional(Match.Any),
     "galaxy.meteor.com": Object,
     private: {
+      jsreportonline: {
+        authorizationHash: String,
+        url: String
+      },
       stripe: {
         secretKey: String
       },
