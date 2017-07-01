@@ -115,6 +115,11 @@ Constants.relationToItem = {
   subItem:"SubItem"//when template represents a sub-template of a base template
 };
 
+Constants.reportTypes = {
+  jobQuote: "Quote",
+  partsLabor: "Parts/Labor",
+};
+
 Constants.selectionAddingModes = {
   addBaseTemplateChildrenForSubTemplates: "AddBaseTemplateChildrenForSubTemplates",
   handleAnything:"HandleAnything",

@@ -89,6 +89,46 @@ CompanyFields = [
       // placeholder: 'www.BidMasters.com',
       required: false,
     }
+  },
+  {
+    key: 'address.addressLines',
+    type: 'textarea',
+    templateOptions: {
+      label: 'Address',
+      required: false,
+    }
+  },
+  {
+    className: 'row',
+    fieldGroup: [
+      {
+        className: 'col-xs-6',
+        key: 'address.city',
+        type: 'input',
+        templateOptions: {
+          placeholder: 'City',
+          required: false,
+        }
+      },
+      {
+        className: 'col-xs-2',
+        key: 'address.state',
+        type: 'input',
+        templateOptions: {
+          placeholder: 'State',
+          required: false,
+        }
+      },
+      {
+        className: 'col-xs-4',
+        key: 'address.zipCode',
+        type: 'input',
+        templateOptions: {
+          placeholder: 'Zip Code',
+          required: false,
+        }
+      }
+    ]
   }
 ];
 

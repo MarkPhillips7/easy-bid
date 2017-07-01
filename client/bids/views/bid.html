@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container-fluid">
   <div class="row">
     <div class="col-xs-12">
       <div class="alert alert-info" ng-hide="bid.isLoggedIn">
@@ -6,377 +6,317 @@
       </div>
     </div>
   </div>
-
   <div class="row">
-    <div class="col-md-4">
-        <h4 class="sub-header">
-            Areas
-            <div class="btn-group pull-right"
-                 ng-show="bid.isAllDataReady">
-                <button type="button"
-                        class="btn btn-default btn-xs"
-                        data-ng-click="bid.deleteArea($event)"
-                        uib-tooltip="Delete area">
-                    <i class="fa fa-times"></i>
-                </button>
-
-                <button type="button" class="btn btn-default btn-xs dropdown-toggle"
-                        data-toggle="dropdown">
-                    More
-                    <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu" role="menu">
-                    <!--<li><a href="#"><i class="fa fa-plus"></i> Add area</a></li>
-                    <li><a href="#">Add child area</a></li>-->
-                    <li><a href="#"><i class="fa fa-times"></i> Delete area</a></li>
-                    <li><a href="#">Move</a></li>
-                    <li><a href="#">Copy as sibling</a></li>
-                    <li><a href="#">Copy elsewhere</a></li>
-                    <li><a href="#">New parent</a></li>
-                </ul>
-            </div>
-        </h4>
-        <div ng-show="!bid.isAllDataReady">Loading <i class="fa fa-spinner fa-spin fa-2x"></i></div>
-        <form class="form-inline no-left-or-right-margin"
-              role="form"
-              ng-show="bid.isAllDataReady">
-            <div class="form-group">
-                <input type="text" class="form-control input-sm" id="BidAreaToAdd"
-                       placeholder="Enter area" ng-model="bid.areaToAdd">
-                <button type="submit"
-                        class="btn btn-default btn-xs"
-                        data-ng-click="bid.addArea($event)"
-                        uib-tooltip="Add area">
-                    <i class="fa fa-plus"></i>
-                </button>
-
-                <!--Had added this To the button below, but the tooltip had issues
-                ng-disabled="!bid.areaToAdd || !bid.areaTree.get_selected_branch()"-->
-
-                <button type="button"
-                        class="btn btn-default btn-xs"
-                        data-ng-click="bid.addChildArea($event)"
-                        uib-tooltip="Add child area">
-                    <i class="fa fa-level-down"></i>
-                </button>
-            </div>
-        </form>
-        <div class="pre-scrollable eb-area-hierarchy"
-             ng-show="bid.isAllDataReady">
-          <!-- <abn-tree tree-data="bid.areaTreeData"
-                    tree-control="bid.areaTree"
-                    icon-leaf=""
-                    icon-expand="fa fa-plus"
-                    icon-collapse="fa fa-minus"
-                    on-select="bid.onAreaTreeItemSelected(branch)"
-                    expand-level="2">
-          </abn-tree> -->
-          <treecontrol class="tree-boot"
-                    tree-model="bid.areaTreeData"
-                    expanded-nodes="bid.expandedNodes"
-                    selected-node="bid.selectedNode"
-                    options="bid.areaTreeOptions"
-                    on-selection="bid.onAreaTreeItemSelected(node)">
-            <!-- <span ng-switch="" on="node.type">
-              <span ng-switch-when="folder" aria-hidden="true"><i class="fa fa-times"></i></span>
-              <span ng-switch-when="area" class="fa fa-home" aria-hidden="true"></span>
-              <span ng-switch-when="doc" class="glyphicon glyphicon-file" aria-hidden="true"></span>
-              <span ng-switch-when="file" class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
-              <span ng-switch-when="movie" class="glyphicon glyphicon-film" aria-hidden="true"></span>
-              <span ng-switch-when="email" class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
-              <span ng-switch-when="home" class="glyphicon glyphicon-home" aria-hidden="true"></span>
-              <span ng-switch-when="trash" class="glyphicon glyphicon-trash" aria-hidden="true"></span>
-            </span> -->
-            {{node.label}}
-            <span data-ng-repeat="specification in node.specifications"
-              class="{{specification.class}}">{{specification.label}}</span>
-            <button class="btn btn-default btn-xs" data-ng-click="bid.editArea(node)">
-              <i class="fa fa-edit"></i>
-            </button>
-          </treecontrol>
-        </div>
+    <div class="col-md-1">
+      <div class="list-group">
+        <button
+          type="button"
+          class="list-group-item"
+          ng-click="bid.generateReport()"
+        >
+          <i class="fa fa-file-pdf-o"></i>
+          View Quote
+        </button>
+          <button
+            type="button"
+            class="list-group-item"
+            ng-show="bid.isAllDataReady && bid.isSystemAdmin"
+            ng-click="bid.showMetadata()"
+          >
+          <i class="fa fa-bug"></i>
+          Metadata!
+          </button>
+      </div>
     </div>
-    <!-- <div class="col-md-4">
-        <h4 class="sub-header">
-            Specification Groups
-            <div class="btn-group pull-right">
-                <button type="button" class="btn btn-default btn-xs"
-                        data-ng-click="bid.editSpecificationGroups($event)"
-                        uib-tooltip="Edit specification groups">
-                    <i class="fa fa-edit"></i>
-                </button>
-            </div>
-        </h4>
-        <div class="list-group pre-scrollable">
-            <div class="list-group-item clearfix">
-                <span>{{bid.job.company.name}}</span>
-                <multi-select class="pull-right"
-                              input-model="bid.specificationGroupsCompany"
-                              button-label="icon shortName"
-                              item-label="icon shortName moreName"
-                              tick-property="ticked">
-                </multi-select>
-            </div>
-            <div class="list-group-item clearfix">
-                <span>
-                    {{bid.job.customerText}}
-                </span>
-                <multi-select class="pull-right"
-                              input-model="bid.specificationGroupsCustomer"
-                              button-label="icon shortName"
-                              item-label="icon shortName moreName"
-                              tick-property="ticked">
-                </multi-select>
-            </div>
-            <div class="list-group-item clearfix">
-                <span>
-                    First Floor
-                </span>
-                <multi-select class="pull-right"
-                              input-model="bid.specificationGroupsNothingSelected"
-                              button-label="icon shortName"
-                              item-label="icon shortName moreName"
-                              tick-property="ticked">
-                </multi-select>
-            </div>
-            <div class="list-group-item clearfix">
-                <span>
-                    Living Room
-                </span>
-                <multi-select class="pull-right"
-                              input-model="bid.specificationGroupsNothingSelected"
-                              button-label="icon shortName"
-                              item-label="icon shortName moreName"
-                              tick-property="ticked">
-                </multi-select>
-            </div>
-            <div class="list-group-item clearfix">
-                <span>
-                    LR Closet
-                </span>
-                <multi-select class="pull-right"
-                              input-model="bid.specificationGroupsCloset"
-                              button-label="icon shortName"
-                              item-label="icon shortName moreName"
-                              tick-property="ticked">
-                </multi-select>
-            </div>
-        </div>
-    </div> -->
-    <div class="col-md-4">
-        <h4 class="sub-header">
-            Job Details
-            <div class="btn-group pull-right"
-                 ng-show="bid.isJobDataReady">
-                <button type="button" class="btn btn-default btn-xs"
-                        data-ng-click="bid.editBidDetails($event)"
-                        uib-tooltip="Edit job details">
-                    <i class="fa fa-edit"></i>
-                </button>
-            </div>
-        </h4>
-        <div ng-show="!bid.isJobDataReady">Loading <i class="fa fa-spinner fa-spin fa-2x"></i></div>
-        <div class="pre-scrollable eb-job-details"
-             ng-show="bid.isJobDataReady">
-          <table class="table table-condensed table-striped">
-              <tbody>
-              <tr>
-                  <td><b>Customer</b></td>
-                  <td>{{bid.job.customerProfile.firstName}} {{bid.job.customerProfile.lastName}}</td>
-              </tr>
-              <tr>
-                  <td><b>Description</b></td>
-                  <td>{{bid.job.name}}</td>
-              </tr>
-              <tr>
-                  <td><b>Estimate Total</b></td>
-                  <td>{{bid.job.estimateTotal | ebunitsfilter:'$'}}</td>
-              </tr>
-              <tr>
-                  <td><b>Status</b></td>
-                  <td>{{bid.job.status}}</td>
-              </tr>
-              <tr>
-                  <td><b>Created</b></td>
-                  <td>{{bid.job.createdAt| date:'short'}}</td>
-              </tr>
-              <tr>
-                  <td><b>Due</b></td>
-                  <td>{{bid.job.dueAt | date:'short'}}</td>
-              </tr>
-              <tr>
-                  <td><b>Pricing From</b></td>
-                  <td>{{bid.job.pricingAt | date:'short'}}</td>
-              </tr>
-              <tr>
-                  <td><b>Estimator</b></td>
-                  <td>{{bid.job.estimatorProfile.firstName}} {{bid.job.estimatorProfile.lastName}}</td>
-              </tr>
-              <tr>
-                  <td><b>Notes</b></td>
-                  <td>{{bid.job.notes}}</td>
-              </tr>
-              <tr>
-                  <td><b>General Provisions</b></td>
-                  <td>{{bid.job.provisions}}</td>
-              </tr>
-              <tr>
-                  <td><b>Exclusions</b></td>
-                  <td>{{bid.job.exclusions}}</td>
-              </tr>
-              </tbody>
-          </table>
-        </div>
-    </div>
-    <div class="col-md-4">
-      <h4 class="sub-header">
-          Available Products
-          <div class="btn-group pull-right"
-               ng-show="bid.isJobDataReady">
-              <button type="button" class="btn btn-default btn-xs"
-                      data-ng-click="bid.addNewProductType($event)"
-                      uib-tooltip="Create new product type">
-                New product type
+    <div class="col-md-11">
+      <div class="row">
+        <div class="col-md-4">
+          <h4 class="sub-header">
+              Areas
+              <div class="btn-group pull-right"
+                   ng-show="bid.isAllDataReady">
+                  <button type="button"
+                          class="btn btn-default btn-xs"
+                          data-ng-click="bid.deleteArea($event)"
+                          uib-tooltip="Delete area">
+                      <i class="fa fa-times"></i>
+                  </button>
+
+                  <button type="button" class="btn btn-default btn-xs dropdown-toggle"
+                          data-toggle="dropdown">
+                      More
+                      <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu">
+                      <!--<li><a href="#"><i class="fa fa-plus"></i> Add area</a></li>
+                      <li><a href="#">Add child area</a></li>-->
+                      <li><a href="#"><i class="fa fa-times"></i> Delete area</a></li>
+                      <li><a href="#">Move</a></li>
+                      <li><a href="#">Copy as sibling</a></li>
+                      <li><a href="#">Copy elsewhere</a></li>
+                      <li><a href="#">New parent</a></li>
+                  </ul>
+              </div>
+          </h4>
+          <div ng-show="!bid.isAllDataReady">Loading <i class="fa fa-spinner fa-spin fa-2x"></i></div>
+          <form class="form-inline no-left-or-right-margin"
+                role="form"
+                ng-show="bid.isAllDataReady">
+              <div class="form-group">
+                  <input type="text" class="form-control input-sm" id="BidAreaToAdd"
+                         placeholder="Enter area" ng-model="bid.areaToAdd">
+                  <button type="submit"
+                          class="btn btn-default btn-xs"
+                          data-ng-click="bid.addArea($event)"
+                          uib-tooltip="Add area">
+                      <i class="fa fa-plus"></i>
+                  </button>
+
+                  <!--Had added this To the button below, but the tooltip had issues
+                  ng-disabled="!bid.areaToAdd || !bid.areaTree.get_selected_branch()"-->
+
+                  <button type="button"
+                          class="btn btn-default btn-xs"
+                          data-ng-click="bid.addChildArea($event)"
+                          uib-tooltip="Add child area">
+                      <i class="fa fa-level-down"></i>
+                  </button>
+              </div>
+          </form>
+          <div class="pre-scrollable eb-area-hierarchy"
+               ng-show="bid.isAllDataReady">
+            <!-- <abn-tree tree-data="bid.areaTreeData"
+                      tree-control="bid.areaTree"
+                      icon-leaf=""
+                      icon-expand="fa fa-plus"
+                      icon-collapse="fa fa-minus"
+                      on-select="bid.onAreaTreeItemSelected(branch)"
+                      expand-level="2">
+            </abn-tree> -->
+            <treecontrol class="tree-boot"
+                      tree-model="bid.areaTreeData"
+                      expanded-nodes="bid.expandedNodes"
+                      selected-node="bid.selectedNode"
+                      options="bid.areaTreeOptions"
+                      on-selection="bid.onAreaTreeItemSelected(node)">
+              <!-- <span ng-switch="" on="node.type">
+                <span ng-switch-when="folder" aria-hidden="true"><i class="fa fa-times"></i></span>
+                <span ng-switch-when="area" class="fa fa-home" aria-hidden="true"></span>
+                <span ng-switch-when="doc" class="glyphicon glyphicon-file" aria-hidden="true"></span>
+              </span> -->
+              {{node.label}}
+              <span data-ng-repeat="specification in node.specifications"
+                class="{{specification.class}}">{{specification.label}}</span>
+              <button class="btn btn-default btn-xs" data-ng-click="bid.editArea(node)">
+                <i class="fa fa-edit"></i>
               </button>
+            </treecontrol>
           </div>
-      </h4>
-      <div ng-show="!bid.isTemplateLibraryDataReady">Loading <i class="fa fa-spinner fa-spin fa-2x"></i></div>
-      <div>
-        <multi-select input-model="bid.productCategories"
-                      button-label="icon name"
-                      item-label="icon name maker"
-                      tick-property="ticked">
-        </multi-select>
+        </div>
+        <div class="col-md-4">
+          <h4 class="sub-header">
+              Job Details
+              <div class="btn-group pull-right"
+                   ng-show="bid.isJobDataReady">
+                  <button type="button" class="btn btn-default btn-xs"
+                          data-ng-click="bid.editBidDetails($event)"
+                          uib-tooltip="Edit job details">
+                      <i class="fa fa-edit"></i>
+                  </button>
+              </div>
+          </h4>
+          <div ng-show="!bid.isJobDataReady">Loading <i class="fa fa-spinner fa-spin fa-2x"></i></div>
+          <div class="pre-scrollable eb-job-details"
+               ng-show="bid.isJobDataReady">
+            <table class="table table-condensed table-striped">
+                <tbody>
+                <tr>
+                    <td><b>Customer</b></td>
+                    <td>{{bid.job.customerProfile.firstName}} {{bid.job.customerProfile.lastName}}</td>
+                </tr>
+                <tr>
+                    <td><b>Description</b></td>
+                    <td>{{bid.job.name}}</td>
+                </tr>
+                <tr>
+                    <td><b>Estimate Total</b></td>
+                    <td>{{bid.job.estimateTotal | ebunitsfilter:'$'}}</td>
+                </tr>
+                <tr>
+                    <td><b>Status</b></td>
+                    <td>{{bid.job.status}}</td>
+                </tr>
+                <tr>
+                    <td><b>Created</b></td>
+                    <td>{{bid.job.createdAt| date:'short'}}</td>
+                </tr>
+                <tr>
+                    <td><b>Due</b></td>
+                    <td>{{bid.job.dueAt | date:'short'}}</td>
+                </tr>
+                <tr>
+                    <td><b>Pricing From</b></td>
+                    <td>{{bid.job.pricingAt | date:'short'}}</td>
+                </tr>
+                <tr>
+                    <td><b>Estimator</b></td>
+                    <td>{{bid.job.estimatorProfile.firstName}} {{bid.job.estimatorProfile.lastName}}</td>
+                </tr>
+                <tr>
+                    <td><b>Notes</b></td>
+                    <td>{{bid.job.notes}}</td>
+                </tr>
+                <tr>
+                    <td><b>General Provisions</b></td>
+                    <td>{{bid.job.provisions}}</td>
+                </tr>
+                <tr>
+                    <td><b>Exclusions</b></td>
+                    <td>{{bid.job.exclusions}}</td>
+                </tr>
+                </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <h4 class="sub-header">
+              Available Products
+              <div class="btn-group pull-right"
+                   ng-show="bid.isJobDataReady">
+                  <button type="button" class="btn btn-default btn-xs"
+                          data-ng-click="bid.addNewProductType($event)"
+                          uib-tooltip="Create new product type">
+                    New product type
+                  </button>
+              </div>
+          </h4>
+          <div ng-show="!bid.isTemplateLibraryDataReady">Loading <i class="fa fa-spinner fa-spin fa-2x"></i></div>
+          <div>
+            <multi-select input-model="bid.productCategories"
+                          button-label="icon name"
+                          item-label="icon name maker"
+                          tick-property="ticked">
+            </multi-select>
+          </div>
+          <div class="eb-top-buffer"
+               ng-show="bid.isTemplateLibraryDataReady">
+            <input type="text"
+                   ng-model="bid.productTypeaheadText"
+                   uib-typeahead="option.name for option in bid.productOptions | filter:$viewValue"
+                   typeahead-editable="false"
+                   typeahead-on-select="bid.addProductSelectionOptionFromInput($item)"
+                   class="form-control"
+                   placeholder="Enter product to add or click one below"/>
+          </div>
+          <div class="pre-scrollable eb-top-buffer"
+               ng-show="bid.isTemplateLibraryDataReady">
+            <uib-tabset>
+              <uib-tab data-ng-repeat="tabPage in bid.metadata.tabPages" heading="{{tabPage.name}}">
+                <div class="list-group">
+                  <a href="" data-ng-repeat="option in bid.getProductOptions(tabPage.name)"
+                     class="list-group-item" ng-click="bid.addProductSelectionOption(option)">
+                    <p class="list-group-item-text">
+                        <img data-eb-img-product="{{option.imageSource}}"/>{{option.name}}
+                    </p>
+                  </a>
+                </div>
+              </uib-tab>
+            </uib-tabset>
+          </div>
+          <div class="clearfix"></div>
+        </div>
       </div>
-      <div class="eb-top-buffer"
-           ng-show="bid.isTemplateLibraryDataReady">
-        <input type="text"
-               ng-model="bid.productTypeaheadText"
-               uib-typeahead="option.name for option in bid.productOptions | filter:$viewValue"
-               typeahead-editable="false"
-               typeahead-on-select="bid.addProductSelectionOptionFromInput($item)"
-               class="form-control"
-               placeholder="Enter product to add or click one below"/>
-      </div>
-      <div class="pre-scrollable eb-top-buffer"
-           ng-show="bid.isTemplateLibraryDataReady">
-        <uib-tabset>
-          <uib-tab data-ng-repeat="tabPage in bid.metadata.tabPages" heading="{{tabPage.name}}">
-            <div class="list-group">
-              <a href="" data-ng-repeat="option in bid.getProductOptions(tabPage.name)"
-                 class="list-group-item" ng-click="bid.addProductSelectionOption(option)">
-                <p class="list-group-item-text">
-                    <img data-eb-img-product="{{option.imageSource}}"/>{{option.name}}
-                </p>
-              </a>
+      <div class="row eb-option-buttons"
+           ng-show="bid.isAllDataReady">
+        <div class="col-xs-12">
+          <h4 class="sub-header">{{bid.selectedAreaBreadcrumbText}}
+            <span class="eb-heading-option">
+              <input type="checkbox" ng-checked="bid.includeChildAreas"
+                     data-ng-click="bid.toggleIncludeChildAreas()">Include child areas
+            </span>
+            <div class="pull-right">
+              <span class="label label-danger"
+                    data-ng-show="bid.notShownSelectedCount > 0">
+                {{bid.notShownSelectedCount}} selected item{{bid.notShownSelectedCount > 1 ? 's' : ''}} not shown
+              </span>
+              <div class="btn-group eb-btn-group">
+                <button type="button" class="btn btn-default btn-xs"
+                        data-ng-show="bid.areAnyItemsSelected"
+                        data-ng-click="bid.editSelected()"
+                        uib-tooltip="Edit">
+                  <i class="fa fa-edit"></i> Edit
+                </button>
+                <button type="button" class="btn btn-default btn-xs"
+                        data-ng-show="bid.areAnyItemsSelected"
+                        data-ng-click="bid.deleteSelected()"
+                        uib-tooltip="Delete">
+                  <i class="fa fa-times"></i> Delete
+                </button>
+              </div>
+              <div class="btn-group">
+                <a type="button" class="btn btn-default btn-xs"
+                        data-ng-show="bid.isLoggedIn"
+                        data-ng-click="bid.addProductSelectionClicked()"
+                        uib-tooltip="Use Available Products to add one to the selected area">
+                  <i class="fa fa-plus"></i> Add
+                </a>
+              </div>
             </div>
-          </uib-tab>
-        </uib-tabset>
+          </h4>
+        </div>
       </div>
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div class="row eb-option-buttons"
-       ng-show="bid.isAllDataReady">
-    <div class="col-xs-12">
-      <h4 class="sub-header">{{bid.selectedAreaBreadcrumbText}}
-        <span class="eb-heading-option">
-          <input type="checkbox" ng-checked="bid.includeChildAreas"
-                 data-ng-click="bid.toggleIncludeChildAreas()">Include child areas
-        </span>
-        <div class="pull-right">
-          <span class="label label-danger"
-                data-ng-show="bid.notShownSelectedCount > 0">
-            {{bid.notShownSelectedCount}} selected item{{bid.notShownSelectedCount > 1 ? 's' : ''}} not shown
-          </span>
-          <div class="btn-group eb-btn-group">
-            <button type="button" class="btn btn-default btn-xs"
-                    data-ng-show="bid.areAnyItemsSelected"
-                    data-ng-click="bid.editSelected()"
-                    uib-tooltip="Edit">
-              <i class="fa fa-edit"></i> Edit
-            </button>
-            <button type="button" class="btn btn-default btn-xs"
-                    data-ng-show="bid.areAnyItemsSelected"
-                    data-ng-click="bid.deleteSelected()"
-                    uib-tooltip="Delete">
-              <i class="fa fa-times"></i> Delete
-            </button>
+      <ul class="list-group"
+          ng-show="bid.isAllDataReady">
+        <li dir-paginate="productSelectionId in bid.productSelectionIds | itemsPerPage: bid.perPage track by $index"
+            data-ng-show="bid.inSelectedArea(productSelectionId)"
+            total-items="bid.productSelectionIds.length"
+            class="list-group-item eb-list-group-item">
+          <div class="checkbox eb-list-group-item-left-checkbox">
+            <label>
+              <input type="checkbox" ng-checked="bid.isItemSelected(productSelectionId)"
+                     ng-click="bid.toggleItemSelection(productSelectionId)">
+            </label>
           </div>
-          <div class="btn-group">
-            <a type="button" class="btn btn-default btn-xs"
-                    data-ng-show="bid.isLoggedIn"
-                    data-ng-click="bid.addProductSelectionClicked()"
-                    uib-tooltip="Use Available Products to add one to the selected area">
-              <i class="fa fa-plus"></i> Add
-            </a>
-          </div>
-        </div>
-      </h4>
-    </div>
-  </div>
-  <ul class="list-group"
-      ng-show="bid.isAllDataReady">
-    <li dir-paginate="productSelectionId in bid.productSelectionIds | itemsPerPage: bid.perPage track by $index"
-        data-ng-show="bid.inSelectedArea(productSelectionId)"
-        total-items="bid.productSelectionIds.length"
-        class="list-group-item eb-list-group-item">
-      <div class="checkbox eb-list-group-item-left-checkbox">
-        <label>
-          <input type="checkbox" ng-checked="bid.isItemSelected(productSelectionId)"
-                 ng-click="bid.toggleItemSelection(productSelectionId)">
-        </label>
+          <a href="" ng-click="bid.editProductSelection(productSelectionId, $event)" class="eb-list-group-item-main-a">
+            <img class="eb-list-group-item-main-a-image" data-eb-img-product="{{bid.getProductImage(productSelectionId, bid)}}"/>
+            <div class="eb-list-group-item-main-a-quantity">
+              <span>{{bid.getQuantity(productSelectionId, bid)}}</span>
+            </div>
+            <div class="eb-list-group-item-main-a-price-total eb-price">
+              {{bid.getPriceTotal(productSelectionId, bid)}}
+              <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>
+            </div>
+            <div class="eb-list-group-item-main-a-title-and-description">
+              <span class="eb-list-group-item-main-a-title">{{bid.getTitle(productSelectionId, bid)}}</span>
+              <br/>
+              {{bid.getMainSelectionContent(productSelectionId, bid)}}
+              <div class="eb-price">
+                {{bid.getPriceEach(productSelectionId)}}
+                <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>
+              </div>
+            </div>
+          </a>
+        </li>
+      </ul>
+      <div class="eb-price-subtotal"
+           ng-show="bid.isAllDataReady">
+        <span class="eb-post-list-label">Subtotal</span>
+        <span class="eb-price">{{bid.subtotalSelections(bid.productSelectionIds, true)}}</span>
       </div>
-      <a href="" ng-click="bid.editProductSelection(productSelectionId, $event)" class="eb-list-group-item-main-a">
-        <img class="eb-list-group-item-main-a-image" data-eb-img-product="{{bid.getProductImage(productSelectionId, bid)}}"/>
-        <div class="eb-list-group-item-main-a-quantity">
-          <span>{{bid.getQuantity(productSelectionId, bid)}}</span>
-        </div>
-        <div class="eb-list-group-item-main-a-price-total eb-price">
-          {{bid.getPriceTotal(productSelectionId, bid)}}
-          <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>
-        </div>
-        <div class="eb-list-group-item-main-a-title-and-description">
-          <span class="eb-list-group-item-main-a-title">{{bid.getTitle(productSelectionId, bid)}}</span>
-          <br/>
-          {{bid.getMainSelectionContent(productSelectionId, bid)}}
-          <div class="eb-price">
-            {{bid.getPriceEach(productSelectionId)}}
-            <span data-toggle="tooltip" title="due {{bid.dueAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="bid.dueAt"></span>
-          </div>
-        </div>
-      </a>
-    </li>
-  </ul>
-  <div class="eb-price-subtotal"
-       ng-show="bid.isAllDataReady">
-    <span class="eb-post-list-label">Subtotal</span>
-    <span class="eb-price">{{bid.subtotalSelections(bid.productSelectionIds, true)}}</span>
-  </div>
-  <span ng-show="bid.isAllDataReady && !bid.productSelectionIds.length">No matches found</span>
-  <dir-pagination-controls on-page-change="bid.pageChanged(newPageNumber)"></dir-pagination-controls>
-  <div ng-if="bid.reportContent !== null">
-    <object data="{{bid.reportContent}}" type="application/pdf" style="width:100%;height:80%"></object>
-  </div>
-  <input type="button"
-         value="View Quote"
-         ng-click="bid.generateReport()"
-         class="btn btn-primary">
-  <input type="button"
-         value="Show me the metadata!"
-         ng-show="bid.isAllDataReady && bid.isSystemAdmin"
-         ng-click="bid.showMetadata()"
-         class="btn btn-primary">
-  <pre ng-bind-html="bid.metadataHtml"
-       ng-show="bid.isAllDataReady && bid.isSystemAdmin"></pre>
-  <div class="eb-area-hierarchy"
-       ng-show="bid.isAllDataReady && bid.isSystemAdmin">
-    <abn-tree tree-data="bid.fullHierarchyTreeData"
-              tree-control="bid.fullHierarchyTree"
-              icon-leaf=""
-              icon-expand="fa fa-plus"
-              icon-collapse="fa fa-minus"
-              expand-level="2">
-    </abn-tree>
+      <span ng-show="bid.isAllDataReady && !bid.productSelectionIds.length">No matches found</span>
+      <dir-pagination-controls on-page-change="bid.pageChanged(newPageNumber)"></dir-pagination-controls>
+      <pre ng-bind-html="bid.metadataHtml"
+           ng-show="bid.isAllDataReady && bid.isSystemAdmin"></pre>
+      <div class="eb-area-hierarchy"
+           ng-show="bid.isAllDataReady && bid.isSystemAdmin">
+        <abn-tree tree-data="bid.fullHierarchyTreeData"
+                  tree-control="bid.fullHierarchyTree"
+                  icon-leaf=""
+                  icon-expand="fa fa-plus"
+                  icon-collapse="fa fa-minus"
+                  expand-level="2">
+        </abn-tree>
+      </div>
+    </div>
   </div>
 </div>

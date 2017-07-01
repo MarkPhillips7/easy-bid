@@ -54,6 +54,7 @@ class bid {
     this.productTemplate = null;
     this.productToAdd = null;
     this.productTypeaheadText = '';
+    this.reportTitle = '';
     this.reportContent = null;
     this.selectedAreaBreadcrumbText = '[No Areas]';
     this.selectedProductSelectionId = '';
@@ -363,7 +364,7 @@ class bid {
     metadata.columnSelectionIds[productSelectionId] = columnSelectionIds;
 
     const setColumnSelection = (columnTemplate) => {
-      var productSelections = SelectionsHelper.getSelectionsBySelectionParentAndTemplate(pendingChanges, productSelectionId, columnTemplate);
+      var productSelections = SelectionsHelper.getSelectionsBySelectionParentAndTemplate(pendingChanges, productSelectionId, columnTemplate, false);
       let selection;
 
       //If there is no selection then just create a blank one
@@ -1321,18 +1322,69 @@ class bid {
     });
   }
 
+  populateProductsForReport(productSelections, pendingChanges, parentSelection, areaText) {
+    const childSelections = SelectionsHelper.getChildSelections(parentSelection, this);
+    _.each(childSelections, (childSelection) => {
+      const childSelectionTemplate = TemplateLibrariesHelper.getTemplateById(this, childSelection.templateId);
+      const childSelectionDisplayValue = SelectionsHelper.getDisplayValue(this, childSelection);
+      switch (childSelectionTemplate.templateType) {
+        case Constants.templateTypes.area:
+          this.populateProductsForReport(productSelections, pendingChanges, childSelection,
+            areaText.length ? `${areaText} / ${childSelectionDisplayValue}` : childSelectionDisplayValue);
+          break;
+        case Constants.templateTypes.productSelection:
+          const title = this.getTitle(childSelection._id, pendingChanges);
+          const description = this.getMainSelectionContent(childSelection._id, pendingChanges);
+          const priceEachText = this.getPriceEach(childSelection._id, pendingChanges);
+          const priceTotalText = this.getPriceTotal(childSelection._id, pendingChanges);
+          const quantityText = this.getQuantity(childSelection._id, pendingChanges);
+          productSelections.push({
+            areaText,
+            quantityText,
+            unitOfMeasure: 'each',
+            title,
+            description,
+            priceEachText,
+            priceTotalText,
+          });
+          break;
+      };
+    });
+  }
+
   generateReport() {
     const pendingChanges = this.getPendingChanges();
-    const productSelections = SelectionsHelper.getSelectionsBySelectionParentAndTemplate(pendingChanges, this.jobSelection, this.productSelectionTemplate);
-    const reportData = ReportsHelper.getReportData({job: pendingChanges.job, productSelections});
+    const productSelections = [];
+    this.populateProductsForReport(productSelections, pendingChanges, this.jobSelection, '');
+    const reportData = ReportsHelper.getReportData({
+      company: this.company,
+      job: pendingChanges.job,
+      productSelections,
+      subtotal: this.subtotalSelections(this.productSelectionIds, false),
+    });
     Meteor.call('generateReport', reportData, (err, result) => {
       if (err) {
         console.log('failed to generateReport', err);
       } else {
         var file = new Blob([result], {type: 'application/pdf'});
         var fileURL = URL.createObjectURL(file);
+        this.reportTitle = 'Quote';
         this.reportContent = this.$sce.trustAsResourceUrl(fileURL);
-        // this.reportContent = fileURL;
+        this.showReportModal();
+      }
+    });
+  }
+
+  showReportModal() {
+    const modalInstance = this.$uibModal.open({
+      templateUrl: 'client/reports/views/report-view.html',
+      controller: 'reportView',
+      backdrop: 'static',
+      size: 'lg',
+      resolve: {
+        'bid': () => {
+          return this;
+        },
       }
     });
   }

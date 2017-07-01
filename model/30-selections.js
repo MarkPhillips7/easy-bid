@@ -255,7 +255,7 @@ function populateTemplateIds(templateLibrary, templateIds, template, onlyIfBaseO
   if (!onlyIfBaseOrSubTemplate ||
       isABaseTemplate ||
       isASubTemplate) {
-      templateIds.push(template.id);
+    templateIds.push(template.id);
   }
 
   //Now include template IDs for children if this is a base template or a sub template
@@ -266,8 +266,8 @@ function populateTemplateIds(templateLibrary, templateIds, template, onlyIfBaseO
   }
 };
 
-//Return array of all selections that are children (or grandchildren, Etc.) that match template.
-function getSelectionsBySelectionParentAndTemplate(bidControllerData, selectionParent, template) {
+//Return array of all selections that are children (or grandchildren, Etc. if includeAllDescendents) that match template.
+function getSelectionsBySelectionParentAndTemplate(bidControllerData, selectionParent, template, includeAllDescendents) {
   const {templateLibraries, selections} = bidControllerData;
   var templateIds = [];
   if (typeof selectionParent === 'string') {
@@ -277,18 +277,23 @@ function getSelectionsBySelectionParentAndTemplate(bidControllerData, selectionP
     populateTemplateIds(templateLibrary, templateIds, template, false);
   });
 
-  return getSelectionsBySelectionParentAndTemplateIds(bidControllerData, selectionParent, templateIds);
+  return getSelectionsBySelectionParentAndTemplateIds(bidControllerData, selectionParent, templateIds, includeAllDescendents);
 };
 
-function getSelectionsBySelectionParentAndTemplateIds(bidControllerData, selectionParent, templateIds) {
+function getSelectionsBySelectionParentAndTemplateIds(bidControllerData, selectionParent, templateIds, includeAllDescendents) {
   const {templateLibraries, selections, selectionRelationships} = bidControllerData;
   var selectionsToReturn = [];
+  const visitedSelectionIds = [];
 
-  populateSelectionsBySelectionParent(selectionParent);
+  populateSelectionsBySelectionParent(selectionParent, includeAllDescendents, visitedSelectionIds);
   return selectionsToReturn;
 
-  function populateSelectionsBySelectionParent(selectionParent) {
+  function populateSelectionsBySelectionParent(selectionParent, includeAllDescendents, visitedSelectionIds) {
+    if (_.contains(visitedSelectionIds, selectionParent._id)) {
+      return;
+    }
     if (selectionParent) {
+      visitedSelectionIds.push(selectionParent._id);
       const childSelections = getChildSelections(selectionParent, bidControllerData);
       _.each(childSelections, (childSelection) => {
         if (_.contains(templateIds, childSelection.templateId)) {
@@ -296,10 +301,11 @@ function getSelectionsBySelectionParentAndTemplateIds(bidControllerData, selecti
         } else {
           const selectionTemplate = TemplateLibrariesHelper.getTemplateById(bidControllerData, childSelection.templateId);
           if (selectionTemplate &&
+              (includeAllDescendents ||
               !SelectionsHelper.getSettingValue(childSelection, selectionTemplate,
-              Constants.templateSettingKeys.isVariableCollector)) {
+              Constants.templateSettingKeys.isVariableCollector))) {
             // Check for descendent selections for the template. Often the desired selection is a grandchild of the original selectionParent.
-            populateSelectionsBySelectionParent(childSelection);
+            populateSelectionsBySelectionParent(childSelection, includeAllDescendents, visitedSelectionIds);
           }
         }
       });
