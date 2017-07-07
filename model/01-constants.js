@@ -41,6 +41,10 @@ Constants.importSetTypes = {
   subProducts: 'SubProducts',
 };
 
+Constants.jsReportOnlineIds = {
+  jobQuote: "-1_p0OYdp",
+};
+
 Constants.lookupWildcardText = "*";
 
 Constants.lookupSettingKeys = {
@@ -118,6 +122,10 @@ Constants.relationToItem = {
 Constants.reportTypes = {
   jobQuote: "Quote",
   partsLabor: "Parts/Labor",
+};
+
+Constants.reportTemplates = {
+  jobQuoteStandard: "QuoteStandard",
 };
 
 Constants.selectionAddingModes = {

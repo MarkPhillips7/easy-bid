@@ -3,6 +3,11 @@ Meteor.startup(function () {
     PrerenderIO: Match.Optional(Match.Any),
     "galaxy.meteor.com": Object,
     private: {
+      aws: {
+        accessKeyId: String,
+        secretAccessKey: String,
+        bucketName: String,
+      },
       jsreportonline: {
         authorizationHash: String,
         url: String

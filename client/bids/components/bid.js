@@ -1352,23 +1352,34 @@ class bid {
     });
   }
 
-  generateReport() {
-    const pendingChanges = this.getPendingChanges();
+  getQuoteReportTitle(reportData) {
+    const {customer, job} = reportData;
+    const jobDescription = job.description ? job.description + ' - ' : '';
+    const addressLines = customer.address.addressLines.replace(/[\r\n]/gi,' ')
+    return `Quote - ${jobDescription}${customer.name} - ${addressLines} - ${moment().format('l')}`;
+  }
+
+  getQuoteReport(forceGenerate) {
+    const bidControllerData = this.getPendingChanges();
     const productSelections = [];
-    this.populateProductsForReport(productSelections, pendingChanges, this.jobSelection, '');
+    this.populateProductsForReport(productSelections, bidControllerData, this.jobSelection, '');
     const reportData = ReportsHelper.getReportData({
       company: this.company,
-      job: pendingChanges.job,
+      job: bidControllerData.job,
       productSelections,
       subtotal: this.subtotalSelections(this.productSelectionIds, false),
     });
-    Meteor.call('generateReport', reportData, (err, result) => {
+    const reportTitle = this.getQuoteReportTitle(reportData);
+    const reportName = `${reportTitle}.pdf`;
+    const jsReportOnlineId = Constants.jsReportOnlineIds.jobQuote;
+    Meteor.call('getQuoteReport', bidControllerData, forceGenerate, jsReportOnlineId, reportData, reportName,
+    (err, result) => {
       if (err) {
-        console.log('failed to generateReport', err);
+        console.log('failed to getQuoteReport', err);
       } else {
         var file = new Blob([result], {type: 'application/pdf'});
         var fileURL = URL.createObjectURL(file);
-        this.reportTitle = 'Quote';
+        this.reportTitle = reportTitle;
         this.reportContent = this.$sce.trustAsResourceUrl(fileURL);
         this.showReportModal();
       }

@@ -27,7 +27,6 @@ Schema.Report = new SimpleSchema({
   reportType: {
     type: String,
   },
-  // If reportType is Price, reportTemplate could be 'Drawer Slides'
   reportTemplate: {
     type: String,
     optional: true,
@@ -36,9 +35,13 @@ Schema.Report = new SimpleSchema({
     type: String,
     optional: true,
   },
-  templateLibraryId: {
-    type: String, // not optional, but can be some global value to be used by multiple template libraries
+  amazonS3Key: {
+    type: String,
+    optional: true,
   },
+  // templateLibraryId: {
+  //   type: String, // not optional, but can be some global value to be used by multiple template libraries
+  // },
   companyId: {
     type: String,
     optional: true,

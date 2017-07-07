@@ -1,20 +1,47 @@
 import Future from 'fibers/future';
 import axios from 'axios';
+import AWS from 'aws-sdk';
+
+const getJsReportOnlineAuthorizationInfo = () => {
+  const authorizationHashParts = Meteor.settings.private.jsreportonline.authorizationHash.split(':');
+  return {
+    username: authorizationHashParts[0],
+    password: authorizationHashParts[1]
+  };
+};
+
+const generateQuoteReport = async ({bidControllerData, forceGenerate, jsReportOnlineId, reportData, reportName}) => {
+};
 
 Meteor.methods({
-  generateReport: function(reportData) {
+  getQuoteReport: function(bidControllerData, forceGenerate, jsReportOnlineId, reportData, reportName) {
+    check(bidControllerData, {
+      selections: [Schema.Selection],
+      selectionRelationships: [Schema.SelectionRelationship],
+      lookupData: Match.Any,
+      metadata: Match.Any,
+      job: Schema.Job,
+      templateLibraries: [Schema.TemplateLibrary],
+    });
+    check(forceGenerate, Match.Any);
+    check(jsReportOnlineId, String);
     check(reportData, Object);
+    check(reportName, String);
+
+    const userId = Meteor.userId();
+    // const existingReport = Reports.findOne({_id:"recordId"});
+
     const reportUrl = Meteor.settings.private.jsreportonline.url;
     const data = {
       "template": {
-        "shortid": "-1_p0OYdp"
+        "shortid": jsReportOnlineId
       },
       "data": reportData,
     };
-
+    const {job} = bidControllerData;
     const reportFuture = new Future();
     let result;
-    const authorizationHashParts = Meteor.settings.private.jsreportonline.authorizationHash.split(':');
+    const {username, password} = getJsReportOnlineAuthorizationInfo();
     axios({
       method: 'post',
       url: reportUrl,
@@ -22,20 +49,126 @@ Meteor.methods({
         'Content-Type': 'application/json',
       },
       auth: {
-        username: authorizationHashParts[0],
-        password: authorizationHashParts[1]
+        username,
+        password
       },
       data,
       responseType: 'arraybuffer'
     })
     .then(function (response) {
-      // console.log(response);
+      // console.log('it worked this time', response);
       reportFuture.return(response.data);
+
+      console.log('Now upload report to amazon S3');
+      const reportId = Random.id();
+      const myCredentials = new AWS.Credentials(
+        Meteor.settings.private.aws.accessKeyId,
+        Meteor.settings.private.aws.secretAccessKey);
+      const myConfig = new AWS.Config({
+        credentials: myCredentials,
+        region: 'us-east-1'
+      });
+      const s3 = new AWS.S3(myConfig);
+      const params = {
+        Bucket: Meteor.settings.private.aws.bucketName,
+        Key: reportId,
+        Body: response.data
+      };
+
+      console.log(`really about to upload '${reportName}' report`);
+      s3.upload(params, (err, data) => {
+        if (err) {
+          console.log(`Failed to upload '${reportName}' report`, err);
+        } else {
+          console.log(`Uploaded '${reportName}' report as ${reportId}`);
+          const report = {
+            _id: reportId,
+            reportType: Constants.reportTypes.jobQuote,
+            reportTemplate: Constants.reportTemplates.jobQuoteStandard,
+            jsReportOnlineId: Constants.jsReportOnlineIds.jobQuote,
+            amazonS3Key: data.Key,
+            companyId: job.companyId,
+            jobId: job._id,
+            name: reportName,
+            createdBy: userId
+          }
+          const newReportId = Reports.rawCollection().insert(report);
+          console.log(`Saved '${reportName}' report as ${newReportId}`);
+        }
+      });
     })
     .catch(function (error) {
       console.log(error);
       reportFuture.return(error);
     });
     return reportFuture.wait();
+
+    // Can maybe do something like this when async await work (I think problem is angular2-now)
+    // const reportUrl = Meteor.settings.private.jsreportonline.url;
+    // const data = {
+    //   "template": {
+    //     "shortid": jsReportOnlineId
+    //   },
+    //   "data": reportData,
+    // };
+    //
+    // let result;
+    // const {job} = bidControllerData;
+    // const {username, password} = getJsReportOnlineAuthorizationInfo();
+    // try {
+    //   const jsReportOnlineResponse = await axios({
+    //     method: 'post',
+    //     url: reportUrl,
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     auth: {
+    //       username,
+    //       password
+    //     },
+    //     data,
+    //     responseType: 'arraybuffer'
+    //   });
+    //   const reportId = Random.id();
+    //   const myCredentials = new AWS.Credentials(
+    //     Meteor.settings.private.aws.accessKeyId,
+    //     Meteor.settings.private.aws.secretAccessKey);
+    //   const myConfig = new AWS.Config({
+    //     credentials: myCredentials,
+    //     region: 'us-east-1'
+    //   });
+    //   const s3 = new AWS.S3(myConfig);
+    //   const params = {
+    //     Bucket: Meteor.settings.private.aws.bucketName,
+    //     Key: reportId,
+    //     Body: jsReportOnlineResponse.data
+    //   };
+    //   const s3UploadPromise = new Promise(function(resolve, reject) {
+    //     s3.upload(params, function(err, data) {
+    //       if (err) {
+    //         reject(err);
+    //       } else {
+    //         resolve(data);
+    //       }
+    //     });
+    //   });
+    //   const s3UploadResponse = await s3UploadPromise;
+    //   const report = {
+    //     _id: reportId,
+    //     reportType: Constants.reportTypes.jobQuote,
+    //     reportTemplate: Constants.reportTemplates.jobQuoteStandard,
+    //     jsReportOnlineId: Constants.jsReportOnlineIds.jobQuote,
+    //     amazonS3Key: s3UploadResponse.Key,
+    //     companyId: job.companyId,
+    //     jobId: job._id,
+    //     name: reportName,
+    //     createdBy: Meteor.userId()
+    //   }
+    //   Reports.insert(report);
+    //   return(jsReportOnlineResponse.data);
+    // }
+    // catch(err) {
+    //   console.log('failed to generateQuoteReport', err);
+    // }
   }
 });
