@@ -21,9 +21,6 @@ const getAmazonS3 = () => {
   return new AWS.S3(myConfig);
 };
 
-const generateQuoteReport = ({bidControllerData, forceGenerate, jsReportOnlineId, reportData, reportName}) => {
-};
-
 Meteor.methods({
   getQuoteReport: function(bidControllerData, forceGenerate, jsReportOnlineId, reportData, reportName) {
     check(bidControllerData, {
@@ -42,35 +39,37 @@ Meteor.methods({
     const reportFuture = new Future();
     const userId = Meteor.userId();
     const {job} = bidControllerData;
-    const existingReport = Reports.findOne({
-      reportType: Constants.reportTypes.jobQuote,
-      reportTemplate: Constants.reportTemplates.jobQuoteStandard,
-      jobId: job._id,
-    }, {
-        sort: {
-          'createdAt': -1,
-        },
-      }
-    );
-    if (existingReport) {
-      const s3 = getAmazonS3();
-      const params = {
-        Bucket: Meteor.settings.private.aws.bucketName,
-        Key: existingReport.amazonS3Key,
-      };
-      const reportName = existingReport.name;
-
-      console.log(`about to download '${reportName}' report`);
-      s3.getObject(params, (err, data) => {
-        if (err) {
-          console.log(`Failed to download '${reportName}' report`, err);
-          reportFuture.return(err);
-        } else {
-          console.log(`Downloaded '${reportName}' report`);
-          reportFuture.return(data.Body);
+    if (!forceGenerate) {
+      const existingReport = Reports.findOne({
+        reportType: Constants.reportTypes.jobQuote,
+        reportTemplate: Constants.reportTemplates.jobQuoteStandard,
+        jobId: job._id,
+      }, {
+          sort: {
+            'createdAt': -1,
+          },
         }
-      });
-      return reportFuture.wait();
+      );
+      if (existingReport && existingReport.createdAt > job.modifiedAt) {
+        const s3 = getAmazonS3();
+        const params = {
+          Bucket: Meteor.settings.private.aws.bucketName,
+          Key: existingReport.amazonS3Key,
+        };
+        const reportName = existingReport.name;
+
+        // console.log(`about to download '${reportName}' report`);
+        s3.getObject(params, (err, data) => {
+          if (err) {
+            console.log(`Failed to download '${reportName}' report`, err);
+            reportFuture.return(err);
+          } else {
+            // console.log(`Downloaded '${reportName}' report`);
+            reportFuture.return(data.Body);
+          }
+        });
+        return reportFuture.wait();
+      }
     }
 
     const reportUrl = Meteor.settings.private.jsreportonline.url;
@@ -112,7 +111,7 @@ Meteor.methods({
         if (err) {
           console.log(`Failed to upload '${reportName}' report`, err);
         } else {
-          console.log(`Uploaded '${reportName}' report as ${reportId}`);
+          // console.log(`Uploaded '${reportName}' report as ${reportId}`);
           const report = {
             _id: reportId,
             reportType: Constants.reportTypes.jobQuote,
@@ -126,7 +125,7 @@ Meteor.methods({
             createdAt: new Date(),
           }
           const newReportId = Reports.rawCollection().insert(report);
-          console.log(`Saved '${reportName}' report as ${newReportId}`);
+          // console.log(`Saved '${reportName}' report as ${newReportId}`);
         }
       });
     })

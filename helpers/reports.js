@@ -14,6 +14,7 @@ export const getReportData = ({company, job, productSelections, subtotal}) => {
       "id": job._id,
       "description": job.name,
       "createdAt": job.createdAt,
+      "modifiedAt": job.modifiedAt,
       "dueAt": job.dueAt,
       "estimator": job.estimatorProfile ? `${job.estimatorProfile.firstName} ${job.estimatorProfile.lastName}` : '',
   };

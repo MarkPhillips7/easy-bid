@@ -928,12 +928,15 @@ class bid {
   }
 
   getNewJob() {
+    const now = new Date();
     return {
       _id: Random.id(),
       company: this.company,
       companyId: this.companyId,
-      createdAt: new Date(),
+      createdAt: now,
       createdBy: Meteor.userId(),
+      modifiedAt: now,
+      modifiedBy: Meteor.userId(),
       estimatorId: Meteor.userId(),
     };
   }

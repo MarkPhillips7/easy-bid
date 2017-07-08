@@ -53,7 +53,7 @@ import {diff} from 'rus-diff';
   // SelectionsHelper.setSelectionValue(templateLibraries, selections,
   //   selectionRelationships, metadata, selection, newValue, oldValue,
   //   selection.valueSource, Constants.valueSources.userEntry);
-// 
+//
 //   return selection;
 // };
 
@@ -114,6 +114,7 @@ Meteor.methods({
       check(jobToSave, Schema.Job);
     }
 
+    let anyMods = false;
     const jobId = jobToSave._id;
     if (_.any(selectionsToSave, (selection) => selection.jobId !== jobId)) {
       throw new Meteor.Error('can-update-selections-for-only-specified-job', 'Sorry, can only update selections for specified job.');
@@ -205,16 +206,19 @@ Meteor.methods({
 
       _.each(selectionUpdates, (selectionUpdate) => {
         Selections.update({_id: selectionUpdate._id}, selectionUpdate.mods);
+        anyMods = true;
       });
       // turns out that selectionIdXrefs is not needed because meteor uses _id if specified.
       // let selectionIdXrefs = {};
       _.each(selectionInserts, (selectionToInsert) => {
         Selections.insert(selectionToInsert);
+        anyMods = true;
         // const selectionId = Selections.insert(selectionToInsert);
         // selectionIdXrefs[selectionToInsert._id] = selectionId;
       });
       _.each(selectionRelationshipInserts, (selectionRelationshipToInsert) => {
         SelectionRelationships.insert(selectionRelationshipToInsert);
+        anyMods = true;
         // const selectionRelationshipToInsertReally = {
         //   parentSelectionId: selectionIdXrefs[selectionRelationshipToInsert.parentSelectionId] || selectionRelationshipToInsert.parentSelectionId,
         //   childSelectionId: selectionIdXrefs[selectionRelationshipToInsert.childSelectionId] || selectionRelationshipToInsert.childSelectionId,
@@ -224,16 +228,25 @@ Meteor.methods({
     }
     if (selectionIdsToDelete && selectionIdsToDelete.length > 0) {
       Selections.remove({_id: {$in: selectionIdsToDelete}});
+      anyMods = true;
     }
     if (selectionRelationshipIdsToDelete && selectionRelationshipIdsToDelete.length > 0) {
       SelectionRelationships.remove({_id: {$in: selectionRelationshipIdsToDelete}});
+      anyMods = true;
     }
     if (job) {
-      const jobMods = diff(job, jobToSave);
-      if (jobMods) {
+      if (anyMods || diff(job, jobToSave)) {
+        jobToSave.modifiedAt = new Date();
+        jobToSave.modifiedBy = Meteor.userId();
+        const jobMods = diff(job, jobToSave);
         Jobs.update({_id: jobToSave._id}, jobMods);
       }
     } else {
+      const now = new Date();
+      jobToSave.createdAt = new Date();
+      jobToSave.createdBy = Meteor.userId();
+      jobToSave.modifiedAt = new Date();
+      jobToSave.modifiedBy = Meteor.userId();
       Jobs.insert(jobToSave);
       _.each(templateLibrariesIfNew, (templateLibrary) => {
         JobsTemplateLibraries.insert({

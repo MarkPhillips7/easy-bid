@@ -65,6 +65,14 @@ Schema.Job = new SimpleSchema({
     //   }
     // }
   },
+  modifiedBy: {
+    type: String,
+    optional: true
+  },
+  modifiedAt: {
+    type: Date,
+    optional: true
+  },
   dueAt: {
     type: Date,
     optional: true
