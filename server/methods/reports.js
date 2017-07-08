@@ -10,7 +10,18 @@ const getJsReportOnlineAuthorizationInfo = () => {
   };
 };
 
-const generateQuoteReport = async ({bidControllerData, forceGenerate, jsReportOnlineId, reportData, reportName}) => {
+const getAmazonS3 = () => {
+  const myCredentials = new AWS.Credentials(
+    Meteor.settings.private.aws.accessKeyId,
+    Meteor.settings.private.aws.secretAccessKey);
+  const myConfig = new AWS.Config({
+    credentials: myCredentials,
+    region: 'us-east-1'
+  });
+  return new AWS.S3(myConfig);
+};
+
+const generateQuoteReport = ({bidControllerData, forceGenerate, jsReportOnlineId, reportData, reportName}) => {
 };
 
 Meteor.methods({
@@ -28,8 +39,39 @@ Meteor.methods({
     check(reportData, Object);
     check(reportName, String);
 
+    const reportFuture = new Future();
     const userId = Meteor.userId();
-    // const existingReport = Reports.findOne({_id:"recordId"});
+    const {job} = bidControllerData;
+    const existingReport = Reports.findOne({
+      reportType: Constants.reportTypes.jobQuote,
+      reportTemplate: Constants.reportTemplates.jobQuoteStandard,
+      jobId: job._id,
+    }, {
+        sort: {
+          'createdAt': -1,
+        },
+      }
+    );
+    if (existingReport) {
+      const s3 = getAmazonS3();
+      const params = {
+        Bucket: Meteor.settings.private.aws.bucketName,
+        Key: existingReport.amazonS3Key,
+      };
+      const reportName = existingReport.name;
+
+      console.log(`about to download '${reportName}' report`);
+      s3.getObject(params, (err, data) => {
+        if (err) {
+          console.log(`Failed to download '${reportName}' report`, err);
+          reportFuture.return(err);
+        } else {
+          console.log(`Downloaded '${reportName}' report`);
+          reportFuture.return(data.Body);
+        }
+      });
+      return reportFuture.wait();
+    }
 
     const reportUrl = Meteor.settings.private.jsreportonline.url;
     const data = {
@@ -38,9 +80,6 @@ Meteor.methods({
       },
       "data": reportData,
     };
-    const {job} = bidControllerData;
-    const reportFuture = new Future();
-    let result;
     const {username, password} = getJsReportOnlineAuthorizationInfo();
     axios({
       method: 'post',
@@ -61,14 +100,7 @@ Meteor.methods({
 
       console.log('Now upload report to amazon S3');
       const reportId = Random.id();
-      const myCredentials = new AWS.Credentials(
-        Meteor.settings.private.aws.accessKeyId,
-        Meteor.settings.private.aws.secretAccessKey);
-      const myConfig = new AWS.Config({
-        credentials: myCredentials,
-        region: 'us-east-1'
-      });
-      const s3 = new AWS.S3(myConfig);
+      const s3 = getAmazonS3();
       const params = {
         Bucket: Meteor.settings.private.aws.bucketName,
         Key: reportId,
@@ -90,7 +122,8 @@ Meteor.methods({
             companyId: job.companyId,
             jobId: job._id,
             name: reportName,
-            createdBy: userId
+            createdBy: userId,
+            createdAt: new Date(),
           }
           const newReportId = Reports.rawCollection().insert(report);
           console.log(`Saved '${reportName}' report as ${newReportId}`);
