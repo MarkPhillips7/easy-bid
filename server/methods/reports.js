@@ -78,6 +78,9 @@ Meteor.methods({
         "shortid": jsReportOnlineId
       },
       "data": reportData,
+      "options": {
+        'Content-Disposition': `attachment;filename=test.pdf`,
+      }
     };
     const {username, password} = getJsReportOnlineAuthorizationInfo();
     axios({
@@ -97,7 +100,7 @@ Meteor.methods({
       // console.log('it worked this time', response);
       reportFuture.return(response.data);
 
-      console.log('Now upload report to amazon S3');
+      // console.log('Now upload report to amazon S3');
       const reportId = Random.id();
       const s3 = getAmazonS3();
       const params = {

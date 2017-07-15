@@ -1375,6 +1375,7 @@ class bid {
     const reportTitle = this.getQuoteReportTitle(reportData);
     const reportName = `${reportTitle}.pdf`;
     const jsReportOnlineId = Constants.jsReportOnlineIds.jobQuote;
+    this.showReportModal();
     Meteor.call('getQuoteReport', bidControllerData, forceGenerate, jsReportOnlineId, reportData, reportName,
     (err, result) => {
       if (err) {
@@ -1384,7 +1385,6 @@ class bid {
         var fileURL = URL.createObjectURL(file);
         this.reportTitle = reportTitle;
         this.reportContent = this.$sce.trustAsResourceUrl(fileURL);
-        this.showReportModal();
       }
     });
   }
