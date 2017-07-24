@@ -870,9 +870,10 @@ class bid {
     const selectionsToSum = _.filter(selectionIds, (selectionId) =>
         !onlyIfShouldDisplay || this.selectionShouldDisplay(selectionId));
 
-    const subtotal = SelectionsHelper.sumSelections(this, selectionsToSum, 'priceTotal');
-
-    return Filters.unitsFilter(subtotal, '$');
+    return SelectionsHelper.sumSelections(this, selectionsToSum, 'priceTotal');
+    // const subtotal = SelectionsHelper.sumSelections(this, selectionsToSum, 'priceTotal');
+    //
+    // return Filters.unitsFilter(subtotal, '$');
   }
 
   editBidDetails(event) {
@@ -1362,32 +1363,45 @@ class bid {
     return `Quote - ${jobDescription}${customer.name} - ${addressLines} - ${moment().format('l')}`;
   }
 
-  getQuoteReport(forceGenerate) {
-    const bidControllerData = this.getPendingChanges();
-    const productSelections = [];
-    this.populateProductsForReport(productSelections, bidControllerData, this.jobSelection, '');
-    const reportData = ReportsHelper.getReportData({
-      company: this.company,
-      job: bidControllerData.job,
-      productSelections,
-      subtotal: this.subtotalSelections(this.productSelectionIds, false),
-    });
-    const reportTitle = this.getQuoteReportTitle(reportData);
-    const reportName = `${reportTitle}.pdf`;
-    const jsReportOnlineId = Constants.jsReportOnlineIds.jobQuote;
+  getQuoteReport() {
     this.showReportModal();
-    Meteor.call('getQuoteReport', bidControllerData, forceGenerate, jsReportOnlineId, reportData, reportName,
-    (err, result) => {
-      if (err) {
-        console.log('failed to getQuoteReport', err);
-      } else {
-        var file = new Blob([result], {type: 'application/pdf'});
-        var fileURL = URL.createObjectURL(file);
-        this.reportTitle = reportTitle;
-        this.reportContent = this.$sce.trustAsResourceUrl(fileURL);
-      }
-    });
   }
+
+  // getQuoteReport(forceGenerate) {
+  //   const bidControllerData = this.getPendingChanges();
+  //   const productSelections = [];
+  //   this.populateProductsForReport(productSelections, bidControllerData, this.jobSelection, '');
+  //   const salesTaxRate = this.company.salesTaxRate || 0.05;
+  //   const installPercentOfGrandTotal = this.company.installPercentOfGrandTotal || 0.18;
+  //   const subtotal = this.subtotalSelections(this.productSelectionIds, false);
+  //   const salesTax = salesTaxRate * subtotal;
+  //   const nontaxableInstallAmount =  ((subtotal + salesTax)/(1-installPercentOfGrandTotal/100))-(subtotal + salesTax);
+  //   const grandTotal = subtotal + salesTax + nontaxableInstallAmount;
+  //   const reportData = ReportsHelper.getReportData({
+  //     company: this.company,
+  //     job: bidControllerData.job,
+  //     productSelections,
+  //     amounts: {subtotal, salesTax, nontaxableInstallAmount, grandTotal}
+  //   });
+  //   const reportTitle = this.getQuoteReportTitle(reportData);
+  //   const reportName = `${reportTitle}.pdf`;
+  //   const jsReportOnlineId = Constants.jsReportOnlineIds.jobQuote;
+  //   // if forceGenerate is true the modal is already being shown
+  //   if (!forceGenerate) {
+  //     this.showReportModal();
+  //   }
+  //   Meteor.call('getQuoteReport', bidControllerData, forceGenerate, jsReportOnlineId, reportData, reportName,
+  //   (err, result) => {
+  //     if (err) {
+  //       console.log('failed to getQuoteReport', err);
+  //     } else {
+  //       var file = new Blob([result], {type: 'application/pdf'});
+  //       var fileURL = URL.createObjectURL(file);
+  //       this.reportTitle = reportTitle;
+  //       this.reportContent = this.$sce.trustAsResourceUrl(fileURL);
+  //     }
+  //   });
+  // }
 
   showReportModal() {
     const modalInstance = this.$uibModal.open({

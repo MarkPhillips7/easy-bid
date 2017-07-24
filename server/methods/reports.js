@@ -1,5 +1,6 @@
 import Future from 'fibers/future';
-import axios from 'axios';
+// import axios from 'axios';
+import request from 'superagent';
 import AWS from 'aws-sdk';
 
 const getJsReportOnlineAuthorizationInfo = () => {
@@ -35,6 +36,8 @@ Meteor.methods({
     check(jsReportOnlineId, String);
     check(reportData, Object);
     check(reportName, String);
+
+    console.log(reportData);
 
     const reportFuture = new Future();
     const userId = Meteor.userId();
@@ -79,63 +82,78 @@ Meteor.methods({
       },
       "data": reportData,
       "options": {
-        'Content-Disposition': `attachment;filename=test.pdf`,
+        "Content-Disposition": "attachment; filename=myreport.pdf",
       }
     };
     const {username, password} = getJsReportOnlineAuthorizationInfo();
-    axios({
-      method: 'post',
-      url: reportUrl,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      auth: {
-        username,
-        password
-      },
-      data,
-      responseType: 'arraybuffer'
-    })
-    .then(function (response) {
-      // console.log('it worked this time', response);
-      reportFuture.return(response.data);
+    request
+    .post(reportUrl)
+    .set('Content-Type', 'application/json')
+    .responseType('arraybuffer')
+    .auth(username, password)
+    .send(data)
+    .end(function (err, response) {
+      if (err || !response.ok) {
+        const error = err || 'unexpected error generating report';
+        console.log(error);
+        reportFuture.return(error);
+      } else {
+        console.log('it worked this time', response);
+        reportFuture.return(response.body);
 
-      // console.log('Now upload report to amazon S3');
-      const reportId = Random.id();
-      const s3 = getAmazonS3();
-      const params = {
-        Bucket: Meteor.settings.private.aws.bucketName,
-        Key: reportId,
-        Body: response.data
-      };
+        // console.log('Now upload report to amazon S3');
+        const reportId = Random.id();
+        const s3 = getAmazonS3();
+        const params = {
+          Bucket: Meteor.settings.private.aws.bucketName,
+          Key: reportId,
+          Body: response.body
+        };
 
-      console.log(`really about to upload '${reportName}' report`);
-      s3.upload(params, (err, data) => {
-        if (err) {
-          console.log(`Failed to upload '${reportName}' report`, err);
-        } else {
-          // console.log(`Uploaded '${reportName}' report as ${reportId}`);
-          const report = {
-            _id: reportId,
-            reportType: Constants.reportTypes.jobQuote,
-            reportTemplate: Constants.reportTemplates.jobQuoteStandard,
-            jsReportOnlineId: Constants.jsReportOnlineIds.jobQuote,
-            amazonS3Key: data.Key,
-            companyId: job.companyId,
-            jobId: job._id,
-            name: reportName,
-            createdBy: userId,
-            createdAt: new Date(),
+        console.log(`really about to upload '${reportName}' report`);
+        s3.upload(params, (err, data) => {
+          if (err) {
+            console.log(`Failed to upload '${reportName}' report`, err);
+          } else {
+            // console.log(`Uploaded '${reportName}' report as ${reportId}`);
+            const report = {
+              _id: reportId,
+              reportType: Constants.reportTypes.jobQuote,
+              reportTemplate: Constants.reportTemplates.jobQuoteStandard,
+              jsReportOnlineId: Constants.jsReportOnlineIds.jobQuote,
+              amazonS3Key: data.Key,
+              companyId: job.companyId,
+              jobId: job._id,
+              name: reportName,
+              createdBy: userId,
+              createdAt: new Date(),
+            }
+            const newReportId = Reports.rawCollection().insert(report);
+            // console.log(`Saved '${reportName}' report as ${newReportId}`);
           }
-          const newReportId = Reports.rawCollection().insert(report);
-          // console.log(`Saved '${reportName}' report as ${newReportId}`);
-        }
-      });
+        });
+      }
+      // axios changes all header names to lowercase, which seems to prevent jsreportsonline from understanding content-disposition
+      // axios({
+      //   method: 'post',
+      //   url: reportUrl,
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   auth: {
+      //     username,
+      //     password
+      //   },
+      //   data,
+      //   responseType: 'arraybuffer'
+      // })
+      // .then(function (response) {
+      // ...
+      // .catch(function (error) {
+      //   console.log(error);
+      //   reportFuture.return(error);
+      // });
     })
-    .catch(function (error) {
-      console.log(error);
-      reportFuture.return(error);
-    });
     return reportFuture.wait();
 
     // Can maybe do something like this when async await work (I think problem is angular2-now)

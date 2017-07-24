@@ -12,10 +12,10 @@
         <button
           type="button"
           class="list-group-item"
-          ng-click="bid.getQuoteReport(false)"
+          ng-click="bid.getQuoteReport()"
         >
           <i class="fa fa-file-pdf-o"></i>
-          View Quote
+          Quote
         </button>
           <button
             type="button"
@@ -301,7 +301,7 @@
       <div class="eb-price-subtotal"
            ng-show="bid.isAllDataReady">
         <span class="eb-post-list-label">Subtotal</span>
-        <span class="eb-price">{{bid.subtotalSelections(bid.productSelectionIds, true)}}</span>
+        <span class="eb-price">{{Filters.unitsFilter(subtotal, '$')}}</span>
       </div>
       <span ng-show="bid.isAllDataReady && !bid.productSelectionIds.length">No matches found</span>
       <dir-pagination-controls on-page-change="bid.pageChanged(newPageNumber)"></dir-pagination-controls>

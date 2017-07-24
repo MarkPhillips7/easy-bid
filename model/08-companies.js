@@ -52,6 +52,10 @@ Schema.Company = new SimpleSchema({
     //   }
     // }
   },
+  phoneNumber: {
+    type: String,
+    optional: true
+  },
   websiteUrl: {
     type: String,
     regEx: SimpleSchema.RegEx.Url,
@@ -60,6 +64,10 @@ Schema.Company = new SimpleSchema({
   logoUrl: {
     type: String,
     regEx: SimpleSchema.RegEx.Url,
+    optional: true
+  },
+  salesTaxRate: {
+    type: Number,
     optional: true
   },
   defaultTemplateLibraryId: {
@@ -86,6 +94,25 @@ CompanyFields = [
     templateOptions: {
       type: 'url',
       label: 'Website',
+      placeholder: 'www.BidMasters.com',
+      required: false,
+    }
+  },
+  {
+    key: 'logoUrl',
+    type: 'input',
+    templateOptions: {
+      type: 'url',
+      label: 'Logo',
+      placeholder: 'www.BidMasters.com/company-logo.gif',
+      required: false,
+    }
+  },
+  {
+    key: 'phoneNumber',
+    type: 'input',
+    templateOptions: {
+      label: 'Phone Number',
       // placeholder: 'www.BidMasters.com',
       required: false,
     }
