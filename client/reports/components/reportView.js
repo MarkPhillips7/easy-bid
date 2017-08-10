@@ -25,7 +25,7 @@
       const productSelections = [];
       bid.populateProductsForReport(productSelections, bidControllerData, bid.jobSelection, '');
       const salesTaxRate = bid.company.salesTaxRate || 0.05;
-      const installPercentOfGrandTotal = bid.company.installPercentOfGrandTotal || 0.18;
+      const installPercentOfGrandTotal = bid.company.installPercentOfGrandTotal || 18;
       const subtotal = bid.subtotalSelections(bid.productSelectionIds, false);
       const salesTax = salesTaxRate * subtotal;
       const nontaxableInstallAmount =  ((subtotal + salesTax)/(1-installPercentOfGrandTotal/100))-(subtotal + salesTax);
