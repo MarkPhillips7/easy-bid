@@ -37,7 +37,7 @@ Meteor.methods({
     check(reportData, Object);
     check(reportName, String);
 
-    console.log(reportData);
+    // console.log(reportData);
 
     const reportFuture = new Future();
     const userId = Meteor.userId();
@@ -68,7 +68,7 @@ Meteor.methods({
             reportFuture.return(err);
           } else {
             // console.log(`Downloaded '${reportName}' report`);
-            reportFuture.return(data.Body);
+            reportFuture.return({reportId: existingReport._id, reportBody: data.Body});
           }
         });
         return reportFuture.wait();
@@ -98,11 +98,13 @@ Meteor.methods({
         console.log(error);
         reportFuture.return(error);
       } else {
-        console.log('it worked this time', response);
-        reportFuture.return(response.body);
+        // console.log('it worked this time', response);
 
         // console.log('Now upload report to amazon S3');
         const reportId = Random.id();
+
+        reportFuture.return({reportId, reportBody: response.body});
+
         const s3 = getAmazonS3();
         const params = {
           Bucket: Meteor.settings.private.aws.bucketName,
@@ -224,7 +226,7 @@ Meteor.methods({
     //   console.log('failed to generateQuoteReport', err);
     // }
   },
-  sendReportEmail: function(bidControllerData, reportTitle, reportContent) {
+  sendReportEmail: function(bidControllerData, reportId) {
     check(bidControllerData, {
       selections: [Schema.Selection],
       selectionRelationships: [Schema.SelectionRelationship],
@@ -233,8 +235,11 @@ Meteor.methods({
       job: Schema.Job,
       templateLibraries: [Schema.TemplateLibrary],
     });
-    check(reportTitle, String);
-    check(reportContent, Object);
+    check(reportId, String);
+
+    // Let other method calls from the same client start running, without
+    // waiting for the email sending to complete.
+    this.unblock();
 
     const loggedInUser = Meteor.users.findOne(this.userId);
     const customerUser = Meteor.users.findOne(bidControllerData.job.customerId);
@@ -243,24 +248,42 @@ Meteor.methods({
       throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
     }
 
-    // console.log(`user email: ${loggedInUser.emails[0].address}`);
-    const filename = `${reportTitle}.pdf`;
-    const attachment = {
-      filename,
-      content: reportContent
+    const existingReport = Reports.findOne(reportId);
+    if (!existingReport) {
+      throw new Meteor.Error('report-not-found', 'Sorry, report not found.');
     }
 
-    // Let other method calls from the same client start running, without
-    // waiting for the email sending to complete.
-    this.unblock();
+    const reportFuture = new Future();
 
-    Email.send({
-      to: customerUser.emails[0].address,
-      cc: loggedInUser.emails[0].address,
-      from: "Mailgun Sandbox <postmaster@sandbox238ce6ef48964def950cd7f2415500d0.mailgun.org>",
-      subject: reportTitle,
-      text: "Please see the attached quote.",
-      attachments: [reportContent]
-    });
+    const s3 = getAmazonS3();
+    const params = {
+      Bucket: Meteor.settings.private.aws.bucketName,
+      Key: existingReport.amazonS3Key,
+    };
+    const reportName = existingReport.name;
+
+    s3.getObject(params, Meteor.bindEnvironment((err, data) => {
+      if (err) {
+        console.log(`Failed to download '${reportName}' report`, err);
+        reportFuture.return(err);
+      } else {
+        const filename = reportName;
+        const attachment = {
+          filename,
+          content: data.Body
+        }
+
+        Email.send({
+          to: customerUser.emails[0].address,
+          cc: loggedInUser.emails[0].address,
+          from: "Mailgun Sandbox <postmaster@sandbox238ce6ef48964def950cd7f2415500d0.mailgun.org>",
+          subject: reportName.replace(/\.pdf/gi, ''),
+          text: "Please see the attached quote.",
+          attachments: [attachment]
+        });
+        reportFuture.return(reportName);
+      }
+    }));
+    return reportFuture.wait();
   }
 });

@@ -22,7 +22,7 @@
 
     function emailCustomer() {
       const bidControllerData = bid.getPendingChanges();
-      Meteor.call('sendReportEmail', bidControllerData, bid.reportTitle, $scope.reportContent);
+      Meteor.call('sendReportEmail', bidControllerData, $scope.reportId);
     }
 
     function getQuoteReport(forceGenerate) {
@@ -51,9 +51,10 @@
           console.log('failed to getQuoteReport', err);
         } else {
           console.log('getQuoteReport succeeded');
-          var file = new Blob([result], {type: 'application/pdf'});
+          var file = new Blob([result.reportBody], {type: 'application/pdf'});
           var fileURL = URL.createObjectURL(file);
           bid.reportTitle = reportTitle;
+          $scope.reportId = result.reportId;
           $scope.reportContent = bid.$sce.trustAsResourceUrl(fileURL);
           $scope.$digest();
         }
