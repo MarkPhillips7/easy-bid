@@ -3,6 +3,13 @@ import Future from 'fibers/future';
 import request from 'superagent';
 import AWS from 'aws-sdk';
 
+const getEmailAddressForEmail = (user) => {
+  if (!user || !user.emails || user.emails.length < 1 || !user.profile) {
+    return undefined;
+  }
+  return `${user.profile.firstName} ${user.profile.lastName} <${user.emails[0].address}>`;
+};
+
 const getJsReportOnlineAuthorizationInfo = () => {
   const authorizationHashParts = Meteor.settings.private.jsreportonline.authorizationHash.split(':');
   return {
@@ -242,7 +249,8 @@ Meteor.methods({
     this.unblock();
 
     const loggedInUser = Meteor.users.findOne(this.userId);
-    const customerUser = Meteor.users.findOne(bidControllerData.job.customerId);
+    const estimator = Meteor.users.findOne(bidControllerData.job.estimatorId);
+    const customer = Meteor.users.findOne(bidControllerData.job.customerId);
 
     if (!loggedInUser) {
       throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
@@ -273,12 +281,26 @@ Meteor.methods({
           content: data.Body
         }
 
+        const loggedInUserEmailAddress = getEmailAddressForEmail(loggedInUser);
+        const estimatorEmailAddress = getEmailAddressForEmail(estimator);
+        const customerEmailAddress = getEmailAddressForEmail(customer);
+        const to = customerEmailAddress;
+        let replyTo;
+        const bcc = [loggedInUserEmailAddress];
+        if (estimatorEmailAddress && estimatorEmailAddress !== loggedInUserEmailAddress) {
+          bcc.push(estimatorEmailAddress);
+          replyTo = estimatorEmailAddress;
+        } else {
+          replyTo = loggedInUserEmailAddress;
+        }
+
         Email.send({
-          to: customerUser.emails[0].address,
-          cc: loggedInUser.emails[0].address,
+          to,
+          replyTo,
+          bcc,
           from: "Mailgun Sandbox <postmaster@sandbox238ce6ef48964def950cd7f2415500d0.mailgun.org>",
           subject: reportName.replace(/\.pdf/gi, ''),
-          text: "Please see the attached quote.",
+          text: "Please see attached quote.",
           attachments: [attachment]
         });
         reportFuture.return(reportName);
