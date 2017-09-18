@@ -223,5 +223,44 @@ Meteor.methods({
     // catch(err) {
     //   console.log('failed to generateQuoteReport', err);
     // }
+  },
+  sendReportEmail: function(bidControllerData, reportTitle, reportContent) {
+    check(bidControllerData, {
+      selections: [Schema.Selection],
+      selectionRelationships: [Schema.SelectionRelationship],
+      lookupData: Match.Any,
+      metadata: Match.Any,
+      job: Schema.Job,
+      templateLibraries: [Schema.TemplateLibrary],
+    });
+    check(reportTitle, String);
+    check(reportContent, Object);
+
+    const loggedInUser = Meteor.users.findOne(this.userId);
+    const customerUser = Meteor.users.findOne(bidControllerData.job.customerId);
+
+    if (!loggedInUser) {
+      throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
+    }
+
+    // console.log(`user email: ${loggedInUser.emails[0].address}`);
+    const filename = `${reportTitle}.pdf`;
+    const attachment = {
+      filename,
+      content: reportContent
+    }
+
+    // Let other method calls from the same client start running, without
+    // waiting for the email sending to complete.
+    this.unblock();
+
+    Email.send({
+      to: customerUser.emails[0].address,
+      cc: loggedInUser.emails[0].address,
+      from: "Mailgun Sandbox <postmaster@sandbox238ce6ef48964def950cd7f2415500d0.mailgun.org>",
+      subject: reportTitle,
+      text: "Please see the attached quote.",
+      attachments: [reportContent]
+    });
   }
 });

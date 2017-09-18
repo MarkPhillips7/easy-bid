@@ -6,6 +6,7 @@
 
   function reportView($uibModalInstance, $scope, bid, reportContent) {
     $scope.cancel = cancel;
+    $scope.emailCustomer = emailCustomer;
     $scope.save = save;
     $scope.getQuoteReport = getQuoteReport;
     $scope.bid = bid;
@@ -17,6 +18,11 @@
 
     function save() {
       $uibModalInstance.close();
+    }
+
+    function emailCustomer() {
+      const bidControllerData = bid.getPendingChanges();
+      Meteor.call('sendReportEmail', bidControllerData, bid.reportTitle, $scope.reportContent);
     }
 
     function getQuoteReport(forceGenerate) {
