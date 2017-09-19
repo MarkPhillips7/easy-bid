@@ -61,6 +61,7 @@ markphillips7:unit-of-measure@0.0.1
 mdg:validation-error@0.2.0
 meteor@1.7.1
 meteor-base@1.1.0
+meteorhacks:ssr@2.2.0
 meteortoys:toykit@2.2.1
 minifier-css@1.2.16
 minifier-js@2.1.1

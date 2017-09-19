@@ -1,0 +1,126 @@
+<!-- Based on invoice example !-->
+
+<style>
+    {#asset styles.css @encoding=utf8}
+</style>
+
+<!-- workaround for https://jsreport.net/learn/phantom-pdf#images-in-header-and-footer
+<img class="invisible-resource-definition" src="http://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Visa.svg/175px-Visa.svg.png" height="40" width="60" />
+<img class="invisible-resource-definition" src="http://www.mastercardbrandcenter.com/images/am1_a.gif" height="40" width="140" />
+!-->
+
+<div class="quote-box">
+    <table class="top" cellpadding="0" cellspacing="0">
+        <tr class="top">
+            <td colspan="2">
+                <table>
+                    <tr>
+                        <td class="title">
+                            <!-- {{company.name}}!-->
+                            <img src={{company.logoUrl}} width="350"/>
+                        </td>
+                        <td>
+                            Bid ID: {{job.id}}
+                            <br> Date: {{formatDate job.createdAt}}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr class="information ">
+            <td colspan="2 ">
+                <table>
+                    <tr>
+                        <td>
+                            {{company.name}}<br>
+                            {{company.address.addressLines}}<br>
+                            {{company.address.city}}, {{company.address.state}} {{company.address.zipCode}}
+                        </td>
+                        <td>
+                            {{customer.name}}<br>
+                            {{customer.address.addressLines}}<br>
+                            {{customer.address.city}}, {{customer.address.state}} {{customer.address.zipCode}}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <table class="items" cellpadding="0" cellspacing="0">
+        <thead>
+            <tr class="heading ">
+                <td>Area</td>
+                <td>Quantity</td>
+                <td>Product</td>
+                <td>Description</td>
+                <td>Each</td>
+                <td>Total</td>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each productSelections}}
+                <tr class="item">
+                    <td>
+                        {{areaText}}
+                    </td>
+                    <td>
+                        {{quantityText}}
+                    </td>
+                    <td>
+                        {{title}}
+                    </td>
+                    <td>
+                        {{description}}
+                    </td>
+                    <td>
+                        {{priceEachText}}
+                    </td>
+                    <td>
+                        {{priceTotalText}}
+                    </td>
+                </tr>
+            {{/each}}
+        </tbody>
+    </table>
+    <table class="items" cellpadding="0" cellspacing="0">
+        <tr class="total">
+            <td></td><td></td><td></td><td></td>
+            <td>Sub Total</td>
+            <td>{{formatDollars subtotal}}</td>
+        </tr>
+        <tr>
+            <td></td><td></td><td></td><td></td>
+            <td>Sales Tax</td>
+            <td>{{formatDollars salesTax}}</td>
+        </tr>
+        <tr>
+            <td></td><td></td><td></td><td></td>
+            <td>Engineering, Admin & Installation (non-taxable)</td>
+            <td>{{formatDollars nontaxableInstallAmount}}</td>
+        </tr>
+        <tr class="total">
+            <td></td><td></td><td></td><td></td>
+            <td>Grand Total</td>
+            <td>{{formatDollars grandTotal}}</td>
+        </tr>
+    </table>
+    <table class="miscellaneous" cellpadding="0" cellspacing="0">
+        <tr>
+            <td>
+                <h4>Exclusions:</h4>
+                <p>{{job.exclusions}}</p>
+                <h4>General Provisions:</h4>
+                <p>{{job.provisions}}</p>
+            </td>
+            <td>
+                <h4>Estimated Lead Time:</h4>
+                <p>{{job.estimatedLeadTime}}</p>
+                <h4>Acknowledgments:</h4>
+                <p>{{job.acknowledgments}}</p>
+            </td>
+        </tr>
+    </table>
+    <h4>Approved:</h4>
+    <p>Customer _______________________________________ Date _____________</p>
+
+</div>

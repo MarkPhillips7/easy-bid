@@ -1,0 +1,125 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta name="viewport" content="width=device-width" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>HTML email test</title>
+  <link href="styles.css" media="all" rel="stylesheet" type="text/css" />
+</head>
+
+<body itemscope itemtype="http://schema.org/EmailMessage">
+  <div class="quote-box">
+    <table class="top" cellpadding="0" cellspacing="0">
+        <tr class="top">
+            <td colspan="2">
+                <table>
+                    <tr>
+                        <td class="title">
+                            <!-- {{company.name}}!-->
+                            <img src={{company.logoUrl}} width="350"/>
+                        </td>
+                        <td>
+                            Bid ID: {{job.id}}
+                            <br> Date: {{job.createdAt}}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr class="information ">
+            <td colspan="2 ">
+                <table>
+                    <tr>
+                        <td>
+                            {{company.name}}<br>
+                            {{company.address.addressLines}}<br>
+                            {{company.address.city}}, {{company.address.state}} {{company.address.zipCode}}
+                        </td>
+                        <td>
+                            {{customer.name}}<br>
+                            {{customer.address.addressLines}}<br>
+                            {{customer.address.city}}, {{customer.address.state}} {{customer.address.zipCode}}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <table class="items" cellpadding="0" cellspacing="0">
+        <thead>
+            <tr class="heading ">
+                <td>Area</td>
+                <td>Quantity</td>
+                <td>Product</td>
+                <td>Description</td>
+                <td>Each</td>
+                <td>Total</td>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each productSelections}}
+                <tr class="item">
+                    <td>
+                        {{areaText}}
+                    </td>
+                    <td>
+                        {{quantityText}}
+                    </td>
+                    <td>
+                        {{title}}
+                    </td>
+                    <td>
+                        {{description}}
+                    </td>
+                    <td>
+                        {{priceEachText}}
+                    </td>
+                    <td>
+                        {{priceTotalText}}
+                    </td>
+                </tr>
+            {{/each}}
+        </tbody>
+    </table>
+    <table class="items" cellpadding="0" cellspacing="0">
+        <tr class="total">
+            <td></td><td></td><td></td><td></td>
+            <td>Sub Total</td>
+            <td>{{subtotal}}</td>
+        </tr>
+        <tr>
+            <td></td><td></td><td></td><td></td>
+            <td>Sales Tax</td>
+            <td>{{salesTax}}</td>
+        </tr>
+        <tr>
+            <td></td><td></td><td></td><td></td>
+            <td>Engineering, Admin & Installation (non-taxable)</td>
+            <td>{{nontaxableInstallAmount}}</td>
+        </tr>
+        <tr class="total">
+            <td></td><td></td><td></td><td></td>
+            <td>Grand Total</td>
+            <td>{{grandTotal}}</td>
+        </tr>
+    </table>
+    <table class="miscellaneous" cellpadding="0" cellspacing="0">
+        <tr>
+            <td>
+                <h4>Exclusions:</h4>
+                <p>{{job.exclusions}}</p>
+                <h4>General Provisions:</h4>
+                <p>{{job.provisions}}</p>
+            </td>
+            <td>
+                <h4>Estimated Lead Time:</h4>
+                <p>{{job.estimatedLeadTime}}</p>
+                <h4>Acknowledgments:</h4>
+                <p>{{job.acknowledgments}}</p>
+            </td>
+        </tr>
+    </table>
+    <h4>Approved:</h4>
+    <p>Customer _________??______________________________ Date _____________</p>
+  </div>
+</body>
+</html>
