@@ -9,6 +9,7 @@
     $scope.emailCustomer = emailCustomer;
     $scope.save = save;
     $scope.getQuoteReport = getQuoteReport;
+    $scope.getReportData = getReportData;
     $scope.bid = bid;
     $scope.reportContent = null;
 
@@ -22,12 +23,10 @@
 
     function emailCustomer() {
       const bidControllerData = bid.getPendingChanges();
-      Meteor.call('sendReportEmail', bidControllerData, $scope.reportId);
+      Meteor.call('sendReportEmail', bidControllerData, $scope.reportId, $scope.getReportData(bidControllerData));
     }
 
-    function getQuoteReport(forceGenerate) {
-      $scope.reportContent = null;
-      const bidControllerData = bid.getPendingChanges();
+    function getReportData(bidControllerData) {
       const productSelections = [];
       bid.populateProductsForReport(productSelections, bidControllerData, bid.jobSelection, '');
       const salesTaxRate = bid.company.salesTaxRate || 0.05;
@@ -36,12 +35,23 @@
       const salesTax = salesTaxRate * subtotal;
       const nontaxableInstallAmount =  ((subtotal + salesTax)/(1-installPercentOfGrandTotal/100))-(subtotal + salesTax);
       const grandTotal = subtotal + salesTax + nontaxableInstallAmount;
-      const reportData = ReportsHelper.getReportData({
+      return ReportsHelper.getReportData({
         company: bid.company,
         job: bidControllerData.job,
         productSelections,
-        amounts: {subtotal, salesTax, nontaxableInstallAmount, grandTotal}
+        amounts: {
+          subtotal,
+          salesTax,
+          nontaxableInstallAmount,
+          grandTotal
+        }
       });
+    }
+
+    function getQuoteReport(forceGenerate) {
+      const bidControllerData = bid.getPendingChanges();
+      $scope.reportContent = null;
+      const reportData = $scope.getReportData(bidControllerData);
       const reportTitle = bid.getQuoteReportTitle(reportData);
       const reportName = `${reportTitle}.pdf`;
       const jsReportOnlineId = Constants.jsReportOnlineIds.jobQuote;

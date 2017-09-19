@@ -4,6 +4,85 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <title>HTML email test</title>
   <link href="styles.css" media="all" rel="stylesheet" type="text/css" />
+  <style type="text/css">
+    .invisible-resource-definition {
+        display: none;
+    }
+    .quote-box {
+        margin: auto;
+        padding: 10px;
+        font-size: 16px;
+        line-height: 24px;
+        font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+        color: #555;
+    }
+    .quote-box table {
+        width: 100%;
+        line-height: inherit;
+        text-align: left;
+    }
+    .quote-box table td {
+        padding: 5px;
+        vertical-align: top;
+    }
+    .quote-box table.top tr td:nth-child(2) {
+        text-align: right;
+    }
+    .quote-box table.items tr td:nth-child(5) {
+        text-align: right;
+    }
+    .quote-box table.items tr td:nth-child(6) {
+        text-align: right;
+    }
+    .quote-box table.miscellaneous td {
+        width: 50%;
+    }
+    .quote-box table tr.top table td {
+        padding-bottom: 20px;
+    }
+    .quote-box table tr.top table td.title {
+        font-size: 45px;
+        line-height: 45px;
+        color: #333;
+    }
+    .quote-box table tr.information table td {
+        padding-bottom: 40px;
+    }
+    .quote-box table tr.heading td {
+        background: #eee;
+        border-bottom: 1px solid #ddd;
+        font-weight: bold;
+    }
+    .quote-box table tr.details td {
+        padding-bottom: 20px;
+    }
+    .quote-box table tr.item td {
+        border-bottom: 1px solid #eee;
+    }
+    .quote-box table tr.item.last td {
+        border-bottom: none;
+    }
+    .quote-box table tr.total td:nth-child(5) {
+        width: 85%;
+        font-weight: bold;
+    }
+    .quote-box table tr.total td:nth-child(6) {
+        font-weight: bold;
+    }
+    .page-break	{ display: block; page-break-before: always; }
+    @media only screen and (max-width: 600px) {
+        .quote-box table tr.top table td {
+            width: 100%;
+            display: block;
+            text-align: center;
+        }
+        .quote-box table tr.information table td {
+            width: 100%;
+            display: block;
+            text-align: center;
+        }
+    }
+  </style>
 </head>
 
 <body itemscope itemtype="http://schema.org/EmailMessage">
@@ -19,7 +98,7 @@
                         </td>
                         <td>
                             Bid ID: {{job.id}}
-                            <br> Date: {{job.createdAt}}
+                            <br> Date: {{job.createdAtText}}
                         </td>
                     </tr>
                 </table>
@@ -84,22 +163,22 @@
         <tr class="total">
             <td></td><td></td><td></td><td></td>
             <td>Sub Total</td>
-            <td>{{subtotal}}</td>
+            <td>{{subtotalText}}</td>
         </tr>
         <tr>
             <td></td><td></td><td></td><td></td>
             <td>Sales Tax</td>
-            <td>{{salesTax}}</td>
+            <td>{{salesTaxText}}</td>
         </tr>
         <tr>
             <td></td><td></td><td></td><td></td>
             <td>Engineering, Admin & Installation (non-taxable)</td>
-            <td>{{nontaxableInstallAmount}}</td>
+            <td>{{nontaxableInstallAmountText}}</td>
         </tr>
         <tr class="total">
             <td></td><td></td><td></td><td></td>
             <td>Grand Total</td>
-            <td>{{grandTotal}}</td>
+            <td>{{grandTotalText}}</td>
         </tr>
     </table>
     <table class="miscellaneous" cellpadding="0" cellspacing="0">

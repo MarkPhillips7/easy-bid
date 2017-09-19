@@ -17,6 +17,7 @@ export const getReportData = ({company, job, productSelections, amounts}) => {
       "id": job._id,
       "description": job.name,
       "createdAt": job.createdAt,
+      "createdAtText": moment(job.createdAt).format('MMMM Do YYYY'),
       "modifiedAt": job.modifiedAt,
       "dueAt": job.dueAt,
       "estimator": job.estimatorProfile ? `${job.estimatorProfile.firstName} ${job.estimatorProfile.lastName}` : '',
@@ -32,6 +33,10 @@ Addendums XXXX`,
   reportData.salesTax = salesTax;
   reportData.nontaxableInstallAmount = nontaxableInstallAmount;
   reportData.grandTotal = grandTotal;
+  reportData.subtotalText = Filters.unitsFilter(subtotal, '$');
+  reportData.salesTaxText = Filters.unitsFilter(salesTax, '$');
+  reportData.nontaxableInstallAmountgrandTotalText = Filters.unitsFilter(nontaxableInstallAmount, '$');
+  reportData.grandTotalgrandTotalText = Filters.unitsFilter(grandTotal, '$');
   return reportData;
 };
 
