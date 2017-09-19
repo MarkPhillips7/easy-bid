@@ -23,7 +23,7 @@
 
     function emailCustomer() {
       const bidControllerData = bid.getPendingChanges();
-      Meteor.call('sendReportEmail', bidControllerData, $scope.reportId, $scope.getReportData(bidControllerData));
+      Meteor.call('sendQuoteReportEmail', bidControllerData, $scope.reportId, $scope.getReportData(bidControllerData));
     }
 
     function getReportData(bidControllerData) {

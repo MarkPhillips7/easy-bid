@@ -96,30 +96,21 @@
                             <!-- {{company.name}}!-->
                             <img src={{company.logoUrl}} width="350"/>
                         </td>
-                        <td>
+                        <!-- <td>
                             Bid ID: {{job.id}}
                             <br> Date: {{job.createdAtText}}
-                        </td>
+                        </td> -->
                     </tr>
                 </table>
             </td>
         </tr>
-        <tr class="information ">
-            <td colspan="2 ">
-                <table>
-                    <tr>
-                        <td>
-                            {{company.name}}<br>
-                            {{company.address.addressLines}}<br>
-                            {{company.address.city}}, {{company.address.state}} {{company.address.zipCode}}
-                        </td>
-                        <td>
-                            {{customer.name}}<br>
-                            {{customer.address.addressLines}}<br>
-                            {{customer.address.city}}, {{customer.address.state}} {{customer.address.zipCode}}
-                        </td>
-                    </tr>
-                </table>
+        <tr>
+            <td colspan="2">
+              <span>{{customer.name}},</span><br/>
+              <span>Thank you for considering {{company.name}}!</span><br/>
+              <span>Please see the attached proposal and let me know what you think.</span><br/>
+              <span>Thanks,</span><br/>
+              <span>{{job.estimator}}</span>
             </td>
         </tr>
     </table>
@@ -181,24 +172,6 @@
             <td>{{grandTotalText}}</td>
         </tr>
     </table>
-    <table class="miscellaneous" cellpadding="0" cellspacing="0">
-        <tr>
-            <td>
-                <h4>Exclusions:</h4>
-                <p>{{job.exclusions}}</p>
-                <h4>General Provisions:</h4>
-                <p>{{job.provisions}}</p>
-            </td>
-            <td>
-                <h4>Estimated Lead Time:</h4>
-                <p>{{job.estimatedLeadTime}}</p>
-                <h4>Acknowledgments:</h4>
-                <p>{{job.acknowledgments}}</p>
-            </td>
-        </tr>
-    </table>
-    <h4>Approved:</h4>
-    <p>Customer _________??______________________________ Date _____________</p>
   </div>
 </body>
 </html>

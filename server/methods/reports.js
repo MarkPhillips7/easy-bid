@@ -3,11 +3,15 @@ import Future from 'fibers/future';
 import request from 'superagent';
 import AWS from 'aws-sdk';
 
+const getEmailAddressFor = (firstName, lastName, emailAddress) => {
+  return `${firstName} ${lastName} <${emailAddress}>`;
+};
+
 const getEmailAddressForEmail = (user) => {
   if (!user || !user.emails || user.emails.length < 1 || !user.profile) {
     return undefined;
   }
-  return `${user.profile.firstName} ${user.profile.lastName} <${user.emails[0].address}>`;
+  return getEmailAddressFor(user.profile.firstName, user.profile.lastName, user.emails[0].address);
 };
 
 const getJsReportOnlineAuthorizationInfo = () => {
@@ -233,7 +237,7 @@ Meteor.methods({
     //   console.log('failed to generateQuoteReport', err);
     // }
   },
-  sendReportEmail: function(bidControllerData, reportId, reportData) {
+  sendQuoteReportEmail: function(bidControllerData, reportId, reportData) {
     check(bidControllerData, {
       selections: [Schema.Selection],
       selectionRelationships: [Schema.SelectionRelationship],
@@ -286,13 +290,16 @@ Meteor.methods({
         const estimatorEmailAddress = getEmailAddressForEmail(estimator);
         const customerEmailAddress = getEmailAddressForEmail(customer);
         const to = customerEmailAddress;
+        let from;
         let replyTo;
         const bcc = [loggedInUserEmailAddress];
         if (estimatorEmailAddress && estimatorEmailAddress !== loggedInUserEmailAddress) {
           bcc.push(estimatorEmailAddress);
           replyTo = estimatorEmailAddress;
+          from = getEmailAddressFor(estimator.profile.firstName, estimator.profile.lastName, Meteor.settings.private.email.fromAddress);
         } else {
           replyTo = loggedInUserEmailAddress;
+          from = getEmailAddressFor(loggedInUser.profile.firstName, loggedInUser.profile.lastName, Meteor.settings.private.email.fromAddress);
         }
         SSR.compileTemplate('htmlEmail', Assets.getText('email/job-quote.html'));
 
@@ -300,9 +307,8 @@ Meteor.methods({
           to,
           replyTo,
           bcc,
-          from: "Mailgun Sandbox <postmaster@sandbox238ce6ef48964def950cd7f2415500d0.mailgun.org>",
+          from,
           subject: reportName.replace(/\.pdf/gi, ''),
-          // text: "Please see attached quote.",
           html: SSR.render('htmlEmail', reportData),
           attachments: [attachment]
         });

@@ -35,8 +35,8 @@ Addendums XXXX`,
   reportData.grandTotal = grandTotal;
   reportData.subtotalText = Filters.unitsFilter(subtotal, '$');
   reportData.salesTaxText = Filters.unitsFilter(salesTax, '$');
-  reportData.nontaxableInstallAmountgrandTotalText = Filters.unitsFilter(nontaxableInstallAmount, '$');
-  reportData.grandTotalgrandTotalText = Filters.unitsFilter(grandTotal, '$');
+  reportData.nontaxableInstallAmountText = Filters.unitsFilter(nontaxableInstallAmount, '$');
+  reportData.grandTotaText = Filters.unitsFilter(grandTotal, '$');
   return reportData;
 };
 

@@ -8,6 +8,9 @@ Meteor.startup(function () {
         secretAccessKey: String,
         bucketName: String,
       },
+      email: {
+        fromAddress: String
+      },
       jsreportonline: {
         authorizationHash: String,
         url: String
