@@ -54,7 +54,9 @@
           </button>
         </div>
         <div class="btn-group">
-          <a type="button" class="btn btn-default btn-sm"
+          <a type="button"
+                  class="btn btn-default btn-sm"
+                  ng-disabled="!customers.company"
                   data-ng-show="customers.isLoggedIn"
                   href="/customers/new?c={{customers.company._id}}"
                   uib-tooltip="Add">
@@ -64,32 +66,55 @@
       </div>
     </div>
   </div>
-  <ul class="list-group">
-    <li dir-paginate="customer in customers.customers | itemsPerPage: customers.perPage" total-items="customers.customersCount"
-      current-page="customers.page"
-      class="list-group-item eb-list-group-item">
-      <div class="checkbox eb-list-group-item-left-checkbox">
-        <label>
-          <input type="checkbox" ng-checked="customers.isItemSelected(customer._id)"
-                 ng-click="customers.toggleItemSelection(customer._id)">
-        </label>
+  <div class="row">
+    <div ng-show="customers.companies.length > 1" class="col-sm-3">
+      <div class="form-group">
+        <label for="company">Company</label>
+        <br/>
+
+        <!-- reason for helper-elements="filter": https://github.com/isteven/angular-multi-select/issues/496 -->
+        <isteven-multi-select directive-id="company"
+          input-model="customers.companies"
+          output-model="customers.companiesSelected"
+          helper-elements="filter"
+          search-property="name"
+          button-label="name"
+          item-label="name"
+          tick-property="ticked"
+          selection-mode="single">
+        </isteven-multi-select>
       </div>
-      <a href="/customers/{{customer._id}}" class="eb-list-group-item-main-a">
-        <div class="row">
-          <div class="col-sm-8">
-            <span class="eb-list-group-item-main-a-left">
-              <strong>{{customer.profile.firstName}} {{customer.profile.lastName}}</strong>
-            </span>
+    </div>
+    <div ng-show="customers.companiesSelected.length === 1"
+         ng-class="(customers.companies.length > 1) ? 'col-sm-9' : 'col-sm-12'">
+      <ul class="list-group">
+        <li dir-paginate="customer in customers.customers | itemsPerPage: customers.perPage" total-items="customers.customersCount"
+          current-page="customers.page"
+          class="list-group-item eb-list-group-item">
+          <div class="checkbox eb-list-group-item-left-checkbox">
+            <label>
+              <input type="checkbox" ng-checked="customers.isItemSelected(customer._id)"
+                     ng-click="customers.toggleItemSelection(customer._id)">
+            </label>
           </div>
-          <div class="col-sm-4">
-            <div class="pull-right">
-              <span data-toggle="tooltip" title="created {{customer.createdAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="customer.createdAt"></span>
+          <a href="/customers/{{customer._id}}" class="eb-list-group-item-main-a">
+            <div class="row">
+              <div class="col-sm-8">
+                <span class="eb-list-group-item-main-a-left">
+                  <strong>{{customer.profile.firstName}} {{customer.profile.lastName}}</strong>
+                </span>
+              </div>
+              <div class="col-sm-4">
+                <div class="pull-right">
+                  <span data-toggle="tooltip" title="created {{customer.createdAt | amDateFormat:'MMMM Do, YYYY' }}" am-time-ago="customer.createdAt"></span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </a>
-    </li>
-  </ul>
-  <span ng-show="!customers.customers.length">No matches found</span>
-  <dir-pagination-controls on-page-change="customers.pageChanged(newPageNumber)"></dir-pagination-controls>
+          </a>
+        </li>
+      </ul>
+      <span ng-show="!customers.customers.length">No matches found</span>
+      <dir-pagination-controls on-page-change="customers.pageChanged(newPageNumber)"></dir-pagination-controls>
+    </div>
+  </div>
 </div>
