@@ -48,8 +48,6 @@ class customers {
       updateDependencies: this._updateDependencies,
     });
 
-    // this.initializeCompanyId();
-
     this.subscribe('companies', this._companiesSubscription.bind(this));
     this.subscribe('company', this._companySubscription.bind(this));
     this.subscribe('customers', this._customersSubscription.bind(this));
@@ -96,23 +94,6 @@ class customers {
     }
   }
 
-  // initializeCompanyId() {
-  //   let self = this;
-  //   if (!this.companyIdToFilterBy) {
-  //     Meteor.call('companyIdsRelatedToUser', Meteor.userId(), function(err, result){
-  //       if (err) {
-  //         console.log('failed to get companyIdsRelatedToUser', err);
-  //       } else {
-  //         // console.log('success getting companyIdsRelatedToUser', result);
-  //
-  //         self.companyIdToFilterBy = result[0];
-  //         // console.log(`Changed companyId to ${self.companyIdToFilterBy}. Rerouting...`);
-  //         self.$state.go('customers', {c: self.companyIdToFilterBy})
-  //       }
-  //     });
-  //   }
-  // }
-
   _currentUserId() {
     return Meteor.userId();
   }
@@ -138,7 +119,6 @@ class customers {
   }
 
   _company() {
-    // console.log(`about to get companyIdToFilterBy ${this.companyIdToFilterBy}`);
     return Companies.findOne({ _id: this.getReactively('companiesSelected[0]._id') });
   }
 
@@ -148,23 +128,12 @@ class customers {
     ]
   }
 
-  // update pretty much all state dependent on subscriptions
-  _updateDependencies() {
-    if (this.getReactively('companies', true) &&
-        this.companies.length === 1 &&
-        this.companiesSelected.length === 0) {
-      // cause the company to be selected
-      this.companies[0].ticked = true;
-    }
-  }
-
   _customersCollection() {
     const companyIdToFilterBy = this.getReactively('companiesSelected[0]._id');
     if (companyIdToFilterBy) {
       let customerRole = {};
       const roleGroup = 'roles.' + companyIdToFilterBy;
-      customerRole[roleGroup] = 'customer';
-      // console.log(`about to get users for ${roleGroup} customers`);
+      customerRole[roleGroup] = Config.roles.customer;
       return Meteor.users.find(customerRole,
         {
           sort: this.getReactively('sortOptionSelected.sort')
@@ -188,5 +157,21 @@ class customers {
       },
       this.getReactively('searchText')
     ]
+  }
+  
+  _updateDependencies() {
+    if (this.getReactively('companies', true) &&
+        this.companiesSelected.length === 0) {
+      if (this.companies.length === 1) {
+        // cause the company to be selected
+        this.companies[0].ticked = true;
+      } else if (this.companies.length > 0 && this.companyIdToFilterBy) {
+        const company = _.find(this.companies, (_company) => _company._id === this.companyIdToFilterBy);
+        if (company) {
+          // cause the company to be selected
+          company.ticked = true;
+        }
+      }
+    }
   }
 }
