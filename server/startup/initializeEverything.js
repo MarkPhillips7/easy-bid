@@ -1,4 +1,5 @@
 Meteor.startup(function () {
+  Initialization.initializeEmail();
   var companyInfo = Initialization.initializeCompanies();
   var userInfo = Initialization.initializeUsers(companyInfo);
   Initialization.initializeTemplates(companyInfo, userInfo);
