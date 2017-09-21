@@ -46,10 +46,22 @@ angular.module('app')
   .run(['$rootScope', function ($rootScope) {
     $rootScope.$on("$stateChangeError", console.log.bind(console));
     $rootScope.isInRole = function(role) {
+      if (!$rootScope.currentUser) {
+        return false;
+      }
+
       if (!_.isArray(role)) {
         role = [role];
       }
-      return Roles.userIsInRole($rootScope.currentUser, role, Roles.GLOBAL_GROUP);
+      if (!$rootScope.currentUser.groups) {
+        $rootScope.currentUser.groups = [
+          Roles.GLOBAL_GROUP,
+          ...Roles.getGroupsForUser($rootScope.currentUser)
+        ];
+      }
+
+      return _.any($rootScope.currentUser.groups, (group) =>
+        Roles.userIsInRole($rootScope.currentUser, role, group));
     }
   }])
   .run(['formlyConfig', 'formlyValidationMessages', function(formlyConfig, formlyValidationMessages) {

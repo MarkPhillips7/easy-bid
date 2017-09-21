@@ -22,6 +22,14 @@ Meteor.publish("customers", function(companyId, options, searchString) {
     options, searchString, "numberOfCustomers");
 });
 
+Meteor.publish("users", function(companyId, rolesToReturn, options, searchString) {
+  check(companyId, Match.OneOf(String, null));
+  check(searchString, Match.Any);
+
+  return usersRelatedToCompany.bind(this)(this.userId, rolesToReturn, companyId,
+    options, searchString, "numberOfUsers");
+});
+
 Meteor.publish("user", function (userId) {
   check(userId, Match.OneOf(String, null));
   const options = {

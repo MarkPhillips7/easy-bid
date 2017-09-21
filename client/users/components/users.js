@@ -5,21 +5,23 @@ init();
 SetModule('app');
 
 @Component({
-  selector: 'customers'
+  selector: 'users'
 })
 @View({
-  templateUrl: () => 'client/users/views/customers.html'
+  templateUrl: () => 'client/users/views/users.html'
 })
 @Inject('$state', '$stateParams')
 @MeteorReactive
 @LocalInjectables
-class customers {
+class users {
   constructor($state, $stateParams) {
     this.companiesSelected = [];
     this.companyIdToFilterBy = this.$stateParams.c;
     this.itemIdsSelected = [];
     this.perPage = Config.defaultRecordsPerPage;
     this.page = 1;
+    this.roles = [];
+    this.rolesSelected = [];
     this.searchText = '';
     this.sortOptions = [
       {
@@ -41,8 +43,8 @@ class customers {
       companies: this._companiesCollection,
       company: this._company,
       currentUserId: this._currentUserId,
-      customers: this._customersCollection,
-      customersCount: this._customersCount,
+      users: this._usersCollection,
+      usersCount: this._usersCount,
       isLoggedIn: this._isLoggedIn,
       notShownSelectedCount: this._notShownSelectedCount,
       updateDependencies: this._updateDependencies,
@@ -50,7 +52,7 @@ class customers {
 
     this.subscribe('companies', this._companiesSubscription.bind(this));
     this.subscribe('company', this._companySubscription.bind(this));
-    this.subscribe('customers', this._customersSubscription.bind(this));
+    this.subscribe('users', this._usersSubscription.bind(this));
   }
 
   updateSort() {
@@ -66,7 +68,7 @@ class customers {
   };
 
   _notShownSelectedCount() {
-    const items = this.customers;
+    const items = this.users;
     const itemIdsSelected = this.getReactively('itemIdsSelected');
     let shownCount = 0;
     _.each(itemIdsSelected, (itemIdSelected) => {
@@ -132,13 +134,14 @@ class customers {
     ]
   }
 
-  _customersCollection() {
-    const companyIdToFilterBy = this.getReactively('companiesSelected[0]._id');
-    if (companyIdToFilterBy) {
-      let customerRole = {};
+  _usersCollection() {
+    const companyIdToFilterBy = this.getReactively('companyIdToFilterBy');
+    const roleToFilterBy = this.getReactively('rolesSelected[0].id');
+    if (companyIdToFilterBy && roleToFilterBy) {
+      let roleSelector = {};
       const roleGroup = 'roles.' + companyIdToFilterBy;
-      customerRole[roleGroup] = Config.roles.customer;
-      return Meteor.users.find(customerRole,
+      roleSelector[roleGroup] = roleToFilterBy;
+      return Meteor.users.find(roleSelector,
         {
           sort: this.getReactively('sortOptionSelected.sort')
         }
@@ -146,14 +149,17 @@ class customers {
     }
   }
 
-  _customersCount() {
-    return Counts.get('numberOfCustomers');
+  _usersCount() {
+    return Counts.get('numberOfUsers');
   }
 
-  _customersSubscription() {
-    // console.log(`about to get customersSubscription for company ${this.companyIdToFilterBy} searching for '${this.searchText}'`);
+  _usersSubscription() {
+    // console.log(`about to get usersSubscription for company ${this.companyIdToFilterBy} searching for '${this.searchText}'`);
+    const companyIdToFilterBy = this.getReactively('companyIdToFilterBy');
+    const roleToFilterBy = this.getReactively('rolesSelected[0].id');
     return [
-      this.getReactively('companiesSelected[0]._id'),
+      companyIdToFilterBy,
+      roleToFilterBy ? [roleToFilterBy] : [],
       {
         limit: parseInt(this.perPage),
         skip: parseInt((this.getReactively('page') - 1) * this.perPage),
@@ -163,19 +169,50 @@ class customers {
     ]
   }
 
-  _updateDependencies() {
-    if (this.getReactively('companies', true) &&
-        this.companiesSelected.length === 0) {
-      if (this.companies.length === 1) {
-        // cause the company to be selected
-        this.companies[0].ticked = true;
-      } else if (this.companies.length > 0 && this.companyIdToFilterBy) {
-        const company = _.find(this.companies, (_company) => _company._id === this.companyIdToFilterBy);
-        if (company) {
-          // cause the company to be selected
-          company.ticked = true;
+  getRolesLoggedInUserCanAssign(companyId) {
+    Meteor.call('getRolesLoggedInUserCanAssign', companyId, (err, result) => {
+      if (err) {
+        console.log('failed to getRolesLoggedInUserCanAssign', err);
+      } else {
+        // console.log('success getting getRolesLoggedInUserCanAssign', result);
+        this.roles = result;
+        if (this.roles.length === 1) {
+          // cause the role to be selected
+          this.roles[0].ticked = true;
         }
       }
+    });
+  }
+
+  _updateDependencies() {
+    const companies = this.getReactively('companies', true);
+    const companiesSelectedLength = this.getReactively('companiesSelected.length');
+    const companySelectedId = this.getReactively('companiesSelected[0]._id');
+    const companyIdFilteringBy = this.getReactively('companyIdToFilterBy');
+    if (companies &&
+        companiesSelectedLength === 0) {
+      if (companies.length === 1) {
+        // cause the company to be selected
+        console.log('hello');
+        companies[0].ticked = true;
+        console.log('goodbye');
+      } else if (companies.length > 0 && companyIdFilteringBy) {
+        const company = _.find(companies, (_company) => _company._id === companyIdFilteringBy);
+        if (company) {
+          // cause the company to be selected
+          console.log('hello again');
+          company.ticked = true;
+          console.log('goodbye again');
+        }
+      }
+    }
+    if (companies &&
+        companiesSelectedLength === 1 &&
+        companyIdFilteringBy !== companySelectedId) {
+      console.log('hello yet again');
+      this.companyIdToFilterBy = companySelectedId;
+      this.getRolesLoggedInUserCanAssign(this.companyIdToFilterBy);
+      console.log('goodbye yet again');
     }
   }
 }

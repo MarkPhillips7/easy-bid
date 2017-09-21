@@ -75,6 +75,34 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
           }
         }
       })
+      // .state('user', {
+      //   url: '/users/:userId?c',
+      //   template: '<user></user>',
+      //   resolve: {
+      //     currentUser: ($q) => {
+      //       if (Meteor.userId() == null) {
+      //         return $q.reject('AUTH_REQUIRED');
+      //       }
+      //       else {
+      //         return $q.resolve();
+      //       }
+      //     }
+      //   }
+      // })
+      .state('users', {
+        url: '/users?c?r',
+        template: '<users></users>',
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
+        }
+      })
       .state('billing', {
         url: '/billing',
         templateUrl: 'client/account/views/billing.html',

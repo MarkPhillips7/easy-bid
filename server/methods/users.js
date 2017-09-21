@@ -1,4 +1,98 @@
+const getRoleObject = (role) => {
+  let name;
+  switch (role) {
+    case Config.roles.systemAdmin:
+      name = 'System Admin';
+      break;
+    case Config.roles.manageTemplates:
+      name = 'Manage Templates';
+      break;
+    case Config.roles.manageUsers:
+      name = 'Manage Users';
+      break;
+    case Config.roles.user:
+      name = 'User';
+      break;
+    case Config.roles.customer:
+      name = 'Customer';
+      break;
+    case Config.roles.guest:
+      name = 'Guest';
+      break;
+    default:
+      name = '[Invalid]';
+      break;
+  }
+  return {
+    id: role,
+    name,
+  };
+}
+
 Meteor.methods({
+  getRolesLoggedInUserCanAssign: function(companyId) {
+    check(companyId, Match.OneOf(String, null));
+
+    console.log(`In getRolesLoggedInUserCanAssign for ${companyId}`);
+
+    const loggedInUser = Meteor.userId();
+
+    if (!loggedInUser) {
+      throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
+    }
+
+    if (companyId === Roles.GLOBAL_GROUP) {
+      // What global roles can this user assign?
+      if (Roles.userIsInRole(loggedInUser, [
+        Config.roles.systemAdmin
+      ], Roles.GLOBAL_GROUP)) {
+        return [
+          getRoleObject(Config.roles.systemAdmin),
+          getRoleObject(Config.roles.manageTemplates),
+          getRoleObject(Config.roles.manageUsers),
+          getRoleObject(Config.roles.user),
+          getRoleObject(Config.roles.customer),
+          getRoleObject(Config.roles.guest),
+        ];
+      } else if (Roles.userIsInRole(loggedInUser, [
+        Config.roles.manageUsers,
+      ], Roles.GLOBAL_GROUP)) {
+        return [
+          getRoleObject(Config.roles.manageTemplates),
+          getRoleObject(Config.roles.manageUsers),
+          getRoleObject(Config.roles.user),
+          getRoleObject(Config.roles.customer),
+          getRoleObject(Config.roles.guest),
+        ];
+      }
+      return [];
+    }
+
+    // companyId is not global
+    if (Roles.userIsInRole(loggedInUser, [
+      Config.roles.systemAdmin,
+      Config.roles.manageUsers
+    ], Roles.GLOBAL_GROUP) ||
+    Roles.userIsInRole(loggedInUser, [
+      Config.roles.manageUsers
+    ], companyId)) {
+      return [
+        getRoleObject(Config.roles.manageTemplates),
+        getRoleObject(Config.roles.manageUsers),
+        getRoleObject(Config.roles.user),
+        getRoleObject(Config.roles.customer),
+        getRoleObject(Config.roles.guest),
+      ];
+    } else if (Roles.userIsInRole(loggedInUser, [
+      Config.roles.user,
+    ], companyId)) {
+      return [
+        getRoleObject(Config.roles.customer),
+        getRoleObject(Config.roles.guest),
+      ];
+    }
+    return [];
+  },
   createUserRelatedToCompany: function(user, companyId) {
     // user like Schema.User but not entirely, so...
     check(user, {
