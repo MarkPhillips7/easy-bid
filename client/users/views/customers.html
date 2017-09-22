@@ -97,7 +97,7 @@
                      ng-click="customers.toggleItemSelection(customer._id)">
             </label>
           </div>
-          <a href="/customers/{{customer._id}}" class="eb-list-group-item-main-a">
+          <a href="/customers/{{customer._id}}?c={{customers.company._id}}" class="eb-list-group-item-main-a">
             <div class="row">
               <div class="col-sm-8">
                 <span class="eb-list-group-item-main-a-left">
