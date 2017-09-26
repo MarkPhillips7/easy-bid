@@ -10,6 +10,7 @@ import treeControl from 'angular-tree-control';
 import 'angular-tree-control/css/tree-control.css';
 import ngSanitize from 'angular-sanitize';
 import toastr from 'angular-toastr';
+import 'angular-toastr/dist/angular-toastr.css';
 import uiRouter from 'angular-ui-router';
 import 'angular-ui-bootstrap';
 import 'bootstrap-ui-datetime-picker/datetime-picker';
