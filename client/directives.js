@@ -17,7 +17,54 @@ angular.module('app')
 //    });
 //  }
 //}])
+  // https://stackoverflow.com/questions/28207033/angularjs-ui-mask-with-ng-pattern/40686169#40686169
+  .directive('patternModel', function patternModelOverwriteDirective() {
+    return {
+      restrict: 'A',
+      require: '?ngModel',
+      priority: 1,
+      compile: function() {
+        var regexp, patternExp;
 
+        return {
+          pre: function(scope, elm, attr, ctrl) {
+            if (!ctrl) return;
+
+            attr.$observe('pattern', function(regex) {
+              /**
+               * The built-in directive will call our overwritten validator
+               * (see below). We just need to update the regex.
+               * The preLink fn guarantees our observer is called first.
+               */
+              if (angular.isString(regex) && regex.length > 0) {
+                regex = new RegExp('^' + regex + '$');
+              }
+
+              if (regex && !regex.test) {
+                //The built-in validator will throw at this point
+                return;
+              }
+
+              regexp = regex || undefined;
+            });
+
+          },
+          post: function(scope, elm, attr, ctrl) {
+            if (!ctrl) return;
+
+            regexp, patternExp = attr.ngPattern || attr.pattern;
+
+            //The postLink fn guarantees we overwrite the built-in pattern validator
+            ctrl.$validators.pattern = function(value) {
+              return ctrl.$isEmpty(value) ||
+                angular.isUndefined(regexp) ||
+                regexp.test(value);
+            };
+          }
+        };
+      }
+    };
+  })
   .directive('ebImgProduct', [function () {
     //Usage:
     //<img data-eb-img-product="{{s.product.imageSource}}"/>

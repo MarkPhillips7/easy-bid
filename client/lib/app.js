@@ -17,6 +17,7 @@ import 'isteven-angular-multiselect/isteven-multi-select';
 import 'isteven-angular-multiselect/isteven-multi-select.css';
 import 'angular-wizard/dist/angular-wizard';
 import 'angular-wizard/dist/angular-wizard.css';
+import uiMask from 'angular-ui-mask';
 
 angular.module('app', [
   'accounts.ui',
@@ -37,6 +38,7 @@ angular.module('app', [
   treeControl,
   'ui.bootstrap',      // ui-bootstrap (ex: carousel, pagination, dialog)
   'ui.bootstrap.datetimepicker',
+  uiMask,
   uiRouter,
 ]);
 

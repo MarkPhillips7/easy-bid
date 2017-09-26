@@ -10,12 +10,13 @@ SetModule('app');
 @View({
   templateUrl: () => 'client/users/views/customer.html'
 })
-@Inject('$state', '$stateParams')
+@Inject('$state', '$stateParams', 'toastr')
 @MeteorReactive
 @LocalInjectables
 class customer {
-  constructor($state, $stateParams) {
+  constructor($state, $stateParams, toastr) {
     this.companyId = this.$stateParams.c;
+    this.emailRegex = SimpleSchema.RegEx.Email;
     this.isNew = this.$stateParams.userId.toLowerCase() === 'new';
     this.savedCustomer = null;
     this.stateOptions = _.chain(Constants.states)
@@ -30,6 +31,8 @@ class customer {
       search: 'Search...',
       nothingSelected : ''
     };
+    this.schemaAddress = Schema.Address._schema;
+    this.toastr = toastr;
 
     this.helpers({
       company: this._company,
@@ -50,21 +53,11 @@ class customer {
 
     if (this.isNew) {
       this.savedCustomer = {
-        emailAddress: '',
-        firstName: '',
-        lastName: '',
-        address: {
-          addressLines: '',
-          city: '',
-          state: '',
-          zipCode: ''
-        },
-        phoneNumber: '',
-        notes: ''
+        ...UsersHelper.emptyFormUser
       };
     } else {
       if (customer) {
-        // savedCustomer needs to be a deep clone of customer
+        // savedCustomer needs to be a deep clone of customer and string properties should not be undefined
         this.savedCustomer = {
           ...customer,
           address: {
@@ -113,17 +106,7 @@ class customer {
   _customer() {
     if (this.isNew) {
       return {
-        emailAddress: '',
-        firstName: '',
-        lastName: '',
-        address: {
-          addressLines: '',
-          city: '',
-          state: '',
-          zipCode: ''
-        },
-        phoneNumber: '',
-        notes: ''
+        ...UsersHelper.emptyFormUser
       };
     } else {
       console.log(`about to get user ${this.$stateParams.userId}`);
@@ -155,8 +138,12 @@ class customer {
     this.$state.go('customers', {c: this.companyId})
   }
 
-  submit() {
+  submit(form) {
     const self = this;
+    if (form.$invalid) {
+      this.toastr.info("Please address field issue(s)");
+      return;
+    }
     // this.customer.state = this.stateOptionsSelected.length > 0 ? this.stateOptionsSelected[0].abbr : '';
     if (this.isNew) {
       Meteor.call('createUserRelatedToCompany', this.customer, this.companyId,
@@ -182,7 +169,7 @@ class customer {
         }
       });
     } else {
-      Meteor.call('updateUserRelatedToCompany', this.customer, this.companyId,
+      Meteor.call('updateUserRelatedToCompany', UsersHelper.cleanUser(this.customer), this.companyId,
         function(err, result){
         if (err) {
           console.log('failed to update customer', err);
