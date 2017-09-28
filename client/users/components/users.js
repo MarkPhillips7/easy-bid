@@ -160,6 +160,7 @@ class users {
         }
       );
     }
+    return [];
   }
 
   _usersCount() {
