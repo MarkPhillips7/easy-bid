@@ -16,10 +16,11 @@ SetModule('app');
 class users {
   constructor($state, $stateParams) {
     this.companiesSelected = [];
-    this.companyIdToFilterBy = this.$stateParams.c;
+    this.companyIdParam = this.$stateParams.c;
     this.itemIdsSelected = [];
     this.perPage = Config.defaultRecordsPerPage;
     this.page = 1;
+    this.roleIdParam = this.$stateParams.r;
     this.roles = [];
     this.rolesSelected = [];
     this.searchText = '';
@@ -135,7 +136,7 @@ class users {
   }
 
   _usersCollection() {
-    const companyIdToFilterBy = this.getReactively('companyIdToFilterBy');
+    const companyIdToFilterBy = this.getReactively('companiesSelected[0]._id');
     const roleToFilterBy = this.getReactively('rolesSelected[0].id');
     if (companyIdToFilterBy && roleToFilterBy) {
       let roleSelector = {};
@@ -155,7 +156,7 @@ class users {
 
   _usersSubscription() {
     // console.log(`about to get usersSubscription for company ${this.companyIdToFilterBy} searching for '${this.searchText}'`);
-    const companyIdToFilterBy = this.getReactively('companyIdToFilterBy');
+    const companyIdToFilterBy = this.getReactively('companiesSelected[0]._id');
     const roleToFilterBy = this.getReactively('rolesSelected[0].id');
     return [
       companyIdToFilterBy,
@@ -179,6 +180,12 @@ class users {
         if (this.roles.length === 1) {
           // cause the role to be selected
           this.roles[0].ticked = true;
+        } else if (this.roles.length > 0 && this.roleIdParam) {
+          const role = _.find(this.roles, (_role) => _role.id === this.roleIdParam);
+          if (role) {
+            // cause the role to be selected
+            role.ticked = true;
+          }
         }
       }
     });
@@ -188,31 +195,30 @@ class users {
     const companies = this.getReactively('companies', true);
     const companiesSelectedLength = this.getReactively('companiesSelected.length');
     const companySelectedId = this.getReactively('companiesSelected[0]._id');
-    const companyIdFilteringBy = this.getReactively('companyIdToFilterBy');
     if (companies &&
         companiesSelectedLength === 0) {
       if (companies.length === 1) {
         // cause the company to be selected
-        console.log('hello');
+        // console.log('hello');
         companies[0].ticked = true;
-        console.log('goodbye');
-      } else if (companies.length > 0 && companyIdFilteringBy) {
-        const company = _.find(companies, (_company) => _company._id === companyIdFilteringBy);
+        this.getRolesLoggedInUserCanAssign(companies[0]._id);
+        // console.log('goodbye');
+      } else if (companies.length > 0 && this.companyIdParam) {
+        const company = _.find(companies, (_company) => _company._id === this.companyIdParam);
         if (company) {
           // cause the company to be selected
-          console.log('hello again');
+          // console.log('hello again');
           company.ticked = true;
-          console.log('goodbye again');
+          this.getRolesLoggedInUserCanAssign(company._id);
+          // console.log('goodbye again');
         }
       }
-    }
-    if (companies &&
+    } else if (companies &&
         companiesSelectedLength === 1 &&
-        companyIdFilteringBy !== companySelectedId) {
-      console.log('hello yet again');
-      this.companyIdToFilterBy = companySelectedId;
-      this.getRolesLoggedInUserCanAssign(this.companyIdToFilterBy);
-      console.log('goodbye yet again');
+        this.companyIdParam !== companySelectedId) {
+      // console.log('hello yet again');
+      this.getRolesLoggedInUserCanAssign(companySelectedId);
+      // console.log('goodbye yet again');
     }
   }
 }

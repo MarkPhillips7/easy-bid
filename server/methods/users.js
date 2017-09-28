@@ -1,33 +1,26 @@
-const getRoleObject = (role) => {
-  let name;
-  switch (role) {
-    case Config.roles.systemAdmin:
-      name = 'System Admin';
-      break;
-    case Config.roles.manageTemplates:
-      name = 'Manage Templates';
-      break;
-    case Config.roles.manageUsers:
-      name = 'Manage Users';
-      break;
-    case Config.roles.user:
-      name = 'User';
-      break;
-    case Config.roles.customer:
-      name = 'Customer';
-      break;
-    case Config.roles.guest:
-      name = 'Guest';
-      break;
-    default:
-      name = '[Invalid]';
-      break;
-  }
-  return {
-    id: role,
-    name,
-  };
-}
+const checkUser = (user) => {
+  // user like Schema.User but not entirely, so...
+  check(user, {
+    emailAddress: String,
+    firstName: String,
+    lastName: String,
+    address: Match.Optional({
+      addressLines: String,
+      city: String,
+      state: String,
+      zipCode: String,
+    }),
+    gender: Match.Optional(String),
+    organization : Match.Optional(String),
+    website: Match.Optional(String),
+    bio: Match.Optional(String),
+    country: Match.Optional(String),
+    subscription: Match.Optional(String),
+    stripeCustomerId: Match.Optional(String),
+    phoneNumber: Match.Optional(String),
+    notes: Match.Optional(String)
+  });
+};
 
 Meteor.methods({
   getRolesLoggedInUserCanAssign: function(companyId) {
@@ -47,22 +40,22 @@ Meteor.methods({
         Config.roles.systemAdmin
       ], Roles.GLOBAL_GROUP)) {
         return [
-          getRoleObject(Config.roles.systemAdmin),
-          getRoleObject(Config.roles.manageTemplates),
-          getRoleObject(Config.roles.manageUsers),
-          getRoleObject(Config.roles.user),
-          getRoleObject(Config.roles.customer),
-          getRoleObject(Config.roles.guest),
+          RolesHelper.getRoleObject(Config.roles.systemAdmin),
+          RolesHelper.getRoleObject(Config.roles.manageTemplates),
+          RolesHelper.getRoleObject(Config.roles.manageUsers),
+          RolesHelper.getRoleObject(Config.roles.user),
+          RolesHelper.getRoleObject(Config.roles.customer),
+          RolesHelper.getRoleObject(Config.roles.guest),
         ];
       } else if (Roles.userIsInRole(loggedInUser, [
         Config.roles.manageUsers,
       ], Roles.GLOBAL_GROUP)) {
         return [
-          getRoleObject(Config.roles.manageTemplates),
-          getRoleObject(Config.roles.manageUsers),
-          getRoleObject(Config.roles.user),
-          getRoleObject(Config.roles.customer),
-          getRoleObject(Config.roles.guest),
+          RolesHelper.getRoleObject(Config.roles.manageTemplates),
+          RolesHelper.getRoleObject(Config.roles.manageUsers),
+          RolesHelper.getRoleObject(Config.roles.user),
+          RolesHelper.getRoleObject(Config.roles.customer),
+          RolesHelper.getRoleObject(Config.roles.guest),
         ];
       }
       return [];
@@ -77,44 +70,34 @@ Meteor.methods({
       Config.roles.manageUsers
     ], companyId)) {
       return [
-        getRoleObject(Config.roles.manageTemplates),
-        getRoleObject(Config.roles.manageUsers),
-        getRoleObject(Config.roles.user),
-        getRoleObject(Config.roles.customer),
-        getRoleObject(Config.roles.guest),
+        RolesHelper.getRoleObject(Config.roles.manageTemplates),
+        RolesHelper.getRoleObject(Config.roles.manageUsers),
+        RolesHelper.getRoleObject(Config.roles.user),
+        RolesHelper.getRoleObject(Config.roles.customer),
+        RolesHelper.getRoleObject(Config.roles.guest),
       ];
     } else if (Roles.userIsInRole(loggedInUser, [
       Config.roles.user,
     ], companyId)) {
       return [
-        getRoleObject(Config.roles.customer),
-        getRoleObject(Config.roles.guest),
+        RolesHelper.getRoleObject(Config.roles.customer),
+        RolesHelper.getRoleObject(Config.roles.guest),
       ];
     }
     return [];
   },
+  getRoleIdsForUserAndCompany: function(userId, companyId) {
+    check(userId, Match.OneOf(String, null));
+    check(companyId, Match.OneOf(String, null));
+
+    if (userId === null || companyId === null) {
+      return [];
+    }
+
+    return _.filter(_.values(Config.roles), (roleId) => Roles.userIsInRole(userId, [roleId], companyId));
+  },
   createUserRelatedToCompany: function(user, companyId) {
-    // user like Schema.User but not entirely, so...
-    check(user, {
-      emailAddress: String,
-      firstName: String,
-      lastName: String,
-      address: Match.Optional({
-        addressLines: String,
-        city: String,
-        state: String,
-        zipCode: String,
-      }),
-      gender: Match.Optional(String),
-      organization : Match.Optional(String),
-      website: Match.Optional(String),
-      bio: Match.Optional(String),
-      country: Match.Optional(String),
-      subscription: Match.Optional(String),
-      stripeCustomerId: Match.Optional(String),
-      phoneNumber: Match.Optional(String),
-      notes: Match.Optional(String)
-    });
+    checkUser(user);
     check(companyId, String);
 
     let loggedInUser = Meteor.userId();
@@ -166,27 +149,7 @@ Meteor.methods({
     return userId;
   },
   updateUserRelatedToCompany: function(user, companyId) {
-    // user like Schema.User but not entirely, so...
-    check(user, {
-      emailAddress: String,
-      firstName: String,
-      lastName: String,
-      address: Match.Optional({
-        addressLines: String,
-        city: String,
-        state: String,
-        zipCode: String,
-      }),
-      gender: Match.Optional(String),
-      organization : Match.Optional(String),
-      website: Match.Optional(String),
-      bio: Match.Optional(String),
-      country: Match.Optional(String),
-      subscription: Match.Optional(String),
-      stripeCustomerId: Match.Optional(String),
-      phoneNumber: Match.Optional(String),
-      notes: Match.Optional(String)
-    });
+    checkUser(user);
     check(companyId, String);
 
     let loggedInUser = Meteor.userId();
@@ -292,11 +255,83 @@ Meteor.methods({
       throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
     }
   },
-  companyIdsRelatedToUser: function (user) {
-    check(user, Match.OneOf(String, null));
+  removeUserRole: function (userId, role, companyId) {
+    check(userId, String);
+    check(role, String);
+    check(companyId, String);
 
+    let loggedInUser = Meteor.userId();
+
+    switch (role) {
+      case Config.roles.systemAdmin:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin], Roles.GLOBAL_GROUP)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+      case Config.roles.manageUsers:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
+        && !Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers], companyId)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+      case Config.roles.user:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
+        && !Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers], companyId)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+      case Config.roles.customer:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
+        && !Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers, Config.roles.user], companyId)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+      case Config.roles.guest:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
+        && !Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers, Config.roles.user], companyId)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+    }
+
+    const user =  Meteor.users.findOne(userId);
     if (user) {
-      let companiesRelatedToUser = Roles.getGroupsForUser(user);
+      let roles;
+      const rolesForCompany = user.roles && user.roles[companyId];
+
+      if (rolesForCompany) {
+        if (_.some(rolesForCompany, function (_role) {
+          return _role === role;
+        })) {
+          const roleIndex = _.indexOf(rolesForCompany, role);
+          console.log(`weird stuff: ${roleIndex} ${rolesForCompany.length}`);
+          roles = [
+            ..._.first(rolesForCompany, roleIndex),
+            ..._.rest(rolesForCompany, roleIndex + 1),
+          ];
+        } else {
+          console.log(`${user.profile.firstName} ${user.profile.lastName} already does not have ${role} role`);
+          return;
+        }
+      }
+
+      if (!roles) {
+        // user already does not have role, so just return
+        console.log(`${user.profile.firstName} ${user.profile.lastName} already does not have ${role} role`);
+        return;
+      }
+
+      Roles.setUserRoles(userId, roles, companyId);
+      console.log(`${roles.length}, ${user.profile.firstName} ${user.profile.lastName} had ${role} role removed`);
+    } else {
+      throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
+    }
+  },
+  companyIdsRelatedToUser: function (userId) {
+    check(userId, Match.OneOf(String, null));
+
+    if (userId) {
+      let companiesRelatedToUser = Roles.getGroupsForUser(userId);
       return Companies.find(
         {
           '_id' : { $in: companiesRelatedToUser }
@@ -308,14 +343,14 @@ Meteor.methods({
 
     return [];
   },
-  checkUserPlan: function (user) {
-    if (user == null){
+  checkUserPlan: function (userId) {
+    if (userId == null){
       return false;
     }
 
-    check(user, String);
+    check(userId, String);
 
-    let getUser = Meteor.users.findOne({"_id": user}, {fields: {"profile.subscription": 1}});
+    let getUser = Meteor.users.findOne({"_id": userId}, {fields: {"profile.subscription": 1}});
     let subscription = getUser.profile.subscription;
 
     if (!subscription || !subscription.plan) {// || !currentPlan.amount){

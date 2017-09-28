@@ -96,7 +96,7 @@
 //     this.customer = customer;
 //     this.job = job;
 //     // this.companyId = this.$stateParams.c;
-//     // this.customerId = this.$stateParams.r;
+//     // this.customerId = this.$stateParams.u;
 //     // this.jobId = this.$stateParams.bidId;
 //     //
 //     // this.helpers({

@@ -20,7 +20,7 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         template: '<test></test>'
       })
       .state('bid', {
-        url: '/bids/:bidId?c&r',
+        url: '/bids/:bidId?c&u',
         template: '<bid></bid>',
         resolve: {
           currentUser: ($q) => {
@@ -34,7 +34,7 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         }
       })
       .state('bids', {
-        url: '/bids?c&r',
+        url: '/bids?c&u',
         template: '<bids></bids>',
         resolve: {
           currentUser: ($q) => {
@@ -75,22 +75,22 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
           }
         }
       })
-      // .state('user', {
-      //   url: '/users/:userId?c',
-      //   template: '<user></user>',
-      //   resolve: {
-      //     currentUser: ($q) => {
-      //       if (Meteor.userId() == null) {
-      //         return $q.reject('AUTH_REQUIRED');
-      //       }
-      //       else {
-      //         return $q.resolve();
-      //       }
-      //     }
-      //   }
-      // })
+      .state('user', {
+        url: '/users/:userId?c&r',
+        template: '<user></user>',
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
+        }
+      })
       .state('users', {
-        url: '/users?c?r',
+        url: '/users?c&r',
         template: '<users></users>',
         resolve: {
           currentUser: ($q) => {
@@ -122,6 +122,20 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
         url: '/billing/plan',
         templateUrl: 'client/account/views/billing-plan.html',
         controller: 'billing',
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
+        }
+      })
+      .state('roles', {
+        url: '/roles?c&u',
+        template: '<roles></roles>',
         resolve: {
           currentUser: ($q) => {
             if (Meteor.userId() == null) {

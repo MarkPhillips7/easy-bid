@@ -17,7 +17,7 @@ class bids {
   constructor($state, $stateParams) {
     this.itemIdsSelected = [];
     this.companyIdToFilterBy = this.$stateParams.c;
-    this.customerIdToFilterBy = this.$stateParams.r;
+    this.customerIdToFilterBy = this.$stateParams.u;
     this.perPage = Config.defaultRecordsPerPage;
     this.page = 1;
     this.sort = {

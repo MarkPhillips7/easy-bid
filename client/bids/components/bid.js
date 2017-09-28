@@ -29,7 +29,7 @@ class bid {
     this.columnTemplates = [];
     this.companyId = this.$stateParams.c;
     this.companyTemplate = null;
-    this.customerId = this.$stateParams.r;
+    this.customerId = this.$stateParams.u;
     this.customerTemplate = null;
     this.fullHierarchyTree = {};
     this.fullHierarchyTreeData = [];

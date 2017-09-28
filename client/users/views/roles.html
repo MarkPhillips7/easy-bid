@@ -1,0 +1,53 @@
+<div class="container">
+  <div class="row">
+    <div class="col-sm-3">
+      <div class="form-group">
+        <label for="company">Company</label>
+        <br/>
+        <isteven-multi-select directive-id="company"
+          input-model="roles.companies"
+          output-model="roles.companiesSelected"
+          helper-elements="filter"
+          search-property="name"
+          button-label="name"
+          item-label="name"
+          tick-property="ticked"
+          selection-mode="single">
+        </isteven-multi-select>
+      </div>
+      <div class="form-group">
+        <label for="user">User</label>
+        <br/>
+        <isteven-multi-select directive-id="user"
+          disabled="true"
+          input-model="roles.users"
+          output-model="roles.usersSelected"
+          helper-elements="filter"
+          search-property="name"
+          button-label="name"
+          item-label="name"
+          tick-property="ticked"
+          selection-mode="single">
+        </isteven-multi-select>
+      </div>
+    </div>
+    <div class="col-sm-5">
+      <h3>Roles</h3>
+      <ul class="list-group">
+          <li ng-repeat="role in roles.rolesAvailable"
+              ng-class="roles.getRoleListItemClass(role)">
+            <div class="eb-role-info pull-left">
+              <i ng-class="roles.getRoleIconClass(role)"></i> {{role.name}}
+            </div>
+            <span class="pull-right">
+              <button ng-class="roles.getRoleButtonClass(role)"
+                      ng-disabled="roles.getRoleButtonDisabled(role)"
+                      ng-click="roles.toggleRoleClick(role)">
+                {{roles.getRoleButtonText(role)}}
+              </button>
+            </span>
+          </li>
+      </div>
+    </div>
+  </div>
+</div>
