@@ -42,6 +42,7 @@ class users {
     this.helpers({
       areAnyItemsSelected: this._areAnyItemsSelected,
       companies: this._companiesCollection,
+      companiesForSelect: this._companiesForSelect,
       company: this._company,
       currentUserId: this._currentUserId,
       users: this._usersCollection,
@@ -125,6 +126,17 @@ class users {
     ]
   }
 
+  _companiesForSelect() {
+    const companies = this.getReactively('companies', true);
+    if (Roles.userIsInRole(Meteor.userId(), [Config.roles.systemAdmin], Roles.GLOBAL_GROUP)) {
+      return [
+        {name: '[ GLOBAL - ALL COMPANIES! ]', _id: Roles.GLOBAL_GROUP},
+        ...companies
+      ];
+    }
+    return companies;
+  }
+
   _company() {
     return Companies.findOne({ _id: this.getReactively('companiesSelected[0]._id') });
   }
@@ -192,7 +204,7 @@ class users {
   }
 
   _updateDependencies() {
-    const companies = this.getReactively('companies', true);
+    const companies = this.getReactively('companiesForSelect', true);
     const companiesSelectedLength = this.getReactively('companiesSelected.length');
     const companySelectedId = this.getReactively('companiesSelected[0]._id');
     if (companies &&

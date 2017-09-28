@@ -74,7 +74,7 @@
 
         <!-- reason for helper-elements="filter": https://github.com/isteven/angular-multi-select/issues/496 -->
         <isteven-multi-select directive-id="company"
-          input-model="users.companies"
+          input-model="users.companiesForSelect"
           output-model="users.companiesSelected"
           helper-elements="filter"
           search-property="name"
@@ -110,7 +110,7 @@
                      ng-click="users.toggleItemSelection(user._id)">
             </label>
           </div>
-          <a href="/users/{{user._id}}?c={{users.company._id}}&r={{users.rolesSelected[0].id}}" class="eb-list-group-item-main-a">
+          <a href="/users/{{user._id}}?c={{users.companiesSelected[0]._id}}&r={{users.rolesSelected[0].id}}" class="eb-list-group-item-main-a">
             <div class="row">
               <div class="col-sm-8">
                 <span class="eb-list-group-item-main-a-left">

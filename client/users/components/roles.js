@@ -27,6 +27,7 @@ class roles {
 
     this.helpers({
       companies: this._companiesCollection,
+      companiesForSelect: this._companiesForSelect,
       company: this._company,
       // roleIdsActive: this._roleIdsActive,
       user: this._user,
@@ -58,6 +59,17 @@ class roles {
       },
       ''
     ]
+  }
+
+  _companiesForSelect() {
+    const companies = this.getReactively('companies', true);
+    if (Roles.userIsInRole(Meteor.userId(), [Config.roles.systemAdmin], Roles.GLOBAL_GROUP)) {
+      return [
+        {name: '[ GLOBAL - ALL COMPANIES! ]', _id: Roles.GLOBAL_GROUP},
+        ...companies
+      ];
+    }
+    return companies;
   }
 
   _company() {
@@ -234,7 +246,7 @@ class roles {
   }
 
   _updateDependencies() {
-    const companies = this.getReactively('companies', true);
+    const companies = this.getReactively('companiesForSelect', true);
     const companiesSelectedLength = this.getReactively('companiesSelected.length');
     const companySelectedId = this.getReactively('companiesSelected[0]._id');
     if (companies &&
@@ -259,7 +271,8 @@ class roles {
         companiesSelectedLength === 1 &&
         this.companyIdParam !== companySelectedId) {
       // console.log('hello yet again');
-      this.getCompanyDependencies(companySelectedId);
+      this.$state.go('roles', {c: companySelectedId, u: this.userId});
+      // this.getCompanyDependencies(companySelectedId);
       // console.log('goodbye yet again');
     }
   }
