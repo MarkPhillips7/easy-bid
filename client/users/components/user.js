@@ -162,14 +162,14 @@ class user {
           let userId = result;
 
           // Now need to add the role indicating user is user of company
-          Meteor.call('addUserRole', userId, Config.roles.user, self.companyId,
+          Meteor.call('addUserRole', userId, self.roleId, self.companyId,
             function(err, result) {
             if (err) {
               console.log('failed to add role for new user', err);
             } else {
               // console.log('success adding role for new user', result);
 
-              self.$state.go('users', {c: self.companyId})
+              self.$state.go('users', {c: self.companyId, r: self.roleId})
             }
           });
         }
@@ -181,7 +181,7 @@ class user {
           console.log('failed to update user', err);
         } else {
           // console.log('success creating user', result);
-          self.$state.go('users', {c: self.companyId})
+          self.$state.go('users', {c: self.companyId, r: self.roleId})
         }
       });
     }

@@ -7,8 +7,12 @@
     <nav class="navbar navbar-fixed-top">
       <div class="container">
         <div class="navbar-header">
-          <a ng-if="$root.isInRole('system-admin')" class="navbar-brand" href="/companies">Companies</a>
-          <a ng-if="$root.isInRole('system-admin') || $root.isInRole('manage-users')" class="navbar-brand" href="/users">Users</a>
+          <a ng-if="$root.isInRole('system-admin') || $root.isInRole('manage-users')"
+             class="navbar-brand"
+             href="/companies">Companies</a>
+          <a ng-if="$root.isInRole('system-admin') || $root.isInRole('manage-users')"
+             class="navbar-brand"
+             href="/users">Users</a>
           <a class="navbar-brand" href="/customers">Customers</a>
           <a class="navbar-brand" href="/bids">Bids</a>
           <a class="navbar-brand" href="/billing">Billing</a>
