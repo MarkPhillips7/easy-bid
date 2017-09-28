@@ -94,7 +94,10 @@ Meteor.methods({
       return [];
     }
 
-    return _.filter(_.values(Config.roles), (roleId) => Roles.userIsInRole(userId, [roleId], companyId));
+    const user =  Meteor.users.findOne(userId);
+    if (user) {
+      return user.roles && user.roles[companyId];
+    }
   },
   createUserRelatedToCompany: function(user, companyId) {
     checkUser(user);

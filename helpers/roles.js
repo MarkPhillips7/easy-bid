@@ -11,7 +11,7 @@ export const getRoleObject = (roleId) => {
       name = 'Manage Users';
       break;
     case Config.roles.user:
-      name = 'User';
+      name = 'Manage Bids';
       break;
     case Config.roles.customer:
       name = 'Customer';

@@ -170,9 +170,10 @@ class roles {
   }
 
   confirmAddRole(role) {
+    const addRole = () => this.addRole(role);
     this.bootstrapDialog.confirmationDialog("Add Role",
       `Are you sure you want to add ${role.name} role to ${this.user.profile.firstName} ${this.user.profile.lastName} in relation to ${this.company.name}?`)
-      .then(this.addRole(role));
+      .then(addRole);
   }
 
   removeRole(role) {
@@ -189,9 +190,10 @@ class roles {
   }
 
   confirmRemoveRole(role) {
+    const removeRole = () => this.removeRole(role);
     this.bootstrapDialog.confirmationDialog("Remove Role",
       `Are you sure you want to remove ${role.name} role from ${this.user.profile.firstName} ${this.user.profile.lastName} in relation to ${this.company.name}?`)
-      .then(this.removeRole(role));
+      .then(removeRole);
   }
 
   toggleRoleClick(role) {
