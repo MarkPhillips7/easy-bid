@@ -36,7 +36,11 @@ Meteor.publish("templateLibraries", function (options, searchString) {
     $and : [{
       'name': {'$regex': '.*' + searchString || '' + '.*', '$options': 'i'}
     }, {
-      'ownerCompanyId' : { $in: companyIdsRelatedToUser }
+      $or: [{
+        'ownerCompanyId' : null
+      }, {
+        'ownerCompanyId' : { $in: companyIdsRelatedToUser }
+      }],
     }]
   },{
     noReady: true
@@ -46,7 +50,11 @@ Meteor.publish("templateLibraries", function (options, searchString) {
     $and : [{
       'name': {'$regex': '.*' + searchString || '' + '.*', '$options': 'i'}
     }, {
-      'ownerCompanyId' : { $in: companyIdsRelatedToUser }
+      $or: [{
+        'ownerCompanyId' : null
+      }, {
+        'ownerCompanyId' : { $in: companyIdsRelatedToUser }
+      }]
     }]
   },options);
 });

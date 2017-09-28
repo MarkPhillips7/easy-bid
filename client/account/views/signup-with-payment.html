@@ -25,10 +25,10 @@
           <label for="password">Password</label>
           <input type="password" name="password" class="form-control" placeholder="Password" ng-model="vm.client.password">
         </div>
-        <div class="form-group">
-          <label for="companyName">Company Name</label>
-          <input type="text" name="companyName" class="form-control" placeholder="Company Name" ng-model="vm.client.companyName">
-        </div>
+        <h4 class="page-header">Payment Information</h4>
+        <label>Pick a plan <em>(can always change later)</em></label>
+        <ng-include src="'client/account/views/select-plan.html'"></ng-include>
+        <ng-include src="'client/account/views/credit-card.html'"></ng-include>
         <div class="form-group">
           <input type="submit" class="btn btn-success btn-block" data-loading-text="Setting up your trial..."
                  ng-click="vm.submit()" ng-disabled="vm.creatingTrialClient"
