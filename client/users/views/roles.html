@@ -34,20 +34,20 @@
     <div class="col-sm-5">
       <h3>Roles</h3>
       <ul class="list-group">
-          <li ng-repeat="role in roles.rolesAvailable"
-              ng-class="roles.getRoleListItemClass(role)">
-            <div class="eb-role-info pull-left">
-              <i ng-class="roles.getRoleIconClass(role)"></i> {{role.name}}
-            </div>
-            <span class="pull-right">
-              <button ng-class="roles.getRoleButtonClass(role)"
-                      ng-disabled="roles.getRoleButtonDisabled(role)"
-                      ng-click="roles.toggleRoleClick(role)">
-                {{roles.getRoleButtonText(role)}}
-              </button>
-            </span>
-          </li>
-      </div>
+        <li ng-repeat="role in roles.rolesAvailable"
+            ng-class="roles.getRoleListItemClass(role)">
+          <div class="eb-role-info pull-left">
+            <i ng-class="roles.getRoleIconClass(role)"></i> {{role.name}}
+          </div>
+          <span class="pull-right">
+            <button ng-class="roles.getRoleButtonClass(role)"
+                    ng-disabled="roles.getRoleButtonDisabled(role)"
+                    ng-click="roles.toggleRoleClick(role)">
+              {{roles.getRoleButtonText(role)}}
+            </button>
+          </span>
+        </li>
+      </ul>
     </div>
   </div>
 </div>

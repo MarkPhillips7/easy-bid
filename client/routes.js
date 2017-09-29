@@ -103,6 +103,20 @@ angular.module("app").config(['$urlRouterProvider', '$stateProvider', '$location
           }
         }
       })
+      .state('inviteUsers', {
+        url: '/invite/users?c&r',
+        template: '<invite-users></invite-users>',
+        resolve: {
+          currentUser: ($q) => {
+            if (Meteor.userId() == null) {
+              return $q.reject('AUTH_REQUIRED');
+            }
+            else {
+              return $q.resolve();
+            }
+          }
+        }
+      })
       .state('billing', {
         url: '/billing',
         templateUrl: 'client/account/views/billing.html',

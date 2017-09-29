@@ -258,6 +258,67 @@ Meteor.methods({
       throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
     }
   },
+  getUserAndRoleInfo: function (emailAddressesText, role, companyId) {
+    check(emailAddressesText, String);
+    check(role, String);
+    check(companyId, String);
+
+    let loggedInUser = Meteor.userId();
+
+    switch (role) {
+      case Config.roles.systemAdmin:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin], Roles.GLOBAL_GROUP)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+      case Config.roles.manageUsers:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
+        && !Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers], companyId)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+      case Config.roles.user:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
+        && !Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers], companyId)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+      case Config.roles.customer:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
+        && !Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers, Config.roles.user], companyId)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+      case Config.roles.guest:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
+        && !Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers, Config.roles.user], companyId)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+    }
+
+    const emailRegularExpression = new RegExp(
+      `[a-zA-Z0-9.!#$%&'*+/=?^_\`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*`,
+      'g');
+    // const regularExpressionResults = emailRegularExpression.exec(emailAddressesText);
+    // if (!regularExpressionResults) {
+    //   return [];
+    // }
+    const emailAddresses = emailAddressesText.match(emailRegularExpression);
+    return emailAddresses
+    ? _.map(emailAddresses, (emailAddress) => {
+      const theUser = Accounts.findUserByEmail(emailAddress);
+      const userAndRoleInfo = {
+        emailAddress,
+        name: theUser ? `${theUser.profile.firstName} ${theUser.profile.lastName}` : '',
+        userExists: !!theUser,
+        isInRole: theUser ? Roles.userIsInRole(theUser, [role], companyId) : false,
+      };
+      console.log(`role: ${role}, userAndRoleInfo: ${JSON.stringify(userAndRoleInfo)}`);
+      return userAndRoleInfo;
+    })
+    : [];
+  },
   removeUserRole: function (userId, role, companyId) {
     check(userId, String);
     check(role, String);

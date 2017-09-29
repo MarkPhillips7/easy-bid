@@ -1,0 +1,61 @@
+<div class="container">
+  <h2>Invite Users</h2>
+  <p>
+    Invite people for <strong>{{inviteUsers.role.name}}</strong>
+    role in relation to <strong>{{inviteUsers.company.name}}</strong>
+  </p>
+  <p>
+    Enter email addresses and then click <em>Preview Actions</em>.
+  </p>
+    <form class="form"
+          ng-submit="inviteUsers.submit(userForm)"
+          novalidate="novalidate"
+          role="form"
+          name="userForm">
+      <div class="form-group">
+        <label class="control-label" for="EmailAddresses">Email Addresses</label>
+        <textarea class="form-control" rows="3" id="EmailAddresses"
+                  ng-model="inviteUsers.emailAddresses">
+        </textarea>
+      </div>
+      <div class="form-group">
+        <input type="button"
+               class="btn btn-primary"
+               ng-click="inviteUsers.previewActions()"
+               ng-disabled="inviteUsers.emailAddresses === inviteUsers.originalEmailAddresses || inviteUsers.saving"
+               value="Preview Actions">
+        <input type="button"
+               class="btn btn-danger"
+               ng-click="inviteUsers.cancelInvite()"
+               ng-disabled="inviteUsers.saving"
+               ng-show="!(inviteUsers.pendingActions.length >= 0)"
+               value="Cancel">
+      </div>
+      <h3 ng-show="inviteUsers.pendingActions.length >= 0">Pending Actions</h3>
+      <ul class="list-group">
+        <p ng-show="inviteUsers.pendingActions.length === 0">No email addresses found in text provided</p>
+        <li ng-repeat="pendingAction in inviteUsers.pendingActions"
+            class="list-group-item clearfix">
+          <div class="pull-left">
+            <i ng-class="inviteUsers.getPreviewActionIconClass(pendingAction)"></i>
+            {{inviteUsers.getPreviewActionText(pendingAction)}}
+          </div>
+          <span class="pull-right">
+            {{pendingAction.emailAddress}}
+          </span>
+        </li>
+      </ul>
+      <div class="form-group"
+           ng-show="inviteUsers.pendingActions.length >= 0">
+        <input type="submit"
+               class="btn btn-success"
+               ng-disabled="!(inviteUsers.pendingActions.length > 0) || inviteUsers.saving"
+               value="Add Roles / Send Invitations">
+        <input type="button"
+               class="btn btn-danger"
+               ng-click="inviteUsers.cancelInvite()"
+               ng-disabled="inviteUsers.saving"
+               value="Cancel">
+      </div>
+    </form>
+</div>
