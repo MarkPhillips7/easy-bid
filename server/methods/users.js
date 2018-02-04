@@ -22,6 +22,24 @@ const checkUser = (user) => {
   });
 };
 
+const getNewRolesForCompany = (user, companyId, roleToAdd) => {
+  const rolesForCompany = user.roles && user.roles[companyId];
+
+  if (rolesForCompany) {
+    if (_.some(rolesForCompany, function (_role) {
+      return _role === roleToAdd;
+    })) {
+      // user already has roleToAdd, so just return
+      console.log(`${user.profile.firstName} ${user.profile.lastName} already had ${roleToAdd} role`);
+      return;
+    } else {
+      return [ ...rolesForCompany, roleToAdd];
+    }
+  }
+
+  return [roleToAdd];
+};
+
 Meteor.methods({
   getRolesLoggedInUserCanAssign: function(companyId) {
     check(companyId, Match.OneOf(String, null));
@@ -192,14 +210,14 @@ Meteor.methods({
 
     return userId;
   },
-  addUserRole: function (userId, role, companyId) {
+  addUserRole: function (userId, roleToAdd, companyId) {
     check(userId, String);
-    check(role, String);
+    check(roleToAdd, String);
     check(companyId, String);
 
     let loggedInUser = Meteor.userId();
 
-    switch (role) {
+    switch (roleToAdd) {
       case Config.roles.systemAdmin:
         if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin], Roles.GLOBAL_GROUP)) {
           throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
@@ -233,27 +251,9 @@ Meteor.methods({
 
     const user =  Meteor.users.findOne(userId);
     if (user) {
-      let roles;
-      const rolesForCompany = user.roles && user.roles[companyId];
-
-      if (rolesForCompany) {
-        if (_.some(rolesForCompany, function (_role) {
-          return _role === role;
-        })) {
-          // user already has role, so just return
-          console.log(`${user.profile.firstName} ${user.profile.lastName} already had ${role} role`);
-          return;
-        } else {
-          roles = [ ...rolesForCompany, role];
-        }
-      }
-
-      if (!roles) {
-        roles = [role];
-      }
-
+      const roles = getNewRolesForCompany(user, companyId, roleToAdd);
       Roles.setUserRoles(userId, roles, companyId);
-      console.log(`${user.profile.firstName} ${user.profile.lastName} was given ${role} role`);
+      console.log(`${user.profile.firstName} ${user.profile.lastName} was given ${roleToAdd} role`);
     } else {
       throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
     }
@@ -300,10 +300,6 @@ Meteor.methods({
     const emailRegularExpression = new RegExp(
       `[a-zA-Z0-9.!#$%&'*+/=?^_\`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*`,
       'g');
-    // const regularExpressionResults = emailRegularExpression.exec(emailAddressesText);
-    // if (!regularExpressionResults) {
-    //   return [];
-    // }
     const emailAddresses = emailAddressesText.match(emailRegularExpression);
     return emailAddresses
     ? _.map(emailAddresses, (emailAddress) => {
@@ -318,6 +314,67 @@ Meteor.methods({
       return userAndRoleInfo;
     })
     : [];
+  },
+  addRolesSendInvitations: function (pendingActions, roleToAdd, companyId) {
+    check(pendingActions, [{
+      emailAddress: String,
+      name: String,
+      userExists: Boolean,
+      isInRole: Boolean,
+    }]);
+    check(roleToAdd, String);
+    check(companyId, String);
+
+    let loggedInUser = Meteor.userId();
+
+    switch (roleToAdd) {
+      case Config.roles.systemAdmin:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin], Roles.GLOBAL_GROUP)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+      case Config.roles.manageUsers:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
+        && !Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers], companyId)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+      case Config.roles.user:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
+        && !Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers], companyId)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+      case Config.roles.customer:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
+        && !Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers, Config.roles.user], companyId)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+      case Config.roles.guest:
+        if (!Roles.userIsInRole(loggedInUser, [Config.roles.systemAdmin, Config.roles.manageUsers], Roles.GLOBAL_GROUP)
+        && !Roles.userIsInRole(loggedInUser, [Config.roles.manageUsers, Config.roles.user], companyId)) {
+          throw new Meteor.Error('not-authorized', 'Sorry, you are not authorized.');
+        }
+        break;
+    }
+
+    _.each(pendingActions, (pendingAction) => {
+      if (pendingAction.userExists) {
+        const user = Accounts.findUserByEmail(pendingAction.emailAddress);
+        const userId = user && user._id;
+        if (!pendingAction.isInRole) {
+          const roles = getNewRolesForCompany(user, companyId, roleToAdd);
+          Roles.setUserRoles(userId, roles, companyId);
+          // console.log(`${user.profile.firstName} ${user.profile.lastName} was given ${roleToAdd} role`);
+
+          // Send email to user that a new role has been added?
+        }
+      } else {
+        // Send email to user indicating that invited with role related to company and will have role after signing up
+        // pendingAction.emailAddress
+      }
+    });
   },
   removeUserRole: function (userId, role, companyId) {
     check(userId, String);
@@ -360,7 +417,6 @@ Meteor.methods({
 
     const user =  Meteor.users.findOne(userId);
     if (user) {
-      let roles;
       const rolesForCompany = user.roles && user.roles[companyId];
 
       if (rolesForCompany) {

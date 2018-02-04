@@ -81,45 +81,23 @@ class inviteUsers {
   }
 
   submit(form) {
-    const self = this;
-    if (form.$invalid) {
-      this.toastr.info("Please address field issue(s)");
-      return;
-    }
-    // this.user.state = this.stateOptionsSelected.length > 0 ? this.stateOptionsSelected[0].abbr : '';
-    if (this.isNew) {
-      Meteor.call('createUserRelatedToCompany', this.user, this.companyId,
-        function(err, result){
+    Meteor.call('addRolesSendInvitations', this.pendingActions, this.roleId, this.companyId,
+      (err, result) => {
         if (err) {
-          console.log('failed to create new user', err);
+          console.log('failed to addRolesSendInvitations', err);
         } else {
-          // console.log('success creating user', result);
-
-          let userId = result;
-
-          // Now need to add the role indicating user is user of company
-          Meteor.call('addUserRole', userId, self.roleId, self.companyId,
-            function(err, result) {
-            if (err) {
-              console.log('failed to add role for new user', err);
-            } else {
-              // console.log('success adding role for new user', result);
-
-              self.$state.go('users', {c: self.companyId, r: self.roleId})
-            }
-          });
+          // const addRoleCount = _.filter(this.pendingActions, (pendingAction) => pendingAction.userExists && !pendingAction.isInRole).length;
+          // const addedRolesText = addRoleCount > 0 ? `added ${addRoleCount} role${addRoleCount > 1 ? 's' : ''}` : '';
+          // const sendInvitationCount = _.filter(this.pendingActions, (pendingAction) => !pendingAction.userExists).length;
+          // const sentInvitationsText = sendInvitationCount > 0 ? `${addedRolesText ? ', ' : ''}sent ${sendInvitationCount} invitation${sendInvitationCount > 1 ? 's' : ''}` : '';
+          // const doNothingCount = _.filter(this.pendingActions, (pendingAction) => pendingAction.userExists && pendingAction.isInRole).length;
+          // const didNothingText = doNothingCount > 0 ? `${addedRolesText || sentInvitationsText ? ', ' : ''}did nothing for ${doNothingCount} user${doNothingCount > 1 ? 's' : ''} already having desired role` : '';
+          // const successMessage = `Successfully ${addedRolesText}${sentInvitationsText}${didNothingText}`;
+          const successMessage = 'Successfully added roles / sent invitations';
+          this.toastr.success(successMessage);
+          this.$state.go('users', {c: this.companyId, r: this.roleId})
         }
-      });
-    } else {
-      Meteor.call('updateUserRelatedToCompany', UsersHelper.cleanUser(this.user), this.companyId,
-        function(err, result){
-        if (err) {
-          console.log('failed to update user', err);
-        } else {
-          // console.log('success creating user', result);
-          self.$state.go('users', {c: self.companyId, r: self.roleId})
-        }
-      });
-    }
+      }
+    );
   }
 }

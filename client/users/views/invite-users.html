@@ -34,7 +34,8 @@
       <h3 ng-show="inviteUsers.pendingActions.length >= 0">Pending Actions</h3>
       <ul class="list-group">
         <p ng-show="inviteUsers.pendingActions.length === 0">No email addresses found in text provided</p>
-        <li ng-repeat="pendingAction in inviteUsers.pendingActions"
+        <!-- track by necessary in ng-repeat so that angular does not insert $$hashKey -->
+        <li ng-repeat="pendingAction in inviteUsers.pendingActions track by pendingAction.emailAddress"
             class="list-group-item clearfix">
           <div class="pull-left">
             <i ng-class="inviteUsers.getPreviewActionIconClass(pendingAction)"></i>
