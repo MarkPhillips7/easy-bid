@@ -310,7 +310,7 @@ Meteor.methods({
         userExists: !!theUser,
         isInRole: theUser ? Roles.userIsInRole(theUser, [role], companyId) : false,
       };
-      console.log(`role: ${role}, userAndRoleInfo: ${JSON.stringify(userAndRoleInfo)}`);
+      // console.log(`role: ${role}, userAndRoleInfo: ${JSON.stringify(userAndRoleInfo)}`);
       return userAndRoleInfo;
     })
     : [];
@@ -371,6 +371,31 @@ Meteor.methods({
           // Send email to user that a new role has been added?
         }
       } else {
+        // First see if user has already been invited
+        let selector = {
+          '$and': [
+            {
+              'emailLower': pendingAction.emailAddress.toLowerCase(),
+            }, {
+              'companyId': companyId
+            }, {
+              'role': roleToAdd
+            },
+          ]
+        };
+        const invitedUser = InvitedUsers.findOne(selector);
+        console.log(invitedUser);
+        if (!invitedUser) {
+          const invitedUserId = InvitedUsers.insert({
+            email: pendingAction.emailAddress,
+            emailLower: pendingAction.emailAddress.toLowerCase(),
+            companyId: companyId,
+            role: roleToAdd,
+            expirationDate: moment().endOf('day').add(1, 'months').toDate(),
+            createdBy: loggedInUser,
+            createdAt: new Date(),
+          });
+        }
         // Send email to user indicating that invited with role related to company and will have role after signing up
         // pendingAction.emailAddress
       }
