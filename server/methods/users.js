@@ -398,6 +398,7 @@ Meteor.methods({
         }
         // Send email to user indicating that invited with role related to company and will have role after signing up
         // pendingAction.emailAddress
+        Accounts.sendEnrollmentEmail(userId, [email], [extraTokenData])
       }
     });
   },
