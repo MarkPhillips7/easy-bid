@@ -258,8 +258,12 @@ Meteor.methods({
       throw new Meteor.Error('user-not-found', 'Sorry, user not found.');
     }
   },
-  getUserAndRoleInfo: function (emailAddressesText, role, companyId) {
-    check(emailAddressesText, String);
+  getUserAndRoleInfo: function (userBasics, role, companyId) {
+    check(userBasics, {
+      email: String,
+      firstName: String,
+      lastName: String,
+    });
     check(role, String);
     check(companyId, String);
 
@@ -300,24 +304,26 @@ Meteor.methods({
     const emailRegularExpression = new RegExp(
       `[a-zA-Z0-9.!#$%&'*+/=?^_\`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*`,
       'g');
-    const emailAddresses = emailAddressesText.match(emailRegularExpression);
-    return emailAddresses
-    ? _.map(emailAddresses, (emailAddress) => {
-      const theUser = Accounts.findUserByEmail(emailAddress);
-      const userAndRoleInfo = {
-        emailAddress,
-        name: theUser ? `${theUser.profile.firstName} ${theUser.profile.lastName}` : '',
+    const emailAddresses = userBasics.email.match(emailRegularExpression);
+    if (emailAddresses) {
+      const theUser = Accounts.findUserByEmail(userBasics.email);
+      return {
+        emailAddress: userBasics.email,
+        firstName: userBasics.firstName,
+        lastName: userBasics.lastName,
+        name: theUser ? `${theUser.profile.firstName} ${theUser.profile.lastName}` : `${userBasics.firstName} ${userBasics.lastName}`,
         userExists: !!theUser,
         isInRole: theUser ? Roles.userIsInRole(theUser, [role], companyId) : false,
       };
-      // console.log(`role: ${role}, userAndRoleInfo: ${JSON.stringify(userAndRoleInfo)}`);
-      return userAndRoleInfo;
-    })
-    : [];
+    } else {
+      return{};
+    }
   },
   addRolesSendInvitations: function (pendingActions, roleToAdd, companyId) {
     check(pendingActions, [{
       emailAddress: String,
+      firstName: String,
+      lastName: String,
       name: String,
       userExists: Boolean,
       isInRole: Boolean,
@@ -371,34 +377,25 @@ Meteor.methods({
           // Send email to user that a new role has been added?
         }
       } else {
-        // First see if user has already been invited
-        let selector = {
-          '$and': [
-            {
-              'emailLower': pendingAction.emailAddress.toLowerCase(),
-            }, {
-              'companyId': companyId
-            }, {
-              'role': roleToAdd
-            },
-          ]
-        };
-        const invitedUser = InvitedUsers.findOne(selector);
-        console.log(invitedUser);
-        if (!invitedUser) {
-          const invitedUserId = InvitedUsers.insert({
+        // Just add the user (when the user actually goes to the website he/she will reset password)
+        const userId = Accounts.createUser(
+          {
             email: pendingAction.emailAddress,
-            emailLower: pendingAction.emailAddress.toLowerCase(),
-            companyId: companyId,
-            role: roleToAdd,
-            expirationDate: moment().endOf('day').add(1, 'months').toDate(),
-            createdBy: loggedInUser,
-            createdAt: new Date(),
-          });
-        }
+            // password: userPassword,
+            profile: {
+              nameLower: pendingAction.firstName.toLowerCase() + " " + pendingAction.lastName.toLowerCase(),
+              firstName: pendingAction.firstName,
+              lastName: pendingAction.lastName,
+            }
+          }
+        );
+
+        console.log(pendingAction.firstName + " " + pendingAction.lastName + " was added as a user");
+
+        Roles.setUserRoles(userId, [roleToAdd], companyId);
+
         // Send email to user indicating that invited with role related to company and will have role after signing up
-        // pendingAction.emailAddress
-        Accounts.sendEnrollmentEmail(userId, [email], [extraTokenData])
+        Accounts.sendEnrollmentEmail(userId);
       }
     });
   },

@@ -8,11 +8,11 @@ Initialization.initializeEmail = () => {
   Accounts.emailTemplates.from = Meteor.settings.private.email.fromAddress;
 
   Accounts.emailTemplates.enrollAccount.subject = (user) => {
-    return `Welcome to Easy Bid, ${user.profile.name}`;
+    return `Welcome to Easy Bid, ${user.profile.firstName}`;
   };
 
   Accounts.emailTemplates.enrollAccount.text = (user, url) => {
-    return `${user.profile.name},
+    return `${user.profile.firstName},
 
 You have been selected to join Easy Bid! To activate your account, simply click the link below:
 
@@ -30,7 +30,7 @@ ${url}`;
         return "Activate your account now!";
      },
      text(user, url) {
-        return `Hey ${user.profile.name}!
+        return `Hey ${user.profile.firstName}!
 
 Thank you for signing up with Easy Bid. Verify your e-mail by following the link below:
 

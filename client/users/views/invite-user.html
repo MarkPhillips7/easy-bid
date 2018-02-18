@@ -1,0 +1,19 @@
+<div class="container">
+  <div class="row">
+    <legend>
+      Invite User
+    </legend>
+    <p>
+      Invite somebody for <strong>{{inviteUser.role.name}}</strong>
+      role in relation to <strong>{{inviteUser.company.name}}</strong>
+    </p>
+    <form ng-submit="inviteUser.submit()" name="inviteUser.form" novalidate>
+      <formly-form model="inviteUser.inviteUser" fields="inviteUser.inviteUserFields" options="inviteUser.options" form="inviteUser.form">
+        <button type="submit" class="btn btn-primary submit-button" ng-disabled="!inviteUser.form.$dirty">
+          Invite User
+        </button>
+        <button type="button" class="btn btn-default" ng-click="inviteUser.cancelSave()">Cancel</button>
+      </formly-form>
+    </form>
+  </div>
+</div>

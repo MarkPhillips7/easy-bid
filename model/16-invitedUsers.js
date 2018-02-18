@@ -40,3 +40,34 @@ Schema.InvitedUser = new SimpleSchema({
 });
 
 InvitedUsers.attachSchema(Schema.InvitedUser);
+
+// does not look easy to use auto form (SimpleSchema) with angular.
+// I tried using autoformly, but it does not have npm package and does not seem to be used, so...
+InvitedUserFields = [
+  {
+    key: 'firstName',
+    type: 'input',
+    templateOptions: {
+      label: 'First Name',
+      required: true
+    }
+  },
+  {
+    key: 'lastName',
+    type: 'input',
+    templateOptions: {
+      label: 'Last Name',
+      required: true,
+    }
+  },
+  {
+    key: 'email',
+    type: 'input',
+    templateOptions: {
+      type: 'email',
+      label: 'Email Address',
+      // placeholder: 'Enter email',
+      required: true,
+    }
+  },
+];
