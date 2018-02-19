@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "@babel/runtime": "^7.0.0-beta.40",
     "angular": "^1.5.8",
     "angular-animate": "^1.5.8",
     "angular-formly": "^8.4.0",
